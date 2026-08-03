@@ -208,3 +208,33 @@ renumbered the survivor from 1 to 0; Save wrote the edited family.
 floating gear, which swallows the tap. There is no such overlay in a release
 build. `zoomies://` deep links are no use as a way around it — the dev client
 claims that scheme for its own launcher.
+
+### Step 7 — Verification
+
+All four Phase 2 exit criteria pass, run against the restored seed rather than
+the state left behind by building.
+
+**Criterion 3 needed history that does not exist yet.** Logging arrives in Phase
+4, so proving that editing metrics leaves `set_metric_values` untouched required
+a stand-in: a completed session with one set of `12 reps @ +10kg` inserted
+straight into the database. Then, through the app, Pull-Up's metrics were
+reordered, `Reps` was deleted while values pointed at it, and `Tempo` was added.
+The `set_metric_values` rows diff byte-identical afterwards — same ids, same
+`exercise_metric_id`s including the one referencing the now-deleted metric, same
+values, same `updated_at`.
+
+**DoD 9** — a suggestion activated in one tap, moving into the library and out
+of Suggested, 15 → 16 and 26 → 25.
+
+**Criterion 2** — a dismissed suggestion is absent from both library and
+suggestions, and identically so after a force-stop and relaunch.
+
+**Criterion 4** — no hex colour, arbitrary Tailwind value, `StyleSheet`, `rgb()`
+or inline style prop appears in any of the fifteen files the phase added. The
+only `px` is inside a comment quoting DESIGN.md.
+
+Two harness notes, neither an app fault. Removing a row while the list is
+scrolled near the bottom clamps the scroll offset and shifts content down, so a
+scripted tap can land a row high — it activated `Archer Pull-Up` rather than the
+intended `Muscle-Up`. And Android's stylus onboarding sheet can intercept
+`adb shell input text`, silently swallowing what was meant for the app.

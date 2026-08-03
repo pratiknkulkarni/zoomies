@@ -24,7 +24,19 @@
 > flipping live with no relaunch, and the heading measures as Geist 600 rather
 > than the platform face.
 >
-> **Next: Phase 2 — Exercises.** Its blocker, §4.1, is settled.
+> **Phase 2 — Exercises. Closed 3 Aug 2026.** The library, the family-driven
+> Suggested section, exercise detail, custom exercises and ordered metric
+> configuration are built, on branch `phase-2-exercises`.
+>
+> All four exit criteria verified on the emulator against a restored seed. DoD 9
+> passes: a suggestion activates in one tap, moving into the library and out of
+> Suggested. A dismissal is absent after a force-stop and relaunch. Editing an
+> exercise's metrics — reorder, delete, add — leaves `set_metric_values`
+> byte-identical, proven against a set inserted by hand because logging does not
+> exist until Phase 4. No colour, spacing or radius literal appears in any of the
+> fifteen files the phase added.
+>
+> **Next: Phase 3 — Templates.**
 
 Update this block when a phase closes. It is the first thing read at the start
 of a session.
@@ -483,4 +495,5 @@ before installing.
 | Aug 2026 | Created. Twelve phases defined from empty repository to Definition of Done. Four open questions recorded against the other source-of-truth documents. |
 | Aug 2026 | Phase 0 built. Test runner settled on Vitest, closing half of §4.3; the rest deferred to Phase 8. |
 | Aug 2026 | Phase 1 built. §4.1 and §4.2 settled and folded into the first migration; `FEATURES.md` §2 amended for both. |
+| Aug 2026 | Phase 2 closed. `docs/DEVELOPMENT.md` added as a per-step build record. Two `useLiveQuery` constraints found and recorded: it subscribes to one table only, and cannot distinguish "no rows" from "not read yet". `$onUpdateFn` added to the schema's lifecycle columns — runtime only, no migration. `archivedExercises` added beyond `FEATURES.md`, since archiving with nowhere to see the result is a one-way door. |
 | Aug 2026 | Phases 0 and 1 closed against a running emulator. Two defects surfaced only by running it: `expo-splash-screen` emits a `windowSplashScreenAnimatedIcon` reference for a colour-only splash but never generates the drawable, failing the Android build — worked around by `plugins/with-splash-no-icon.js` until artwork lands in Phase 11. And the custom tab bar called `useSafeAreaInsets`, which the navigator invokes as a plain function inside a context consumer, so every screen rendered blank; it takes `insets` from props now. |
