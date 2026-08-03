@@ -1,0 +1,486 @@
+# Build Plan
+
+**Project:** Zoomies
+**Document Type:** Execution Source of Truth
+**Status:** Authoritative — for sequencing only
+**Last Updated:** August 2026
+**Companion Documents:** `TECH_STACK.md`, `FEATURES.md`, `DESIGN.md`
+
+---
+
+## Current Phase
+
+> **Phase 1 — Database Foundation. Closed 3 Aug 2026.** Both schema questions
+> settled and folded into the first migration, so there is no second migration
+> to write.
+>
+> Every Phase 0 and Phase 1 exit criterion now verified on an Android emulator
+> (Pixel 7a, API 36), against the live on-device database rather than a
+> stand-in: nine tables and thirteen indexes present, 41 catalogue exercises
+> with 15 active, the `meta` flag set. A second launch left every row
+> byte-identical. A built-in soft-deleted behind the app's back stayed deleted
+> across a relaunch, with nothing re-inserted. IDs are v7 and sort identically
+> by `id` and by `created_at`. Both themes render at exactly the `bg` token,
+> flipping live with no relaunch, and the heading measures as Geist 600 rather
+> than the platform face.
+>
+> **Next: Phase 2 — Exercises.** Its blocker, §4.1, is settled.
+
+Update this block when a phase closes. It is the first thing read at the start
+of a session.
+
+---
+
+## 0. Status of This Document
+
+This document is the **single source of truth for sequencing**. It decides
+*when* things are built, never *what* or *how*.
+
+| Question | Document |
+|---|---|
+| What gets built | `FEATURES.md` |
+| What it is built with | `TECH_STACK.md` |
+| What it looks like | `DESIGN.md` |
+| What order it is built in | **This document** |
+
+Where this document appears to describe a feature, it is summarising one defined
+elsewhere. If it conflicts with the other three, **they win** and this document
+is wrong and should be corrected.
+
+### 0.1 Working Agreement
+
+- **One phase at a time.** Do not start a phase before the previous one's exit
+  criteria pass.
+- **A phase closes on its exit criteria, not on its code existing.** "The screen
+  renders" is not an exit criterion. "Force-quitting mid-set loses nothing" is.
+- **Nothing from `FEATURES.md` §14 (Deferred) or §15 (Cut) is scaffolded**, not
+  even as a placeholder, not even behind a flag.
+- **Schema changes get a generated migration in the same commit.** After any
+  edit to `db/schema.ts`, run `npx drizzle-kit generate`.
+- An open question in §4 that blocks a phase is **answered before that phase
+  starts**, not worked around.
+
+### 0.2 Phase Overview
+
+| # | Phase | Closes DoD |
+|---|---|---|
+| 0 | Repository & toolchain | — |
+| 1 | Database foundation | — |
+| 2 | Exercises | 9 |
+| 3 | Templates | 1 |
+| 4 | Active session & logging | 2, 3, 5 |
+| 5 | Timers | 4 |
+| 6 | Completion flow & quick log | 6, 7, 8 |
+| 7 | History | — |
+| 8 | Exercise details & records | 10 |
+| 9 | Dashboard | 11 |
+| 10 | Export & settings | 12 |
+| 11 | Build, icons & store prep | — |
+
+"DoD" refers to the twelve items in `FEATURES.md` §16. All twelve are accounted
+for. Phases 0, 1, 7 and 11 close none of them directly — they are foundation,
+and history is the substrate the later payoff phases read from.
+
+---
+
+## 1. Phases
+
+### Phase 0 — Repository & Toolchain
+
+Everything needed before a single feature can be written.
+
+- Expo SDK 57 managed app, TypeScript with `strict: true` and
+  `noUncheckedIndexedAccess: true`
+- Expo Router, typed routes, `(tabs)` shell with Home / History / Exercises as
+  empty screens
+- NativeWind v4 — **every** token from `DESIGN.md` §3–§7 as CSS variables in
+  `global.css`, mapped in `tailwind.config.js`. Both themes. This happens once,
+  completely, so no later phase is tempted to invent a value.
+- Geist and Geist Mono bundled via `expo-font`, loaded in the root layout with
+  the splash screen held until ready
+- `lucide-react-native`
+- Lint, test runner (see §4.3), npm scripts per `CLAUDE.md`
+- `eas.json` with `development`, `preview`, `production` profiles
+
+**Creates:** `app/_layout.tsx`, `app/(tabs)/`, `global.css`,
+`tailwind.config.js`, `tsconfig.json`, `eas.json`, `assets/fonts/`
+
+**Exit criteria**
+
+1. `npx tsc --noEmit` and `npm run lint` are clean.
+2. The app boots on a device to an empty screen using `bg` and `text`.
+3. Toggling the system theme flips the screen with no component containing a
+   theme conditional.
+4. Text renders in Geist with no frame in a fallback face.
+
+---
+
+### Phase 1 — Database Foundation
+
+The invariants live or die here. Get this wrong and every later phase inherits
+it.
+
+- `db/schema.ts` — all nine tables exactly as `FEATURES.md` §2. UUID v7 primary
+  keys via the `uuidv7` package, `created_at` / `updated_at` as integer epoch
+  millis, nullable `deleted_at` on every user-owned table.
+- `lib/ids.ts` — the single call site for ID generation
+- First `drizzle-kit generate` migration, bundled and applied on launch
+- `db/seed.ts` — the built-in catalogue with families and metrics, roughly
+  fifteen `is_active` per `FEATURES.md` §3.2, the rest dormant. Idempotent,
+  guarded by a flag row in `meta`, run on first launch and never by a migration.
+
+Note that `sets` stores no measurements. `set_metric_values` holds them, one row
+per metric. Do not collapse this into columns.
+
+**Creates:** `db/schema.ts`, `db/migrations/`, `db/seed.ts`, `db/client.ts`,
+`lib/ids.ts`
+
+**Exit criteria**
+
+1. A fresh install runs the migration and seeds the catalogue.
+2. A second launch adds nothing — row counts are identical.
+3. Soft-deleting a built-in exercise and relaunching does not resurrect it.
+4. Generated IDs are v7 — sorting by `id` matches sorting by `created_at`.
+
+---
+
+### Phase 2 — Exercises
+
+The first real surface, and the one with the least risk. It exercises the
+schema, the tokens and the query/mutation split before anything time-critical
+depends on them.
+
+- Exercises tab: the active library
+- Exercise detail: name, family, notes, ordered metric configuration. History
+  and records arrive in Phase 8.
+- Create a custom exercise; add, reorder and soft-delete metrics. The first
+  metric is the primary metric and will drive the logging UI in Phase 4.
+- Archive and soft delete
+- **Suggested** section beneath the library: inactive catalogue exercises whose
+  `family` matches something already active, in a lighter tone, one tap to
+  activate, dismissible per exercise, never shown during a session
+
+**Creates:** `db/queries/exercises.ts`, `db/mutations/exercises.ts`,
+`app/(tabs)/exercises.tsx`, `app/exercise/[id]/`, `features/exercises/`
+
+**Blocked by:** open question §4.1 — dismissal has nowhere to persist.
+
+**Exit criteria**
+
+1. **DoD 9** — activate a suggested exercise from the catalogue.
+2. A dismissed suggestion does not return after a relaunch.
+3. Editing an exercise's metrics leaves existing `set_metric_values` untouched.
+4. No colour, spacing or radius literal appears anywhere in the phase's code.
+
+---
+
+### Phase 3 — Templates
+
+Small, and entirely outside training. Built before sessions because a session
+starts from one.
+
+- Template list; create, rename, delete
+- Slots: add an exercise, remove, reorder
+- Per slot: `target_sets`, `target_metric_id` + `target_value`, `rest_seconds`
+  defaulting to 60 and nullable for no rest timer
+
+**Creates:** `db/queries/templates.ts`, `db/mutations/templates.ts`,
+`app/template/`
+
+**Exit criteria**
+
+1. **DoD 1** — create a template with exercises and targets.
+2. A slot with `rest_seconds` null saves and reads back as null, not 0.
+
+---
+
+### Phase 4 — Active Session & Logging
+
+The reason the application exists. Sets get forgotten when tired; this phase is
+what stops that. It is the largest phase and should not be trimmed to reach the
+next one.
+
+- Start from a template — targets **snapshotted** onto `exercise_entries` at
+  start, so later template edits never rewrite history. Ad-hoc start with no
+  template.
+- Session screen: ordered exercise list, each row carrying a `2 / 4` counter
+  visible **without opening the exercise**. This specific element is the fix for
+  the original problem.
+- Exercise screen: target, and "last time" scoped to this template, falling back
+  to the most recent occurrence anywhere with the source labelled.
+- Number-primary logging: numeric fields, large tap targets, save
+- Inline set edit and delete, during and after the session
+- `to_failure` on every set
+- Add an ad-hoc exercise mid-session; the template is untouched
+- Tap the target to override it **for this session only**
+- One note per exercise entry
+- Zustand for ephemeral state only — current exercise index, unsaved draft.
+  Every write commits to SQLite **before** the UI transitions.
+- `expo-keep-awake` for the session's duration; haptics on set saved and target
+  reached
+- On launch with an unfinished session: Resume · Complete it now · Discard, with
+  a second confirmation on discard
+- Explicit pause only, accumulating into `accumulated_pause_ms`. Leaving the
+  application is not pausing.
+
+**Creates:** `db/queries/sessions.ts`, `db/mutations/sessions.ts`,
+`db/mutations/sets.ts`, `stores/session.ts`, `app/session/`, `features/session/`
+
+**Blocked by:** open question §4.2 — the entry does not snapshot which metric
+its target refers to.
+
+**Exit criteria**
+
+1. **DoD 2** — start a session from a template.
+2. **DoD 3** — log sets quickly with last session's values visible.
+3. **DoD 5** — leave the application and return with the session intact.
+4. Force-quitting immediately after saving a set loses nothing.
+5. Editing a template does not alter any completed session.
+6. An unrecorded value reads back as null and displays as `—`.
+
+---
+
+### Phase 5 — Timers
+
+Split from Phase 4 because the correctness rules are testable in isolation and
+worth getting right on their own.
+
+- `lib/timers.ts` **written test-first** — elapsed time derived from a start
+  timestamp, pause accumulation, resume after backgrounding. Never accumulated
+  `setInterval` ticks.
+- Work timer: the duration-primary logging UI. One large button, tap to start,
+  tap to stop, set recorded, tap again for the next. Fifteen holds in three
+  minutes with no typing. Manual entry stays possible.
+- Rest timer: starts automatically after saving a set when the slot has
+  `rest_seconds`. Pausable, skippable, restartable. Never blocks interaction.
+- Starting a rest timer schedules a **local notification** for its end time so
+  it fires with the app suspended or killed
+- `expo-audio` cues; haptic on completion
+
+**Creates:** `lib/timers.ts`, `lib/timers.test.ts`, `lib/notifications.ts`,
+`features/session/` timer components
+
+**Exit criteria**
+
+1. **DoD 4** — time a hold without leaving the application.
+2. Unit tests pass, including a 90-second background gap resuming at the correct
+   elapsed time.
+3. The rest notification fires with the application killed.
+4. The timer conveys state through the figure and a hairline track — never a
+   colour change.
+
+---
+
+### Phase 6 — Completion Flow & Quick Log
+
+- On finishing, warn about exercises with **zero sets logged**, bypassable in
+  one tap. Do not warn about exercises merely short of target. Informational
+  tone — `text-2`, never `danger`.
+- Target raise prompt, at completion only, offered only when the target was
+  beaten on the **majority** of sets. One tap. Ignoring it changes nothing.
+  This is the only mechanism by which a target increases.
+- Optional session note
+- Quick log: pick exercise, enter values, done. Auto-completed,
+  `is_quick_log = true`, no session screen shown.
+- Exercises with zero sets read as `not trained`, never as zeros
+
+**Exit criteria**
+
+1. **DoD 6** — be warned about untrained exercises before finishing.
+2. **DoD 7** — raise a target in one tap when it was beaten.
+3. **DoD 8** — quick-log five pull-ups outside of training.
+4. A quick log produces the same row shapes as a session — one code path
+   downstream.
+
+---
+
+### Phase 7 — History
+
+- Reverse-chronological timeline of completed sessions: date, name, duration,
+  exercise count
+- Session detail: everything logged, per set, with notes
+- Edit and delete a completed session. Deleting removes its entries and sets;
+  the exercises remain.
+
+Calendar, search and filters stay deferred. A scrolling list is sufficient at
+this volume.
+
+**Creates:** `db/queries/history.ts`, `app/(tabs)/history.tsx`,
+`features/history/`
+
+**Exit criteria**
+
+1. A completed session reads back exactly as logged, including nulls as `—`.
+2. Session duration excludes `accumulated_pause_ms`.
+
+---
+
+### Phase 8 — Exercise Details & Records
+
+The payoff for making Exercise permanent. Spans **all** templates and includes
+quick logs.
+
+- Every set ever logged, newest first, with its session and date
+- Personal records per exercise **per metric** — most reps, longest hold,
+  heaviest added load. A duration PR and a rep PR are separate.
+- Best-set trend over time
+- Which sessions it appeared in
+- Its metric configuration
+
+Aggregation and PR queries are unit tested. They are computed at read time;
+nothing is cached or stored.
+
+**Creates:** `db/queries/records.ts`, `db/queries/aggregate.ts`, their tests
+
+**Exit criteria**
+
+1. **DoD 10** — browse history and one exercise's full record.
+2. PR queries pass unit tests, including ties and nulls.
+3. No aggregate value exists in any table.
+
+---
+
+### Phase 9 — Dashboard
+
+Built in the shipping order of `FEATURES.md` §11.7, **not** the presentation
+order of §11.3 — four of the five blocks are near-empty for the first month.
+
+1. **Not trained recently** — three to five active exercises by days since last
+   logged. Useful from week two.
+2. **Recent records** — PRs set in the last 30 days. Stated, never
+   congratulated.
+3. **This week** — sessions and sets. Two numbers, small type, not a hero.
+4. **Last 7 days** — seven dots, filled if trained. Filled versus hollow, not
+   two colours. No number attached. This is not a streak.
+5. **Sessions per week** — 12-week bar chart. Says nothing until roughly three
+   months of data exist; may land in Phase 11. Bars are neutral; the accent does
+   not appear in charts.
+
+Counting rules: quick logs count toward sets, records and days-since-trained but
+**never** the sessions figure. Ad-hoc sessions do count.
+
+**Exit criteria**
+
+1. **DoD 11** — see what has not been trained recently.
+2. A quick log does not increment the sessions figure.
+3. Blocks 1, 2 and 4 render correctly with a single week of data.
+4. Nothing on the screen is celebratory and nothing animates.
+
+---
+
+### Phase 10 — Export & Settings
+
+With no cloud in v1 this is the only backup. Non-negotiable.
+
+- `lib/export.ts` — full JSON export of the entire database via
+  `expo-file-system`, handed to the OS share sheet via `expo-sharing`
+- Format designed so import is possible later, though import is deferred
+- Serialisation round-trip unit tested
+- Appearance setting: system / light / dark
+
+**Creates:** `lib/export.ts`, `lib/export.test.ts`, `app/settings.tsx`
+
+**Blocked by:** open question §4.4 — the theme override needs a storage
+dependency not yet listed in `TECH_STACK.md`.
+
+**Exit criteria**
+
+1. **DoD 12** — export everything to a file.
+2. A round-trip preserves every row, including nulls and soft-deleted rows.
+3. Export completes in airplane mode.
+
+---
+
+### Phase 11 — Build, Icons & Store Prep
+
+- Local EAS builds across all three profiles; a `preview` `.apk` installed on a
+  real device
+- Icon, adaptive icon and splash — the open items in `DESIGN.md` §12
+- Privacy policy URL; App Privacy and Data Safety disclosures
+- The 12-week sessions chart, if it did not land in Phase 9
+
+**Exit criteria**
+
+1. A preview build installs and runs on a physical device.
+2. All twelve Definition-of-Done items pass **without reading documentation**.
+3. The application works fully in airplane mode from install onward.
+
+---
+
+## 2. Test Coverage by Phase
+
+Unit tests only. Per `TECH_STACK.md` §8, the logic that can silently corrupt
+years of training history is worth testing; layout is verified by looking at it.
+
+| Phase | Under test |
+|---|---|
+| 5 | `lib/timers.ts` — timestamp arithmetic, pause accumulation, background resume |
+| 8 | Aggregation and personal-record queries |
+| 9 | Dashboard counting rules, particularly quick-log exclusion |
+| 10 | Export serialisation round-trip |
+
+**Not tested:** components, navigation, screen rendering, snapshots, E2E.
+
+---
+
+## 3. Long Poles — Start Early
+
+These are calendar-bound and do not care which phase is in progress.
+
+| Item | Lead time | Start by |
+|---|---|---|
+| Google Play closed test — 12 opted-in testers for 14 continuous days before production access applies to personal accounts created after 13 Nov 2023 | 2+ weeks after the track opens, plus recruiting | Phase 4 |
+| Apple Developer Program membership | Days, occasionally longer | Phase 8 |
+| Privacy policy hosted at a public URL | Hours | Phase 10 |
+
+The Play closed-testing gate is the longest pole on the Android timeline. Open
+the track and recruit while the application is still being built, not after.
+
+---
+
+## 4. Open Questions
+
+Gaps found in the source-of-truth documents. Each blocks a phase. Resolving one
+means **amending the owning document**, not deciding locally — `FEATURES.md` and
+`TECH_STACK.md` are authoritative.
+
+### 4.1 Suggestion dismissal — settled
+
+Nullable `suggestion_dismissed_at` on `exercises`, in the first migration.
+`FEATURES.md` §2 amended.
+
+### 4.2 Target's metric on `exercise_entries` — settled
+
+`target_metric_id` is snapshotted onto `exercise_entries` alongside
+`target_value`, in the first migration. `FEATURES.md` §2 and §2.1 amended.
+
+### 4.3 Database-under-test — Phase 8
+
+**Runner settled: Vitest**, recorded in `TECH_STACK.md` §8.
+
+Still open: testing `db/queries/` in Node needs a SQLite driver, because
+`expo-sqlite` does not run there. Likely `better-sqlite3` as a devDependency
+running against the same Drizzle schema. Not needed until the aggregation and
+personal-record queries arrive.
+
+### 4.4 Dependencies not yet justified in `TECH_STACK.md` — Phases 9 and 10
+
+- `victory-native` v41+ requires `@shopify/react-native-skia`, plus reanimated
+  and gesture-handler. §6.3 lists the latter two; Skia is unlisted.
+- The appearance override needs persistent local storage —
+  `@react-native-async-storage/async-storage` per §5, which names AsyncStorage
+  but does not list the package.
+
+§13 requires every dependency be justifiable in one sentence there. Add them
+before installing.
+
+---
+
+## 5. Change Log
+
+| Date | Change |
+|---|---|
+| Aug 2026 | Created. Twelve phases defined from empty repository to Definition of Done. Four open questions recorded against the other source-of-truth documents. |
+| Aug 2026 | Phase 0 built. Test runner settled on Vitest, closing half of §4.3; the rest deferred to Phase 8. |
+| Aug 2026 | Phase 1 built. §4.1 and §4.2 settled and folded into the first migration; `FEATURES.md` §2 amended for both. |
+| Aug 2026 | Phases 0 and 1 closed against a running emulator. Two defects surfaced only by running it: `expo-splash-screen` emits a `windowSplashScreenAnimatedIcon` reference for a colour-only splash but never generates the drawable, failing the Android build — worked around by `plugins/with-splash-no-icon.js` until artwork lands in Phase 11. And the custom tab bar called `useSafeAreaInsets`, which the navigator invokes as a plain function inside a context consumer, so every screen rendered blank; it takes `insets` from props now. |

@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Design tokens — DESIGN.md is authoritative for every value below.
+ * This file and tailwind.config.js are the only places a colour is defined.
+ * Components consume Tailwind class names only, never a literal.
+ *
+ * Channels are space-separated RGB so Tailwind's alpha modifiers work.
+ * Every token has a dark value, so no component contains a theme conditional.
+ *
+ * Both blocks sit outside `@layer base` on purpose. Tailwind tree-shakes layer
+ * contents against the content globs, and `dark` is a class NativeWind applies
+ * at runtime rather than one written into a component — inside a layer the
+ * whole dark block is purged and the app renders light tokens in dark mode.
+ */
+
+:root {
+  /* Neutrals — DESIGN.md §3.1. Warm off-white, never pure white. */
+  --color-bg: 250 250 248; /* #FAFAF8 */
+  --color-surface: 255 255 255; /* #FFFFFF */
+  --color-muted: 241 240 236; /* #F1F0EC */
+  --color-border: 227 226 220; /* #E3E2DC */
+  --color-text: 26 26 23; /* #1A1A17 */
+  --color-text-2: 107 106 98; /* #6B6A62 */
+  --color-text-3: 156 155 146; /* #9C9B92 */
+
+  /* Accent, moss — DESIGN.md §3.2. Three sanctioned uses only, see §3.3. */
+  --color-accent: 85 104 79; /* #55684F */
+  --color-accent-bg: 237 240 234; /* #EDF0EA */
+  --color-accent-fg: 250 250 248; /* #FAFAF8 */
+
+  /* Destructive — DESIGN.md §3.4. Delete and discard only. */
+  --color-danger: 180 68 58; /* #B4443A */
+  --color-danger-bg: 247 235 233; /* #F7EBE9 */
+}
+
+.dark:root {
+  /* Warm near-black, never pure black. */
+  --color-bg: 15 15 14; /* #0F0F0E */
+  --color-surface: 26 26 24; /* #1A1A18 */
+  --color-muted: 37 37 35; /* #252523 */
+  --color-border: 51 50 47; /* #33322F */
+  --color-text: 244 243 238; /* #F4F3EE */
+  --color-text-2: 163 162 152; /* #A3A298 */
+  --color-text-3: 110 109 101; /* #6E6D65 */
+
+  --color-accent: 140 162 133; /* #8CA285 */
+  --color-accent-bg: 42 50 42; /* #2A322A */
+  --color-accent-fg: 15 15 14; /* #0F0F0E */
+
+  --color-danger: 217 122 110; /* #D97A6E */
+  --color-danger-bg: 46 31 29; /* #2E1F1D */
+}

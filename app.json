@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "Zoomies",
+    "slug": "zoomies",
+    "version": "1.0.0",
+    "scheme": "zoomies",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.zoomies.app",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "com.zoomies.app",
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-font",
+      "./plugins/with-splash-no-icon",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FAFAF8",
+          "dark": {
+            "backgroundColor": "#0F0F0E"
+          }
+        }
+      ],
+      "expo-sqlite"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
