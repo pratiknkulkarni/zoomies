@@ -106,3 +106,37 @@ to be able to name what it is reading.
 Multi-statement work is wrapped in `db.transaction`. Single `UPDATE`s are not:
 SQLite commits them atomically in autocommit mode, so a transaction around one
 statement is noise.
+
+### Step 4 — Exercises tab
+
+`app/(tabs)/exercises.tsx` — a `SectionList` over Library and Suggested, three
+live queries, one `IconButton` local to the screen because §9's 48×48 floor
+cannot be met by a 24px glyph on its own.
+
+The Suggested section is omitted entirely when empty rather than rendering an
+empty header, which would imply something had gone missing.
+
+Suggestion rows show their metrics, not their family. Families are slugs —
+`hspu`, `l_sit`, `core_hang` — and displaying them would need a table of
+display names that is not in the seed. Not worth inventing to fill a subtitle.
+
+Library rows are not tappable yet: the detail route does not exist until step
+5, and typed routes fail the typecheck on an `href` that goes nowhere. The
+empty state has no action for the same reason — creation arrives in step 6.
+
+Verified on the emulator: the library renders 15 rows, Suggested renders the 26
+predicted in step 2, activating moved a row into the library and dismissing
+removed one — 26 → 24 in the database. `updated_at` moved on the activated row
+and not on an untouched one, which is `$onUpdateFn` working end to end.
+
+**Workflow note.** After a rebuild the dev client can serve a cached bundle and
+show pre-change code, which looks exactly like a broken build. Check which side
+is stale by fetching the bundle from Metro directly and grepping it for a
+string only the new code contains. If Metro has it, relaunch the client against
+the reversed port rather than debugging the app:
+
+```
+adb reverse tcp:8081 tcp:8081
+adb shell am start -a android.intent.action.VIEW \
+  -d "zoomies://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"
+```
