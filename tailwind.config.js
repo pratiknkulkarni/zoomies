@@ -139,6 +139,11 @@ module.exports = {
       minWidth: {
         touch: '48px',
       },
+      // §6.1 — the press feedback scale. Named rather than written inline so
+      // `scale-[0.98]` never appears in a component.
+      scale: {
+        press: '0.98',
+      },
     },
   },
   corePlugins: {
