@@ -75,3 +75,34 @@ Suggestions resolve through a subquery over the curated `family` column, never
 string similarity (§3.3). Against the seeded catalogue this yields 26
 suggestions across 12 families — with `Front Lever (Tuck)` active it offers
 Advanced Tuck, One Leg, Straddle and Full, which is §3.3's worked example.
+
+### Step 3 — Write layer
+
+Added `db/mutations/exercises.ts`: `activateExercise`, `dismissSuggestion`,
+`createExercise`, `updateExercise`, `archiveExercise`, `unarchiveExercise`,
+`deleteExercise`, `addMetric`, `updateMetric`, `moveMetric`, `deleteMetric`.
+
+**`updated_at` is no longer set by hand.** `$onUpdateFn(now)` was added to the
+schema's lifecycle columns, so Drizzle applies it to every update and a
+mutation cannot forget to bump it. This is runtime behaviour only — it emits no
+DDL, and `drizzle-kit generate` confirms "No schema changes, nothing to
+migrate". It is the one edit to `db/schema.ts` since Phase 1 closed.
+
+**A metric's `type` cannot be changed, by design.** Switching a metric from
+`number` to `duration` would reinterpret every `value_num` already logged
+against it — the same figure silently becoming seconds instead of reps. That is
+history being rewritten without anyone asking, so the operation does not exist.
+Delete the metric and add another.
+
+Reordering renumbers `display_order` as 0..n-1 across the whole live set rather
+than swapping two rows. It costs one extra write and heals any gap an earlier
+delete left, which keeps "the first metric is the primary metric" true rather
+than approximately true.
+
+Nothing in this file touches `set_metric_values`, and deleting an exercise
+leaves its metrics alive — sets already logged point at them, and Phase 8 has
+to be able to name what it is reading.
+
+Multi-statement work is wrapped in `db.transaction`. Single `UPDATE`s are not:
+SQLite commits them atomically in autocommit mode, so a transaction around one
+statement is noise.

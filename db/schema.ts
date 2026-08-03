@@ -23,7 +23,12 @@ const now = () => Date.now();
 /** Every user-owned table carries these. Soft delete only. */
 const lifecycle = {
   createdAt: integer('created_at').notNull().$defaultFn(now),
-  updatedAt: integer('updated_at').notNull().$defaultFn(now),
+  /**
+   * `$onUpdateFn` is applied by Drizzle on every update, so a mutation cannot
+   * forget to bump it. Runtime behaviour only — it emits no DDL and so needs
+   * no migration.
+   */
+  updatedAt: integer('updated_at').notNull().$defaultFn(now).$onUpdateFn(now),
   deletedAt: integer('deleted_at'),
 };
 
