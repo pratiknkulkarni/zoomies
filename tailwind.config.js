@@ -135,6 +135,7 @@ module.exports = {
       minHeight: {
         touch: '48px', // §9 — exceeds the platform minimum deliberately
         row: '56px', // §6.4 list row
+        field: '56px', // §6.2 — the floor for a field that grows, e.g. notes
       },
       minWidth: {
         touch: '48px',

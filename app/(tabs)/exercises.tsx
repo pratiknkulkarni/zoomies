@@ -69,9 +69,17 @@ export default function ExercisesScreen() {
         stickySectionHeadersEnabled={false}
         ItemSeparatorComponent={Separator}
         ListHeaderComponent={
-          <Text className="px-xl pt-xl font-sans-semibold text-display text-text">
-            Exercises
-          </Text>
+          <View className="flex-row items-center justify-between pl-xl pr-md pt-xl">
+            <Text className="font-sans-semibold text-display text-text">
+              Exercises
+            </Text>
+            <IconButton
+              label="New exercise"
+              onPress={() => router.push('/exercise/new')}
+            >
+              <PlusIcon size={24} strokeWidth={1.5} className="text-text-2" />
+            </IconButton>
+          </View>
         }
         renderSectionHeader={({ section }) => (
           <SectionLabel className="px-xl pb-sm pt-2xl">
@@ -127,6 +135,10 @@ export default function ExercisesScreen() {
             <EmptyState
               title="Your library"
               body="Exercises you train live here. The built-in ones came with the app."
+              action={{
+                label: 'New exercise',
+                onPress: () => router.push('/exercise/new'),
+              }}
             />
           </View>
         }

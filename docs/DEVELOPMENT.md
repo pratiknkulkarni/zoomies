@@ -168,3 +168,43 @@ and step 6 makes it editable.
 
 Verified on the emulator: the screen renders, archiving flips the status field
 and the button, and the library drops from 18 rows to 17 live.
+
+### Step 6 — Create and edit
+
+`features/exercises/exercise-form.tsx` and `metric-editor.tsx`, the routes
+`app/exercise/new.tsx` and `app/exercise/[id]/edit.tsx`, and the ways in: a `+`
+beside the Exercises title, `Edit` on the detail screen, and the empty state's
+action. One token added: `minHeight.field`, matching the existing `height.field`
+so the notes box can grow from a 56 floor.
+
+**Creating does not collect metrics.** The exercise is created and the screen
+hands straight over to its editor, so metric configuration has exactly one
+implementation rather than a second that exists only before the row does.
+
+**The fields are a draft; the metrics are not.** Name, family and notes are held
+in memory and written on Save. Every reorder, addition and removal commits
+immediately, because those are individual acts rather than a form.
+
+Filling that draft from the row inside an effect tripped
+`react-hooks/set-state-in-effect`, and the rule was right — the fix is not to
+synchronise at all. The draft lives in a child keyed on the row id, so it
+initialises from props once. Syncing on every live update would have overwritten
+whatever was being typed the moment a metric below it changed.
+
+Empty fields are written as `null`, never `''`: not recorded and recorded-as-
+empty are different, and only one of them displays as `—`.
+
+§3.1 names `muted` as the *inactive* chip fill, so a selected type chip cannot
+be the muted one. Selection reads as `surface` with a border, carried by weight
+as well, since §9 forbids colour alone.
+
+Verified on the emulator, checking the database after each step: create wrote
+`is_builtin = 0` with `family` and `notes` null rather than empty; adding two
+metrics gave `display_order` 0 and 1; moving one up renumbered to a contiguous
+0..1 and moved `Primary` with it; removing the first soft-deleted it and
+renumbered the survivor from 1 to 0; Save wrote the edited family.
+
+**Dev-only annoyance.** The `+` in the tab header sits under the dev client's
+floating gear, which swallows the tap. There is no such overlay in a release
+build. `zoomies://` deep links are no use as a way around it — the dev client
+claims that scheme for its own launcher.

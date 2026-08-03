@@ -125,6 +125,17 @@ export default function ExerciseDetailScreen() {
               <Button
                 variant="secondary"
                 onPress={() =>
+                  router.push({
+                    pathname: '/exercise/[id]/edit',
+                    params: { id: exercise.id },
+                  })
+                }
+              >
+                <Text>Edit</Text>
+              </Button>
+              <Button
+                variant="secondary"
+                onPress={() =>
                   void (exercise.isArchived
                     ? unarchiveExercise(exercise.id)
                     : archiveExercise(exercise.id))
