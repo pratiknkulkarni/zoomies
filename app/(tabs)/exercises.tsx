@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
+import { router } from 'expo-router';
 import { Plus, X } from 'lucide-react-native';
 import { useMemo, type ReactNode } from 'react';
 import { Pressable, SectionList, View } from 'react-native';
@@ -79,7 +80,16 @@ export default function ExercisesScreen() {
         )}
         renderItem={({ item, section }) =>
           section.kind === 'library' ? (
-            <ListRow title={item.name} subtitle={describe(item)} />
+            <ListRow
+              title={item.name}
+              subtitle={describe(item)}
+              onPress={() =>
+                router.push({
+                  pathname: '/exercise/[id]',
+                  params: { id: item.id },
+                })
+              }
+            />
           ) : (
             <ListRow
               title={item.name}

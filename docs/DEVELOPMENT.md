@@ -140,3 +140,31 @@ adb reverse tcp:8081 tcp:8081
 adb shell am start -a android.intent.action.VIEW \
   -d "zoomies://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"
 ```
+
+### Step 5 — Exercise detail
+
+`app/exercise/[id]/index.tsx` and `lib/format.ts`. Library rows now navigate
+here, pushed as `{ pathname: '/exercise/[id]', params: { id } }` rather than an
+interpolated string, so typed routes check the destination.
+
+Name, family, notes, ordered metrics with the first marked `Primary`, and
+archive and delete. History and records are Phase 8 and are absent on purpose.
+
+**`useLiveQuery` cannot distinguish "no rows" from "not read yet".** `data`
+starts as `[]`, so a screen reading a single row will render its empty state
+for the frame before its own query answers — this one flashed "This exercise is
+no longer here" over an exercise that was perfectly present. `updatedAt` is
+`undefined` until the first result lands, and gating on it is the fix. Every
+screen that reads one row needs this, so it belongs with the single-table rule
+from step 2.
+
+Delete confirms through `Alert.alert`. `DESIGN.md` defines no dialog, and
+inventing a modal to be tokened would be a design decision rather than an
+implementation one. Platform confirmation until §6 says otherwise.
+
+Family shows as its raw slug here — `back_lever` — where the tab shows metrics
+instead. On a detail screen the stored value is the honest thing to display,
+and step 6 makes it editable.
+
+Verified on the emulator: the screen renders, archiving flips the status field
+and the button, and the library drops from 18 rows to 17 live.
