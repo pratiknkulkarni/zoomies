@@ -18,13 +18,10 @@ import {
   valuesForEntry,
   type LastTime,
 } from '@/db/queries/sessions';
+import { EntryNotes, TargetRow } from '@/features/session/entry-extras';
 import { SetLog } from '@/features/session/set-log';
-import {
-  formatLastTime,
-  formatSetCount,
-  formatSetValues,
-  formatTarget,
-} from '@/lib/format';
+import { SetRow } from '@/features/session/set-row';
+import { formatLastTime, formatSetCount } from '@/lib/format';
 
 /**
  * Logging one exercise (FEATURES.md §7.2).
@@ -127,10 +124,6 @@ function Logging({ entryId }: { entryId: string }) {
     return null;
   }
 
-  const targetMetric = entry.targetMetricId
-    ? metrics.find((metric) => metric.id === entry.targetMetricId)
-    : undefined;
-
   return (
     <>
       <View className="flex-row items-start justify-between gap-md px-xl pt-sm">
@@ -143,7 +136,7 @@ function Logging({ entryId }: { entryId: string }) {
       </View>
 
       <View className="gap-sm px-xl pt-xl">
-        <Row label="Target" value={formatTarget(entry, targetMetric)} muted={false} />
+        <TargetRow entry={entry} metrics={metrics} />
         <Row
           label="Last time"
           value={
@@ -173,33 +166,21 @@ function Logging({ entryId }: { entryId: string }) {
       {performed.length > 0 ? (
         <View className="pt-2xl">
           <SectionLabel className="px-xl pb-sm">Logged</SectionLabel>
-          {performed.map((set, index) => {
-            const byMetric = new Map(
-              (valuesBySet.get(set.id) ?? []).map((value) => [
-                value.exerciseMetricId,
-                value.valueNum,
-              ]),
-            );
-
-            return (
-              <View key={set.id}>
-                {index > 0 ? <Separator /> : null}
-                <View className="min-h-row flex-row items-center gap-md px-xl py-md">
-                  <Text className="w-field font-mono text-metricSm text-text-3">
-                    {set.setIndex + 1}
-                  </Text>
-                  <Text className="flex-1 text-body text-text">
-                    {formatSetValues(metrics, byMetric)}
-                  </Text>
-                  {set.toFailure ? (
-                    <Text className="text-caption text-text-2">to failure</Text>
-                  ) : null}
-                </View>
-              </View>
-            );
-          })}
+          {performed.map((set, index) => (
+            <View key={set.id}>
+              {index > 0 ? <Separator /> : null}
+              <SetRow
+                entryId={entry.id}
+                set={set}
+                metrics={metrics}
+                values={valuesBySet.get(set.id) ?? []}
+              />
+            </View>
+          ))}
         </View>
       ) : null}
+
+      <EntryNotes key={entry.id} entry={entry} />
     </>
   );
 }
