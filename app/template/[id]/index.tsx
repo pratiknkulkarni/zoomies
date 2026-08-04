@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 
 import { BackButton } from '@/components/ui/back-button';
@@ -10,7 +10,16 @@ import { Screen } from '@/components/ui/screen';
 import { SectionLabel } from '@/components/ui/section-label';
 import { Text } from '@/components/ui/text';
 import { deleteTemplate, renameTemplate } from '@/db/mutations/templates';
-import { templateById, type Template } from '@/db/queries/templates';
+import {
+  allLiveExercises,
+  indexExercisesById,
+} from '@/db/queries/exercises';
+import {
+  slotsForTemplate,
+  templateById,
+  type Template,
+} from '@/db/queries/templates';
+import { SlotList } from '@/features/templates/slot-list';
 
 /**
  * One template. There is no separate read view: a template is a plan, and
@@ -26,6 +35,13 @@ export default function TemplateScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const { data: found, updatedAt } = useLiveQuery(templateById(id), [id]);
+  const { data: slots } = useLiveQuery(slotsForTemplate(id), [id]);
+  const { data: exercises } = useLiveQuery(allLiveExercises());
+
+  const exercisesById = useMemo(
+    () => indexExercisesById(exercises),
+    [exercises],
+  );
 
   const template = found.at(0);
 
@@ -73,6 +89,30 @@ export default function TemplateScreen() {
               reset mid-edit whenever anything else on this screen wrote.
             */}
             <Name key={template.id} template={template} />
+
+            <SectionLabel className="px-xl pb-sm pt-2xl">
+              Exercises
+            </SectionLabel>
+
+            <SlotList
+              templateId={template.id}
+              slots={slots}
+              exercisesById={exercisesById}
+            />
+
+            <View className="gap-md px-xl pt-xl">
+              <Button
+                variant="secondary"
+                onPress={() =>
+                  router.push({
+                    pathname: '/template/[id]/add',
+                    params: { id: template.id },
+                  })
+                }
+              >
+                <Text>Add an exercise</Text>
+              </Button>
+            </View>
 
             <View className="px-xl pt-2xl">
               <Button variant="danger" onPress={confirmDelete}>
