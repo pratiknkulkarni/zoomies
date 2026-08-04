@@ -1,10 +1,9 @@
 import { router } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
+import { BackButton } from '@/components/ui/back-button';
 import { Button } from '@/components/ui/button';
-import { iconWithClassName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { createExercise } from '@/db/mutations/exercises';
@@ -14,8 +13,6 @@ import {
   toNullable,
   type ExerciseFormValues,
 } from '@/features/exercises/exercise-form';
-
-const BackIcon = iconWithClassName(ChevronLeft);
 
 /**
  * A custom exercise (FEATURES.md §3.4). Identical to a built-in once created.
@@ -49,14 +46,7 @@ export default function NewExerciseScreen() {
   return (
     <Screen bleed>
       <ScrollView contentContainerClassName="pb-3xl">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-          onPress={() => router.back()}
-          className="ml-md min-h-touch min-w-touch items-center justify-center self-start active:bg-muted"
-        >
-          <BackIcon size={24} strokeWidth={1.5} className="text-text-2" />
-        </Pressable>
+        <BackButton />
 
         <Text className="px-xl pt-sm font-sans-semibold text-display text-text">
           New exercise

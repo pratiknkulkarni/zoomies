@@ -36,6 +36,19 @@
 > exist until Phase 4. No colour, spacing or radius literal appears in any of the
 > fifteen files the phase added.
 >
+> Merged to `main` 4 Aug 2026.
+>
+> **Phase 2 follow-ups. Closed 4 Aug 2026**, branch `phase-2-followups`.
+> Reviewing the phase found two capabilities with no way to reach them —
+> `archivedExercises()` and `updateMetric()` were both correct and both dead
+> code, leaving archiving one-way and a mistyped metric fixable only by deleting
+> it. Archived exercises now have their own screen, reached from the Exercises
+> tab only while something is archived; metric name and unit are editable in
+> place. Suggestions no longer vanish when the last member of a family is
+> archived, and list rows say what their metrics measure. `FEATURES.md` §3.3 and
+> §3.5 amended for the first two. Verified on a fresh seed, including that a
+> rename leaves `set_metric_values` byte-identical.
+>
 > **Next: Phase 3 — Templates.**
 
 Update this block when a phase closes. It is the first thing read at the start
@@ -497,3 +510,4 @@ before installing.
 | Aug 2026 | Phase 1 built. §4.1 and §4.2 settled and folded into the first migration; `FEATURES.md` §2 amended for both. |
 | Aug 2026 | Phase 2 closed. `docs/DEVELOPMENT.md` added as a per-step build record. Two `useLiveQuery` constraints found and recorded: it subscribes to one table only, and cannot distinguish "no rows" from "not read yet". `$onUpdateFn` added to the schema's lifecycle columns — runtime only, no migration. `archivedExercises` added beyond `FEATURES.md`, since archiving with nowhere to see the result is a one-way door. |
 | Aug 2026 | Phases 0 and 1 closed against a running emulator. Two defects surfaced only by running it: `expo-splash-screen` emits a `windowSplashScreenAnimatedIcon` reference for a colour-only splash but never generates the drawable, failing the Android build — worked around by `plugins/with-splash-no-icon.js` until artwork lands in Phase 11. And the custom tab bar called `useSafeAreaInsets`, which the navigator invokes as a plain function inside a context consumer, so every screen rendered blank; it takes `insets` from props now. |
+| Aug 2026 | Phase 2 follow-ups. Two Phase 2 exports turned out to have no call site — `archivedExercises` and `updateMetric` — so archiving was one-way and metrics could not be renamed. Both given surfaces. `FEATURES.md` §3.3 amended: archived exercises still count toward owned families, because archiving is usually a graduation. §3.5 amended to name the Archived screen. Records that exit criteria only test paths someone built, so dead code passes them. |

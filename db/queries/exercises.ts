@@ -38,9 +38,9 @@ export function activeExercises() {
 }
 
 /**
- * Archived exercises. Not in FEATURES.md as a surface, but archiving without
- * anywhere to see the result is a one-way door — this is what makes it
- * reversible.
+ * Archived exercises (§3.5). Backs `app/exercise/archived.tsx`, and the count
+ * decides whether the Exercises tab offers a way there at all — archiving with
+ * nowhere to see the result is a one-way door.
  */
 export function archivedExercises() {
   return db
@@ -57,6 +57,13 @@ export function archivedExercises() {
  * whose `family` matches something they do. The curated `family` column drives
  * this — never string similarity.
  *
+ * **Archived exercises still count as owned.** Archiving is usually a
+ * graduation — the movement got too easy — and retracting the family at that
+ * moment would hide the harder variants exactly when they became relevant.
+ * Deleting does retract it: archive means "not right now", delete means "this
+ * was a mistake". An archived exercise cannot be suggested back to the user
+ * either way, since it is still `is_active` and the filter below excludes it.
+ *
  * Dismissals are permanent, so a dismissed row never returns. Nothing here is
  * added without a tap, and §3.3 forbids showing any of it during a session.
  */
@@ -70,7 +77,6 @@ export function suggestedExercises() {
       and(
         isNull(owned.deletedAt),
         eq(owned.isActive, true),
-        eq(owned.isArchived, false),
         isNotNull(owned.family),
       ),
     );

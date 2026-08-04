@@ -238,3 +238,91 @@ scrolled near the bottom clamps the scroll offset and shifts content down, so a
 scripted tap can land a row high — it activated `Archer Pull-Up` rather than the
 intended `Muscle-Up`. And Android's stylus onboarding sheet can intercept
 `adb shell input text`, silently swallowing what was meant for the app.
+
+---
+
+## Phase 2 follow-ups
+
+Branch: `phase-2-followups`. Reviewing the phase found five things, three raised
+by reading the code and two while answering them.
+
+The thread connecting the largest two: **Phase 2 built capabilities without
+always building a way to reach them.** `archivedExercises()` and `updateMetric()`
+were both written, both correct, and both dead code. That is not visible from
+the exit criteria, which only test behaviour someone built a path to.
+
+### Suggestions survive archiving
+
+The subquery computing owned families excluded archived exercises, so archiving
+the last non-archived member of a family silently removed every suggestion for
+it. That is backwards: archiving usually means the movement got too easy, which
+is the moment the harder variants matter most. One predicate removed.
+
+Deleting still retracts a family. Archive means "not right now", delete means
+"this was a mistake", and only the second is a statement about the family.
+`FEATURES.md` §3.3 was ambiguous between `is_active` and not-archived; it now
+says which.
+
+### The metric summary reads its units
+
+A library row named its metrics without saying what they measured. The unit is
+appended where it adds something and dropped where it repeats the name, so
+`Hold (s)` and `Added load (kg)` appear but `Reps (reps)` never does.
+
+`formatMetricSummary`, `formatMetricRole` and `formatMetricDetail` live in
+`lib/format.ts`; the last replaced a caption two screens had spelled out
+identically. All three take the narrowest shape they need rather than a row, so
+`lib/format.test.ts` checks strings without inventing ids and timestamps.
+
+### Archived exercises get a screen
+
+Archiving worked and could not be undone: the library is the only route to the
+detail screen and excludes archived rows, so the `Unarchive` button was
+unreachable.
+
+They are meant to be out of the way, so this is `app/exercise/archived.tsx`
+rather than a section in the main list — burying them under 26 suggestion rows
+would have been worse than useless. **The Exercises tab offers a way there only
+while something is archived.** With an empty archive there is no icon and no
+hint the screen exists, which is the behaviour a rarely-wanted surface should
+have: invisible until it isn't.
+
+`BackButton` was extracted here rather than written a fourth time.
+
+### Metrics can be renamed
+
+`updateMetric` existed and nothing called it, so fixing a typo meant deleting
+the metric — the one operation that strands logged values on a dead row.
+
+Name and unit are now fields on each metric row, committing on blur, in the same
+order as the add-metric form below so the two read as one thing. Type stays a
+caption; it is immutable for the reason given in step 3.
+
+**The live-query draft trap recurs here, and it is the third time.** `metrics`
+is live, so a field reading straight from props is reset whenever anything else
+in the table changes — reordering a metric below would wipe what was being typed
+above. Same fix as the `Draft` in `edit.tsx`: a `MetricRow` tied to one row by
+its key, initialising from props once and never syncing. Treat any editable
+field fed by `useLiveQuery` as needing this.
+
+An emptied name reverts rather than writing a nameless metric.
+
+### Verification
+
+Run against a `pm clear` and a fresh seed. Archiving `L-Sit`, the sole active
+member of `l_sit`, left `L-Sit (Tuck)` and `V-Sit` suggested — the pre-fix query
+run against the same database drops to 24 suggestions with `l_sit` gone
+entirely. The archive icon appeared, opened, unarchived and disappeared again.
+
+For the rename, a stand-in set of `42 s` was inserted against Ring Support
+Hold's `Hold` — logging is Phase 4, so history still has to be faked. Renaming
+it to `Static hold` through the app kept the row id, `display_order` and
+`deleted_at`, moved `updated_at`, and left `set_metric_values` byte-identical
+through a subsequent reorder as well. That is the difference the rename buys:
+delete-and-re-add could not have done it.
+
+**A note on the previous entry.** Step 7 said the emulator was restored to the
+seeded baseline. That was true of `exercises` and not of `exercise_metrics` —
+two junk metrics named `2`, typed in by intercepted `adb shell input text`,
+survived on the device and were still visible in the library. Checking the
+tables a change touches is not the same as checking the ones it doesn't.

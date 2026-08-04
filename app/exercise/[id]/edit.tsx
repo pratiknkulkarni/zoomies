@@ -1,11 +1,10 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
+import { BackButton } from '@/components/ui/back-button';
 import { Button } from '@/components/ui/button';
-import { iconWithClassName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { updateExercise } from '@/db/mutations/exercises';
@@ -17,8 +16,6 @@ import {
   type ExerciseFormValues,
 } from '@/features/exercises/exercise-form';
 import { MetricEditor } from '@/features/exercises/metric-editor';
-
-const BackIcon = iconWithClassName(ChevronLeft);
 
 /**
  * Editing an exercise. The fields are a draft held in memory and saved on
@@ -37,14 +34,7 @@ export default function EditExerciseScreen() {
   return (
     <Screen bleed>
       <ScrollView contentContainerClassName="pb-3xl">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-          onPress={() => router.back()}
-          className="ml-md min-h-touch min-w-touch items-center justify-center self-start active:bg-muted"
-        >
-          <BackIcon size={24} strokeWidth={1.5} className="text-text-2" />
-        </Pressable>
+        <BackButton />
 
         {!exercise ? (
           settled ? (

@@ -8,9 +8,15 @@ import { Input } from '@/components/ui/input';
 import { SectionLabel } from '@/components/ui/section-label';
 import { Separator } from '@/components/ui/separator';
 import { Text } from '@/components/ui/text';
-import { addMetric, deleteMetric, moveMetric } from '@/db/mutations/exercises';
+import {
+  addMetric,
+  deleteMetric,
+  moveMetric,
+  updateMetric,
+} from '@/db/mutations/exercises';
 import type { ExerciseMetric } from '@/db/queries/exercises';
-import { formatMetricType } from '@/lib/format';
+import { toNullable } from '@/features/exercises/exercise-form';
+import { formatMetricRole, formatMetricType } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const UpIcon = iconWithClassName(ChevronUp);
@@ -41,21 +47,6 @@ export function MetricEditor({
   const [unit, setUnit] = useState('');
   const [type, setType] = useState<MetricType>('number');
 
-  const confirmDelete = (metric: ExerciseMetric) => {
-    Alert.alert(
-      `Remove ${metric.name}?`,
-      'Values already logged against it are kept and stay readable.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: () => void deleteMetric(exerciseId, metric.id),
-        },
-      ],
-    );
-  };
-
   const submit = () => {
     const trimmed = name.trim();
     if (trimmed.length === 0) {
@@ -65,7 +56,7 @@ export function MetricEditor({
     void addMetric(exerciseId, {
       name: trimmed,
       type,
-      unit: unit.trim().length > 0 ? unit.trim() : null,
+      unit: toNullable(unit),
     }).then(() => {
       setName('');
       setUnit('');
@@ -80,43 +71,20 @@ export function MetricEditor({
       {metrics.map((metric, index) => (
         <View key={metric.id}>
           {index > 0 ? <Separator /> : null}
-          <View className="min-h-row flex-row items-center gap-md px-xl py-md">
-            <View className="flex-1">
-              <Text className="font-sans-semibold text-heading text-text">
-                {metric.name}
-              </Text>
-              <Text className="pt-xs text-caption text-text-2">
-                {[
-                  index === 0 ? 'Primary' : undefined,
-                  formatMetricType(metric.type),
-                  metric.unit ?? undefined,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </Text>
-            </View>
-
-            <IconButton
-              label={`Move ${metric.name} up`}
-              disabled={index === 0}
-              onPress={() => void moveMetric(exerciseId, metric.id, 'up')}
-            >
-              <UpIcon size={24} strokeWidth={1.5} className="text-text-2" />
-            </IconButton>
-            <IconButton
-              label={`Move ${metric.name} down`}
-              disabled={index === metrics.length - 1}
-              onPress={() => void moveMetric(exerciseId, metric.id, 'down')}
-            >
-              <DownIcon size={24} strokeWidth={1.5} className="text-text-2" />
-            </IconButton>
-            <IconButton
-              label={`Remove ${metric.name}`}
-              onPress={() => confirmDelete(metric)}
-            >
-              <DeleteIcon size={24} strokeWidth={1.5} className="text-text-3" />
-            </IconButton>
-          </View>
+          {/*
+            The keyed wrapper ties each `MetricRow` to one metric, so the
+            fields inside it initialise from props once and are never synced
+            afterwards. `metrics` is live: a row reading straight from props
+            would be reset mid-edit the moment anything else in the table
+            changed — reordering a metric below would wipe what was being
+            typed above.
+          */}
+          <MetricRow
+            exerciseId={exerciseId}
+            metric={metric}
+            isFirst={index === 0}
+            isLast={index === metrics.length - 1}
+          />
         </View>
       ))}
 
@@ -161,6 +129,111 @@ export function MetricEditor({
         >
           <Text>Add metric</Text>
         </Button>
+      </View>
+    </View>
+  );
+}
+
+/**
+ * One metric. Name and unit are fields rather than labels — a typo should cost
+ * a keystroke, not a delete, which is the one operation that strands values
+ * already logged against the row.
+ *
+ * Both commit on blur, and the same fields appear in the same order as the
+ * form below, so the two read as one thing.
+ */
+function MetricRow({
+  exerciseId,
+  metric,
+  isFirst,
+  isLast,
+}: {
+  exerciseId: string;
+  metric: ExerciseMetric;
+  isFirst: boolean;
+  isLast: boolean;
+}) {
+  const [name, setName] = useState(metric.name);
+  const [unit, setUnit] = useState(metric.unit ?? '');
+
+  const commitName = () => {
+    const trimmed = name.trim();
+
+    // A metric has to be called something. An emptied field reverts rather
+    // than writing a nameless row.
+    if (trimmed.length === 0) {
+      setName(metric.name);
+      return;
+    }
+
+    if (trimmed !== metric.name) {
+      void updateMetric(metric.id, { name: trimmed });
+    }
+  };
+
+  const commitUnit = () => {
+    const next = toNullable(unit);
+
+    if (next !== metric.unit) {
+      void updateMetric(metric.id, { unit: next });
+    }
+  };
+
+  const confirmDelete = () => {
+    Alert.alert(
+      `Remove ${metric.name}?`,
+      'Values already logged against it are kept and stay readable.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => void deleteMetric(exerciseId, metric.id),
+        },
+      ],
+    );
+  };
+
+  return (
+    <View className="gap-sm px-xl py-md">
+      <Input
+        value={name}
+        onChangeText={setName}
+        onBlur={commitName}
+        accessibilityLabel={`Name of ${metric.name}`}
+        autoCapitalize="sentences"
+      />
+      <Input
+        value={unit}
+        onChangeText={setUnit}
+        onBlur={commitUnit}
+        accessibilityLabel={`Unit of ${metric.name}`}
+        placeholder="Unit — reps, kg, s"
+        autoCapitalize="none"
+      />
+
+      <View className="flex-row items-center gap-md">
+        <Text className="flex-1 text-caption text-text-2">
+          {formatMetricRole(metric.type, isFirst)}
+        </Text>
+
+        <IconButton
+          label={`Move ${metric.name} up`}
+          disabled={isFirst}
+          onPress={() => void moveMetric(exerciseId, metric.id, 'up')}
+        >
+          <UpIcon size={24} strokeWidth={1.5} className="text-text-2" />
+        </IconButton>
+        <IconButton
+          label={`Move ${metric.name} down`}
+          disabled={isLast}
+          onPress={() => void moveMetric(exerciseId, metric.id, 'down')}
+        >
+          <DownIcon size={24} strokeWidth={1.5} className="text-text-2" />
+        </IconButton>
+        <IconButton label={`Remove ${metric.name}`} onPress={confirmDelete}>
+          <DeleteIcon size={24} strokeWidth={1.5} className="text-text-3" />
+        </IconButton>
       </View>
     </View>
   );
