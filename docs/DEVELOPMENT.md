@@ -326,3 +326,33 @@ seeded baseline. That was true of `exercises` and not of `exercise_metrics` —
 two junk metrics named `2`, typed in by intercepted `adb shell input text`,
 survived on the device and were still visible in the library. Checking the
 tables a change touches is not the same as checking the ones it doesn't.
+
+### A line on the metric editor
+
+Reviewing the screen before Phase 3 raised three questions: why an exercise has
+several metrics, what `Primary` means, and whether a reps target should live on
+the exercise rather than the template.
+
+The third is already settled and always was — `exercises` has no target column,
+and `template_slots` carries `target_sets`, `target_metric_id` + `target_value`.
+One Push-Up row can be targeted at 10 reps in one template and 20 in another,
+with §7.4 allowing a further per-session override that leaves the template
+alone. The question only arose because Phase 3 does not exist yet, so the metric
+editor is the only exercise-shaped screen there is, and metrics read as targets
+when you have not seen a slot.
+
+No model change, then — but the screen was silent about two things it cannot
+show on its own. `Primary` means nothing until you know it selects the logging
+UI (§7.2: a duration primary gives a start/stop button instead of fields), and
+the absence of a target field reads as an omission rather than a decision. Two
+sentences under the Metrics label now say both.
+
+This is the app's first explanatory copy, so where it goes is worth stating:
+**on the screen where the concept is actionable, once.** The detail screen shows
+the same `Primary · Duration · s` caption but cannot reorder anything, so it
+stays silent; repeating the copy there would cost more than it explained. The
+four-metric soft cap (§4.1) was left out for the same reason — a third clause
+turns a caption into documentation.
+
+No `DESIGN.md` amendment. The line uses `bodySm` in `text-2`, the same treatment
+as the empty-state text already on that screen, so there is no new visual rule.

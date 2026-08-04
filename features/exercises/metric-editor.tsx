@@ -68,6 +68,18 @@ export function MetricEditor({
     <View>
       <SectionLabel className="px-xl pb-sm">Metrics</SectionLabel>
 
+      {/*
+        Order and targets are the two things this screen cannot show on its own.
+        `Primary` means nothing until you know it decides the logging UI, and
+        the absence of a target field reads as an omission rather than a
+        decision. Said here, where the arrows are, and nowhere else.
+      */}
+      <Text className="px-xl pb-md text-bodySm text-text-2">
+        The first metric drives logging: a duration metric on top gives a
+        stopwatch instead of fields to type into. Targets belong to templates,
+        not here.
+      </Text>
+
       {metrics.map((metric, index) => (
         <View key={metric.id}>
           {index > 0 ? <Separator /> : null}
