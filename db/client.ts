@@ -1,4 +1,6 @@
 import { drizzle } from 'drizzle-orm/expo-sqlite';
+import type { ExpoSQLiteTransaction } from 'drizzle-orm/expo-sqlite';
+import type { ExtractTablesWithRelations } from 'drizzle-orm/relations';
 import { openDatabaseSync } from 'expo-sqlite';
 
 import * as schema from './schema';
@@ -16,5 +18,11 @@ const sqlite = openDatabaseSync('zoomies.db', { enableChangeListener: true });
 sqlite.execSync('PRAGMA foreign_keys = ON;');
 
 export const db = drizzle(sqlite, { schema });
+
+/** What `db.transaction` hands its callback. Every mutation file needs it. */
+export type Transaction = ExpoSQLiteTransaction<
+  typeof schema,
+  ExtractTablesWithRelations<typeof schema>
+>;
 
 export { sqlite };

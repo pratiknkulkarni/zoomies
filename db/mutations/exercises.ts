@@ -1,10 +1,8 @@
 import { and, asc, eq, isNull } from 'drizzle-orm';
-import type { ExpoSQLiteTransaction } from 'drizzle-orm/expo-sqlite';
-import type { ExtractTablesWithRelations } from 'drizzle-orm/relations';
 
-import { db } from '../client';
+import { db, type Transaction } from '../client';
 import { exerciseMetrics, exercises } from '../schema';
-import type * as schema from '../schema';
+import { movedOnePlace, renumber } from './ordering';
 
 /**
  * Writes for the exercise library. Components never build a query inline;
@@ -20,11 +18,6 @@ import type * as schema from '../schema';
  * Deletion is soft everywhere. Nothing here reaches `set_metric_values`:
  * editing an exercise's metrics must leave logged history exactly as it was.
  */
-
-type Transaction = ExpoSQLiteTransaction<
-  typeof schema,
-  ExtractTablesWithRelations<typeof schema>
->;
 
 /** The shape a new metric arrives in, taken from the table rather than restated. */
 export type MetricInput = Pick<
@@ -179,20 +172,15 @@ export async function moveMetric(
 ): Promise<void> {
   await db.transaction(async (tx) => {
     const ordered = await liveMetrics(tx, exerciseId);
-    const from = ordered.findIndex((metric) => metric.id === metricId);
-    const to = direction === 'up' ? from - 1 : from + 1;
+    const next = movedOnePlace(ordered, metricId, direction);
 
-    if (from === -1 || to < 0 || to >= ordered.length) {
+    if (!next) {
       return;
     }
 
-    const reordered = [...ordered];
-    const [moved] = reordered.splice(from, 1);
-    if (moved) {
-      reordered.splice(to, 0, moved);
-    }
-
-    await renumber(tx, ordered, reordered);
+    await renumber(ordered, next, (id, displayOrder) =>
+      writeOrder(tx, id, displayOrder),
+    );
   });
 }
 
@@ -216,9 +204,9 @@ export async function deleteMetric(
       .where(eq(exerciseMetrics.id, metricId));
 
     await renumber(
-      tx,
       ordered,
       ordered.filter((metric) => metric.id !== metricId),
+      (id, displayOrder) => writeOrder(tx, id, displayOrder),
     );
   });
 }
@@ -258,26 +246,9 @@ async function insertMetrics(
   }
 }
 
-/**
- * Writes `display_order` as 0..n-1 over `next`, skipping rows already sitting
- * at the right index. Renumbering from scratch rather than swapping two values
- * also heals any gap an earlier delete left behind.
- */
-async function renumber(
-  tx: Transaction,
-  previous: { id: string; displayOrder: number }[],
-  next: { id: string }[],
-): Promise<void> {
-  const before = new Map(previous.map((metric) => [metric.id, metric.displayOrder]));
-
-  for (const [index, metric] of next.entries()) {
-    if (before.get(metric.id) === index) {
-      continue;
-    }
-
-    await tx
-      .update(exerciseMetrics)
-      .set({ displayOrder: index })
-      .where(eq(exerciseMetrics.id, metric.id));
-  }
+function writeOrder(tx: Transaction, id: string, displayOrder: number) {
+  return tx
+    .update(exerciseMetrics)
+    .set({ displayOrder })
+    .where(eq(exerciseMetrics.id, id));
 }
