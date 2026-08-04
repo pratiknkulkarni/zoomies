@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react-native';
 import { useMemo, type ReactNode } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 
+import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { iconWithClassName } from '@/components/ui/icon';
 import { ListRow } from '@/components/ui/list-row';
@@ -11,6 +12,7 @@ import { Screen } from '@/components/ui/screen';
 import { SectionLabel } from '@/components/ui/section-label';
 import { Separator } from '@/components/ui/separator';
 import { Text } from '@/components/ui/text';
+import { activeSession } from '@/db/queries/sessions';
 import {
   allSlots,
   allTemplates,
@@ -34,6 +36,9 @@ const PlusIcon = iconWithClassName(Plus);
 export default function HomeScreen() {
   const { data: templates } = useLiveQuery(allTemplates());
   const { data: slots } = useLiveQuery(allSlots());
+  const { data: active } = useLiveQuery(activeSession());
+
+  const session = active.at(0);
 
   const slotsByTemplate = useMemo(() => indexSlotsByTemplate(slots), [slots]);
 
@@ -48,6 +53,31 @@ export default function HomeScreen() {
             <Text className="px-xl pt-xl font-sans-semibold text-display text-text">
               Home
             </Text>
+
+            {/*
+              An unfinished session is the most urgent thing on this screen, so
+              it sits above the templates. The full Resume · Complete · Discard
+              prompt of §6.3 arrives in step 6; this is the way back into it.
+            */}
+            {session ? (
+              <View className="px-xl pt-2xl">
+                <SectionLabel>In progress</SectionLabel>
+                <View className="pt-sm">
+                  <Button
+                    variant="primary"
+                    onPress={() =>
+                      router.push({
+                        pathname: '/session/[id]',
+                        params: { id: session.id },
+                      })
+                    }
+                  >
+                    <Text>Return to {session.name ?? 'session'}</Text>
+                  </Button>
+                </View>
+              </View>
+            ) : null}
+
             <View className="flex-row items-center justify-between pl-xl pr-md pt-2xl">
               <SectionLabel>Templates</SectionLabel>
               <IconButton

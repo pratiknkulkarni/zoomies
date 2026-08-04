@@ -9,7 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Screen } from '@/components/ui/screen';
 import { SectionLabel } from '@/components/ui/section-label';
 import { Text } from '@/components/ui/text';
+import { startFromTemplate } from '@/db/mutations/sessions';
 import { deleteTemplate, renameTemplate } from '@/db/mutations/templates';
+import { activeSession } from '@/db/queries/sessions';
 import {
   allLiveExercises,
   allMetrics,
@@ -40,6 +42,9 @@ export default function TemplateScreen() {
   const { data: slots } = useLiveQuery(slotsForTemplate(id), [id]);
   const { data: exercises } = useLiveQuery(allLiveExercises());
   const { data: metrics } = useLiveQuery(allMetrics());
+  // §6.2 allows one at a time, so an unfinished session is offered rather than
+  // a second one started. The mutation refuses either way.
+  const { data: active } = useLiveQuery(activeSession());
 
   const exercisesById = useMemo(
     () => indexExercisesById(exercises),
@@ -87,6 +92,17 @@ export default function TemplateScreen() {
           ) : null
         ) : (
           <>
+            <View className="px-xl pt-sm">
+              <Text className="pb-lg font-sans-semibold text-display text-text">
+                {template.name}
+              </Text>
+              <StartButton
+                templateId={template.id}
+                slotCount={slots.length}
+                activeSessionId={active.at(0)?.id ?? null}
+              />
+            </View>
+
             {/*
               Keyed on the row so the field initialises from props once. The
               query is live, so a field reading straight from props would be
@@ -128,6 +144,59 @@ export default function TemplateScreen() {
         )}
       </ScrollView>
     </Screen>
+  );
+}
+
+/**
+ * The primary action, and the only accent on the screen (DESIGN.md §3).
+ *
+ * An empty template cannot start a session — there would be nothing to log, and
+ * a session with no entries is a row that exists only to be discarded. With one
+ * already running the button offers that instead, since §6.2 allows one at a
+ * time.
+ */
+function StartButton({
+  templateId,
+  slotCount,
+  activeSessionId,
+}: {
+  templateId: string;
+  slotCount: number;
+  activeSessionId: string | null;
+}) {
+  if (activeSessionId) {
+    return (
+      <Button
+        variant="primary"
+        onPress={() =>
+          router.push({
+            pathname: '/session/[id]',
+            params: { id: activeSessionId },
+          })
+        }
+      >
+        <Text>Return to session</Text>
+      </Button>
+    );
+  }
+
+  const start = () => {
+    void startFromTemplate(templateId).then((id) =>
+      router.push({ pathname: '/session/[id]', params: { id } }),
+    );
+  };
+
+  return (
+    <>
+      <Button variant="primary" disabled={slotCount === 0} onPress={start}>
+        <Text>Start session</Text>
+      </Button>
+      {slotCount === 0 ? (
+        <Text className="pt-sm text-caption text-text-2">
+          Add an exercise first — there would be nothing to log.
+        </Text>
+      ) : null}
+    </>
   );
 }
 

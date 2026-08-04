@@ -70,6 +70,27 @@ export function formatSlotCount(count: number): string {
 }
 
 /**
+ * The `2 / 4` counter of DESIGN.md §6.4 — the element that solves the original
+ * problem, because it says what is outstanding without opening the exercise.
+ *
+ * With no target there is nothing to be short of, so it counts what was done
+ * and stops there. Never `2 / 0`.
+ */
+export function formatSetCount(done: number, target: number | null): string {
+  return target === null ? String(done) : `${done} / ${target}`;
+}
+
+/**
+ * What an exercise did last time: `8 · 8 · 7 · 6`.
+ *
+ * A set where this metric went unrecorded shows as `—`, never as zero
+ * (invariant 2).
+ */
+export function formatLastTime(values: (number | null)[]): string {
+  return values.map((value) => value ?? '—').join(SEPARATOR);
+}
+
+/**
  * What a template slot plans: `3 × 8 reps · 60s rest`.
  *
  * Every part is nullable and each null means something specific (§5.1). No
@@ -84,29 +105,40 @@ export function formatSlotTarget(
     targetValue: number | null;
     restSeconds: number | null;
   },
-  metric: { name: string; unit: string | null } | undefined,
+  metric: MetricLabel | undefined,
 ): string {
-  const measure =
-    slot.targetValue !== null && metric
-      ? `${slot.targetValue} ${metric.unit ?? metric.name.toLowerCase()}`
-      : null;
-
-  let target: string;
-  if (slot.targetSets !== null && measure) {
-    target = `${slot.targetSets} × ${measure}`;
-  } else if (slot.targetSets !== null) {
-    target = slot.targetSets === 1 ? '1 set' : `${slot.targetSets} sets`;
-  } else if (measure) {
-    target = measure;
-  } else {
-    target = 'No target';
-  }
-
   const rest =
     slot.restSeconds === null ? 'No rest timer' : `${slot.restSeconds}s rest`;
 
-  return [target, rest].join(SEPARATOR);
+  return [formatTarget(slot, metric), rest].join(SEPARATOR);
 }
+
+/**
+ * The target alone: `3 × 8 reps`.
+ *
+ * Shared by template slots and by the exercise entries they are snapshotted
+ * onto, so a session shows the same words the plan did. An entry has no rest
+ * seconds of its own — that stays on the slot, because it is not history.
+ */
+export function formatTarget(
+  target: { targetSets: number | null; targetValue: number | null },
+  metric: MetricLabel | undefined,
+): string {
+  const measure =
+    target.targetValue !== null && metric
+      ? `${target.targetValue} ${metric.unit ?? metric.name.toLowerCase()}`
+      : null;
+
+  if (target.targetSets !== null && measure) {
+    return `${target.targetSets} × ${measure}`;
+  }
+  if (target.targetSets !== null) {
+    return target.targetSets === 1 ? '1 set' : `${target.targetSets} sets`;
+  }
+  return measure ?? 'No target';
+}
+
+type MetricLabel = { name: string; unit: string | null };
 
 /**
  * The half of a metric that cannot be edited: `Primary · Duration`.
