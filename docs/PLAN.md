@@ -49,7 +49,27 @@
 > §3.5 amended for the first two. Verified on a fresh seed, including that a
 > rename leaves `set_metric_values` byte-identical.
 >
-> **Next: Phase 3 — Templates.**
+> **Phase 3 — Templates. Closed 4 Aug 2026**, branch `phase-3-templates`.
+> Template list on Home with create, rename and delete; slots added, reordered
+> and removed; per-slot `target_sets`, `target_metric_id` + `target_value` and
+> `rest_seconds`.
+>
+> Both exit criteria verified on device against a reset database. **DoD 1** — a
+> template created from Home with two exercises and a 3 × 8 reps target, slots
+> appending at 0/1/2, reordering renumbering contiguously, removal closing the
+> gap. **Criterion 2** — `rest_seconds` reads back as SQLite type `null`, not
+> integer `0`, proven against a slot holding `0` and a slot holding the default
+> `60` in the same table at the same time.
+>
+> `renumber` moved to `db/mutations/ordering.ts` — two tables now carry a
+> user-arranged `display_order` with identical arithmetic and unrelated
+> meanings. `lib/parse.ts` added as the edge where invariant 2 is enforced.
+> `FEATURES.md` §5 amended: it defined templates fully but never said they live
+> on Home.
+>
+> **Next: Phase 4 — Active Session & Logging.** Note its recorded blocker:
+> open question §4.2, which Phase 1 already resolved by adding
+> `target_metric_id` to `exercise_entries`.
 
 Update this block when a phase closes. It is the first thing read at the start
 of a session.
@@ -511,3 +531,4 @@ before installing.
 | Aug 2026 | Phase 2 closed. `docs/DEVELOPMENT.md` added as a per-step build record. Two `useLiveQuery` constraints found and recorded: it subscribes to one table only, and cannot distinguish "no rows" from "not read yet". `$onUpdateFn` added to the schema's lifecycle columns — runtime only, no migration. `archivedExercises` added beyond `FEATURES.md`, since archiving with nowhere to see the result is a one-way door. |
 | Aug 2026 | Phases 0 and 1 closed against a running emulator. Two defects surfaced only by running it: `expo-splash-screen` emits a `windowSplashScreenAnimatedIcon` reference for a colour-only splash but never generates the drawable, failing the Android build — worked around by `plugins/with-splash-no-icon.js` until artwork lands in Phase 11. And the custom tab bar called `useSafeAreaInsets`, which the navigator invokes as a plain function inside a context consumer, so every screen rendered blank; it takes `insets` from props now. |
 | Aug 2026 | Phase 2 follow-ups. Two Phase 2 exports turned out to have no call site — `archivedExercises` and `updateMetric` — so archiving was one-way and metrics could not be renamed. Both given surfaces. `FEATURES.md` §3.3 amended: archived exercises still count toward owned families, because archiving is usually a graduation. §3.5 amended to name the Archived screen. Records that exit criteria only test paths someone built, so dead code passes them. |
+| Aug 2026 | Phase 3 built. `FEATURES.md` §5 amended — templates live on Home, templates themselves do not reorder, and deleting one takes its slots. `renumber` extracted to `db/mutations/ordering.ts` now that two tables carry a user-arranged `display_order`. `lib/parse.ts` added: an empty field is null, `0` is zero, and the rest-timer criterion is exactly that distinction. Harness note: Metro serves a stale route tree after a route file moves, presenting as a blank screen with no JS error. |
