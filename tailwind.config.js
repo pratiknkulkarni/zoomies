@@ -135,9 +135,15 @@ module.exports = {
       minHeight: {
         touch: '48px', // §9 — exceeds the platform minimum deliberately
         row: '56px', // §6.4 list row
+        field: '56px', // §6.2 — the floor for a field that grows, e.g. notes
       },
       minWidth: {
         touch: '48px',
+      },
+      // §6.1 — the press feedback scale. Named rather than written inline so
+      // `scale-[0.98]` never appears in a component.
+      scale: {
+        press: '0.98',
       },
     },
   },
