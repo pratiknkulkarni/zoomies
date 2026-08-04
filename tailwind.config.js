@@ -132,6 +132,11 @@ module.exports = {
         control: '48px', // button
         field: '56px', // numeric input
       },
+      width: {
+        // §6.2 — a stepper is square against the field it flanks. Larger than
+        // the §9 floor on purpose: tapping one must never need precision.
+        field: '56px',
+      },
       minHeight: {
         touch: '48px', // §9 — exceeds the platform minimum deliberately
         row: '56px', // §6.4 list row

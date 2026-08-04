@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo } from 'react';
 import { FlatList, View } from 'react-native';
 
@@ -92,9 +92,12 @@ export default function SessionScreen() {
                   {formatSetCount(done, item.targetSets)}
                 </Text>
               }
-              // Rows are not tappable yet: the logging screen arrives in step
-              // 4, and typed routes fail the typecheck on an href that goes
-              // nowhere.
+              onPress={() =>
+                router.push({
+                  pathname: '/entry/[id]',
+                  params: { id: item.id },
+                })
+              }
             />
           );
         }}

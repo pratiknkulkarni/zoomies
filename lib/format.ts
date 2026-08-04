@@ -70,6 +70,29 @@ export function formatSlotCount(count: number): string {
 }
 
 /**
+ * One logged set as a line: `9 reps · 10 kg`.
+ *
+ * A metric with no row for this set went unrecorded and is simply absent —
+ * writing `0` would claim something the user never said (invariant 2). A set
+ * where nothing at all was recorded still happened, so it says so.
+ */
+export function formatSetValues(
+  metrics: (MetricLabel & { id: string })[],
+  valueByMetric: Map<string, number | null>,
+): string {
+  const parts = metrics
+    .map((metric) => {
+      const value = valueByMetric.get(metric.id);
+      return value === undefined || value === null
+        ? null
+        : `${value} ${metric.unit ?? metric.name.toLowerCase()}`;
+    })
+    .filter((part): part is string => part !== null);
+
+  return parts.length > 0 ? parts.join(SEPARATOR) : 'Recorded';
+}
+
+/**
  * The `2 / 4` counter of DESIGN.md §6.4 — the element that solves the original
  * problem, because it says what is outstanding without opening the exercise.
  *
