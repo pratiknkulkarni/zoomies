@@ -197,6 +197,10 @@ Rules:
 
 - Suggestions are never automatic. Nothing is added without a tap.
 - Suggestions are dismissible per exercise and do not return.
+- **Archived exercises still count toward the families the user owns.**
+  Archiving is usually a graduation — the movement got too easy — so retracting
+  its family would hide the harder variants at exactly the moment they became
+  relevant. Deleting does retract a family.
 - No suggestion is ever shown during an active session.
 - Suggestions carry no implication of readiness. They are a menu, not a
   progression system, and nothing is gated behind anything.
@@ -214,6 +218,12 @@ user-chosen. No distinction after creation.
 Archived exercises disappear from pickers but retain full history. Deletion soft-
 deletes; history remains queryable. A deleted built-in does not reappear on the
 next launch — the seed runs once (see `TECH_STACK.md` §4.5).
+
+Archiving is reversible, so it needs somewhere to be reversed from: an
+**Archived** screen, reached from the Exercises tab. Its entry point exists only
+while something is archived — with an empty archive there is no control and no
+hint the screen is there. Rows open the ordinary exercise detail, which carries
+`Unarchive`.
 
 ---
 
@@ -620,3 +630,4 @@ Without reading documentation.
 | Aug 2026 | Name finalised as Zoomies. Selection metric type removed; progressions encoded as exercise names. Active-library vs catalogue split added with family-based suggestions. Rest timer default set to 60s. Units set to kg / added load. Dashboard and analytics specified. Appearance direction noted. |
 | Aug 2026 | `DESIGN.md` created and made authoritative for visuals. Per-exercise doodles cut. |
 | Aug 2026 | Two §2 amendments found while building Phase 1. `suggestion_dismissed_at` added to `exercises` — §3.3 required dismissals to persist but nothing stored them. `target_metric_id` added to `exercise_entries` — the snapshot recorded the target's value but not which metric it belonged to, so rendering it meant reading through the template slot, which would have let a template edit rewrite completed sessions. |
+| Aug 2026 | Two amendments after reviewing Phase 2. §3.3 now states that archived exercises still count toward owned families — "active" was ambiguous between `is_active` and not-archived, and the narrower reading hid suggestions at the moment archiving made them most relevant. §3.5 names the Archived screen, which the spec had assumed without ever describing, leaving archiving one-way in the build. |
