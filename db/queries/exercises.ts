@@ -57,6 +57,13 @@ export function archivedExercises() {
  * whose `family` matches something they do. The curated `family` column drives
  * this — never string similarity.
  *
+ * **Archived exercises still count as owned.** Archiving is usually a
+ * graduation — the movement got too easy — and retracting the family at that
+ * moment would hide the harder variants exactly when they became relevant.
+ * Deleting does retract it: archive means "not right now", delete means "this
+ * was a mistake". An archived exercise cannot be suggested back to the user
+ * either way, since it is still `is_active` and the filter below excludes it.
+ *
  * Dismissals are permanent, so a dismissed row never returns. Nothing here is
  * added without a tap, and §3.3 forbids showing any of it during a session.
  */
@@ -70,7 +77,6 @@ export function suggestedExercises() {
       and(
         isNull(owned.deletedAt),
         eq(owned.isActive, true),
-        eq(owned.isArchived, false),
         isNotNull(owned.family),
       ),
     );
