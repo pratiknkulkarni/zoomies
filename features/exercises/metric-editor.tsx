@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Text } from '@/components/ui/text';
 import { addMetric, deleteMetric, moveMetric } from '@/db/mutations/exercises';
 import type { ExerciseMetric } from '@/db/queries/exercises';
-import { formatMetricType } from '@/lib/format';
+import { formatMetricDetail, formatMetricType } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const UpIcon = iconWithClassName(ChevronUp);
@@ -86,13 +86,7 @@ export function MetricEditor({
                 {metric.name}
               </Text>
               <Text className="pt-xs text-caption text-text-2">
-                {[
-                  index === 0 ? 'Primary' : undefined,
-                  formatMetricType(metric.type),
-                  metric.unit ?? undefined,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
+                {formatMetricDetail(metric, index === 0)}
               </Text>
             </View>
 

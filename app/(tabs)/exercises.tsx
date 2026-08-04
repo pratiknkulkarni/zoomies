@@ -19,6 +19,7 @@ import {
   suggestedExercises,
   type Exercise,
 } from '@/db/queries/exercises';
+import { formatMetricSummary } from '@/lib/format';
 
 const PlusIcon = iconWithClassName(Plus);
 const DismissIcon = iconWithClassName(X);
@@ -47,10 +48,7 @@ export default function ExercisesScreen() {
   );
 
   const describe = (exercise: Exercise) =>
-    metricsByExercise
-      .get(exercise.id)
-      ?.map((metric) => metric.name)
-      .join(' · ');
+    formatMetricSummary(metricsByExercise.get(exercise.id) ?? []);
 
   const sections: Section[] = [
     { kind: 'library', title: 'Library', data: library },

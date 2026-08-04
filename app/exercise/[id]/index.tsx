@@ -16,7 +16,7 @@ import {
   unarchiveExercise,
 } from '@/db/mutations/exercises';
 import { exerciseById, metricsForExercise } from '@/db/queries/exercises';
-import { formatMetricType } from '@/lib/format';
+import { formatMetricDetail } from '@/lib/format';
 
 const BackIcon = iconWithClassName(ChevronLeft);
 
@@ -106,16 +106,7 @@ export default function ExerciseDetailScreen() {
                   {index > 0 ? <Separator /> : null}
                   <ListRow
                     title={metric.name}
-                    subtitle={[
-                      // The first metric drives the logging UI (§4.1), which
-                      // is worth saying out loud rather than leaving implied
-                      // by its position.
-                      index === 0 ? 'Primary' : undefined,
-                      formatMetricType(metric.type),
-                      metric.unit ?? undefined,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
+                    subtitle={formatMetricDetail(metric, index === 0)}
                   />
                 </View>
               ))
