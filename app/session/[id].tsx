@@ -22,6 +22,7 @@ import {
   setsForSession,
   type ExerciseEntry,
 } from '@/db/queries/sessions';
+import { SessionControls } from '@/features/session/session-controls';
 import { formatSetCount, formatTarget } from '@/lib/format';
 
 /**
@@ -108,6 +109,18 @@ export default function SessionScreen() {
                 title="Nothing planned"
                 body="This session has no exercises yet. Add one to start logging."
               />
+            </View>
+          ) : null
+        }
+        ListFooterComponent={
+          session ? (
+            <View>
+              {session.pausedAt !== null ? (
+                <Text className="px-xl pt-2xl text-bodySm text-text-2">
+                  Paused. Time from here on is not counted.
+                </Text>
+              ) : null}
+              <SessionControls session={session} />
             </View>
           ) : null
         }

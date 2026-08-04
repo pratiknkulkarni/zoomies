@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
+import { useKeepAwake } from 'expo-keep-awake';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -38,6 +39,10 @@ import { formatLastTime, formatSetCount } from '@/lib/format';
  */
 export default function EntryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+
+  // §8.1 — the screen stays on while training. This is where hands are busy
+  // and a screen timeout costs a set.
+  useKeepAwake();
 
   const { data: found, updatedAt } = useLiveQuery(entryById(id), [id]);
   const entry = found.at(0);
@@ -159,7 +164,15 @@ function Logging({ entryId }: { entryId: string }) {
             This exercise records nothing yet. Add a metric to it first.
           </Text>
         ) : (
-          <SetLog entryId={entry.id} metrics={metrics} />
+          <SetLog
+            entryId={entry.id}
+            metrics={metrics}
+            setsUntilTarget={
+              entry.targetSets === null
+                ? null
+                : entry.targetSets - performed.length
+            }
+          />
         )}
       </View>
 

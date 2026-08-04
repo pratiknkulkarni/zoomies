@@ -4,7 +4,6 @@ import { Plus } from 'lucide-react-native';
 import { useMemo, type ReactNode } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 
-import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { iconWithClassName } from '@/components/ui/icon';
 import { ListRow } from '@/components/ui/list-row';
@@ -18,6 +17,7 @@ import {
   allTemplates,
   indexSlotsByTemplate,
 } from '@/db/queries/templates';
+import { ResumePrompt } from '@/features/session/session-controls';
 import { formatSlotCount } from '@/lib/format';
 
 const PlusIcon = iconWithClassName(Plus);
@@ -60,21 +60,9 @@ export default function HomeScreen() {
               prompt of §6.3 arrives in step 6; this is the way back into it.
             */}
             {session ? (
-              <View className="px-xl pt-2xl">
+              <View className="gap-sm px-xl pt-2xl">
                 <SectionLabel>In progress</SectionLabel>
-                <View className="pt-sm">
-                  <Button
-                    variant="primary"
-                    onPress={() =>
-                      router.push({
-                        pathname: '/session/[id]',
-                        params: { id: session.id },
-                      })
-                    }
-                  >
-                    <Text>Return to {session.name ?? 'session'}</Text>
-                  </Button>
-                </View>
+                <ResumePrompt session={session} />
               </View>
             ) : null}
 

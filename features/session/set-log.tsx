@@ -8,6 +8,7 @@ import { SectionLabel } from '@/components/ui/section-label';
 import { Text } from '@/components/ui/text';
 import { logSet, type SetValueInput } from '@/db/mutations/sets';
 import type { ExerciseMetric } from '@/db/queries/exercises';
+import { tapSaved, tapTargetReached } from '@/lib/haptics';
 import { toNullableFloat } from '@/lib/parse';
 import { cn } from '@/lib/utils';
 
@@ -27,10 +28,17 @@ import { cn } from '@/lib/utils';
 export function SetLog({
   entryId,
   metrics,
+  setsUntilTarget,
   onLogged,
 }: {
   entryId: string;
   metrics: ExerciseMetric[];
+  /**
+   * How many more sets reach the target, or null when there is none. Computed
+   * by the caller before the write, because reacting to the count afterwards
+   * would fire on every re-render rather than on the set that got there.
+   */
+  setsUntilTarget: number | null;
   onLogged?: () => void;
 }) {
   const [draft, setDraft] = useState<Record<string, string>>({});
@@ -66,6 +74,13 @@ export function SetLog({
     // force-quit between the tap and the screen changing loses nothing.
     void logSet(entryId, values, toFailure)
       .then(() => {
+        // After the write, never before: the haptic reports what happened.
+        if (setsUntilTarget === 1) {
+          tapTargetReached();
+        } else {
+          tapSaved();
+        }
+
         setDraft({});
         setToFailure(false);
         onLogged?.();
