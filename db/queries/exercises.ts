@@ -151,6 +151,13 @@ export function allMetrics() {
     .orderBy(asc(exerciseMetrics.displayOrder));
 }
 
+/** Keys metrics by id, for resolving a stored `target_metric_id` to a name. */
+export function indexMetricsById(
+  metrics: ExerciseMetric[],
+): Map<string, ExerciseMetric> {
+  return new Map(metrics.map((metric) => [metric.id, metric]));
+}
+
 /** Groups the result of `allMetrics` by exercise, preserving display order. */
 export function indexMetricsByExercise(
   metrics: ExerciseMetric[],

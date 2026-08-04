@@ -12,7 +12,9 @@ import { Text } from '@/components/ui/text';
 import { deleteTemplate, renameTemplate } from '@/db/mutations/templates';
 import {
   allLiveExercises,
+  allMetrics,
   indexExercisesById,
+  indexMetricsById,
 } from '@/db/queries/exercises';
 import {
   slotsForTemplate,
@@ -37,11 +39,13 @@ export default function TemplateScreen() {
   const { data: found, updatedAt } = useLiveQuery(templateById(id), [id]);
   const { data: slots } = useLiveQuery(slotsForTemplate(id), [id]);
   const { data: exercises } = useLiveQuery(allLiveExercises());
+  const { data: metrics } = useLiveQuery(allMetrics());
 
   const exercisesById = useMemo(
     () => indexExercisesById(exercises),
     [exercises],
   );
+  const metricsById = useMemo(() => indexMetricsById(metrics), [metrics]);
 
   const template = found.at(0);
 
@@ -98,6 +102,7 @@ export default function TemplateScreen() {
               templateId={template.id}
               slots={slots}
               exercisesById={exercisesById}
+              metricsById={metricsById}
             />
 
             <View className="gap-md px-xl pt-xl">

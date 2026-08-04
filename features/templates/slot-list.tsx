@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react-native';
 import { Alert, Pressable, View } from 'react-native';
 
@@ -5,8 +6,9 @@ import { iconWithClassName } from '@/components/ui/icon';
 import { Separator } from '@/components/ui/separator';
 import { Text } from '@/components/ui/text';
 import { moveSlot, removeSlot } from '@/db/mutations/templates';
-import type { Exercise } from '@/db/queries/exercises';
+import type { Exercise, ExerciseMetric } from '@/db/queries/exercises';
 import type { TemplateSlot } from '@/db/queries/templates';
+import { formatSlotTarget } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const UpIcon = iconWithClassName(ChevronUp);
@@ -25,10 +27,12 @@ export function SlotList({
   templateId,
   slots,
   exercisesById,
+  metricsById,
 }: {
   templateId: string;
   slots: TemplateSlot[];
   exercisesById: Map<string, Exercise>;
+  metricsById: Map<string, ExerciseMetric>;
 }) {
   if (slots.length === 0) {
     return (
@@ -47,6 +51,11 @@ export function SlotList({
             templateId={templateId}
             slot={slot}
             exercise={exercisesById.get(slot.exerciseId)}
+            targetMetric={
+              slot.targetMetricId
+                ? metricsById.get(slot.targetMetricId)
+                : undefined
+            }
             isFirst={index === 0}
             isLast={index === slots.length - 1}
           />
@@ -60,12 +69,14 @@ function SlotRow({
   templateId,
   slot,
   exercise,
+  targetMetric,
   isFirst,
   isLast,
 }: {
   templateId: string;
   slot: TemplateSlot;
   exercise: Exercise | undefined;
+  targetMetric: ExerciseMetric | undefined;
   isFirst: boolean;
   isLast: boolean;
 }) {
@@ -87,17 +98,33 @@ function SlotRow({
 
   return (
     <View className="min-h-row flex-row items-center gap-md px-xl py-md">
-      <Text
-        className={cn(
-          'flex-1 text-heading',
-          // §9 forbids colour alone, so weight carries the difference too.
-          // No italic: `fontStyle` is off in the Tailwind config because no
-          // italic face is bundled.
-          exercise ? 'font-sans-semibold text-text' : 'font-sans text-text-3',
-        )}
+      {/*
+        Only the label opens the target editor. The whole row cannot be
+        pressable when three of its own controls sit inside it.
+      */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Targets for ${name}`}
+        onPress={() =>
+          router.push({ pathname: '/slot/[id]', params: { id: slot.id } })
+        }
+        className="min-h-touch flex-1 justify-center active:bg-muted"
       >
-        {name}
-      </Text>
+        <Text
+          className={cn(
+            'text-heading',
+            // §9 forbids colour alone, so weight carries the difference too.
+            // No italic: `fontStyle` is off in the Tailwind config because no
+            // italic face is bundled.
+            exercise ? 'font-sans-semibold text-text' : 'font-sans text-text-3',
+          )}
+        >
+          {name}
+        </Text>
+        <Text className="pt-xs text-caption text-text-2">
+          {formatSlotTarget(slot, targetMetric)}
+        </Text>
+      </Pressable>
 
       <IconButton
         label={`Move ${name} up`}

@@ -58,6 +58,18 @@ export function slotsForTemplate(templateId: string) {
 }
 
 /**
+ * One slot, for its target editor. Slot ids are UUID v7 and globally unique,
+ * so this needs no template to scope it.
+ */
+export function slotById(id: string) {
+  return db
+    .select()
+    .from(templateSlots)
+    .where(and(liveSlot, eq(templateSlots.id, id)))
+    .limit(1);
+}
+
+/**
  * Every live slot, for the list rows that count what a template contains.
  * Rooted at `template_slots` so adding or removing one refreshes the list.
  */
