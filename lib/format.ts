@@ -58,6 +58,18 @@ function nameWithUnit({
 }
 
 /**
+ * What a template row says it contains. Counted at read time from the slots —
+ * nothing aggregated is stored (invariant 3).
+ */
+export function formatSlotCount(count: number): string {
+  if (count === 0) {
+    return 'No exercises';
+  }
+
+  return count === 1 ? '1 exercise' : `${count} exercises`;
+}
+
+/**
  * The half of a metric that cannot be edited: `Primary · Duration`.
  *
  * The first metric drives the logging UI (FEATURES.md §4.1), which is worth
