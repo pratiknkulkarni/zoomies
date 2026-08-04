@@ -67,9 +67,29 @@
 > `FEATURES.md` §5 amended: it defined templates fully but never said they live
 > on Home.
 >
-> **Next: Phase 4 — Active Session & Logging.** Note its recorded blocker:
-> open question §4.2, which Phase 1 already resolved by adding
-> `target_metric_id` to `exercise_entries`.
+> **Phase 4 — Active Session & Logging. Closed 4 Aug 2026**, branch
+> `phase-4-session`. Sessions start from a template with targets snapshotted
+> onto `exercise_entries`; the session screen carries live `2 / 4` counters;
+> number-primary logging with steppers, `to_failure`, inline set edit and
+> delete, entry notes, and a session-only target override; the §6.3 lifecycle
+> with explicit pause, keep-awake and haptics.
+>
+> **Five of six exit criteria verified end to end.** DoD 2, DoD 3 (a second
+> session shows `Last time 8` from the first, and the template's `3 × 9` rather
+> than the previous session's `3 × 6` override), DoD 5, criterion 5 (a template
+> moved to `42 × 99` left a completed session's `3 × 6` untouched) and criterion
+> 6.
+>
+> **Criterion 4 is verified by mechanism, not by the race.** `logSet` is one
+> transaction resolving only after COMMIT, and sets survived every force-stop
+> and a full APK reinstall — but `adb shell input tap` returns on injection, so
+> a kill issued immediately after lands before the tap is dispatched and proves
+> nothing. **Needs one manual check on a physical device.**
+>
+> Duration-primary logging (the tap-to-time button) is Phase 5 by design; holds
+> are typed in seconds today, which §8 keeps available regardless.
+>
+> **Next: Phase 5 — Timers.**
 
 Update this block when a phase closes. It is the first thing read at the start
 of a session.
@@ -532,3 +552,4 @@ before installing.
 | Aug 2026 | Phases 0 and 1 closed against a running emulator. Two defects surfaced only by running it: `expo-splash-screen` emits a `windowSplashScreenAnimatedIcon` reference for a colour-only splash but never generates the drawable, failing the Android build — worked around by `plugins/with-splash-no-icon.js` until artwork lands in Phase 11. And the custom tab bar called `useSafeAreaInsets`, which the navigator invokes as a plain function inside a context consumer, so every screen rendered blank; it takes `insets` from props now. |
 | Aug 2026 | Phase 2 follow-ups. Two Phase 2 exports turned out to have no call site — `archivedExercises` and `updateMetric` — so archiving was one-way and metrics could not be renamed. Both given surfaces. `FEATURES.md` §3.3 amended: archived exercises still count toward owned families, because archiving is usually a graduation. §3.5 amended to name the Archived screen. Records that exit criteria only test paths someone built, so dead code passes them. |
 | Aug 2026 | Phase 3 built. `FEATURES.md` §5 amended — templates live on Home, templates themselves do not reorder, and deleting one takes its slots. `renumber` extracted to `db/mutations/ordering.ts` now that two tables carry a user-arranged `display_order`. `lib/parse.ts` added: an empty field is null, `0` is zero, and the rest-timer criterion is exactly that distinction. Harness note: Metro serves a stale route tree after a route file moves, presenting as a blank screen with no JS error. |
+| Aug 2026 | Phase 4 built. Targets snapshotted onto `exercise_entries` at session start, which makes "editing a template never rewrites history" true by construction. `expo-keep-awake` and `expo-haptics` added — both native, so the dev client needed a full rebuild. Two harness lessons: `adb input tap` returns on injection rather than on handling, so the force-quit race cannot be scripted; and screenshot byte size is a useless readiness signal next to `uiautomator dump` matched on app text. |

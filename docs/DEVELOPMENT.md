@@ -474,3 +474,137 @@ likeliest explanation. Both were removed and the tables reset before the
 criteria above were run, but the lesson stands: **check the tables a change does
 not touch, not only the ones it does.** That is the second time this has bitten,
 after the Phase 2 step 7 baseline.
+
+---
+
+## Phase 4 — Active Session & Logging
+
+Branch: `phase-4-session`. The largest phase, and the one the application
+exists for.
+
+### Step 1 — Read layer
+
+`db/queries/sessions.ts`. Rooted per table for the fourth time; `setsForSession`
+joins through entries to filter but stays rooted at `sets`, which is the table
+that changes when a set is logged, so the `2 / 4` counters move.
+
+**`lastTimeFor` is read once, not subscribed.** History cannot change while a
+session runs, so a live query would re-render the logging screen on every set
+saved and buy nothing. It prefers the same template and reports `fromElsewhere`
+when it falls back, because pull-ups in Pull Day and pull-ups in a Rings session
+are different contexts (§7.2).
+
+### Step 2 — Write layer
+
+`db/mutations/sessions.ts` and `sets.ts`.
+
+**The snapshot is the whole point.** `startFromTemplate` copies `target_sets`,
+`target_metric_id` and `target_value` onto each entry and nothing reads back
+through to the slot afterwards. That is what makes exit criterion 5 true by
+construction rather than by care, and what makes the §7.4 override local.
+
+`rest_seconds` is deliberately not copied — it has no column on the entry
+because it is not history, only a timer that exists while the session runs.
+
+`discardSession` is the one genuine delete in the app; §6.3 offers no "save and
+start a new one", so keeping the rows would leave history containing something
+explicitly thrown away. The schema cascades take entries, sets and values, which
+is why `db/client.ts` turns foreign keys on — anticipated in Phase 1, first
+relied on here.
+
+A blank metric gets **no row at all**. That is what "not recorded" is, and it is
+why an unrecorded value can never read back as zero.
+
+### Step 3 — The session screen
+
+Every row carries its `2 / 4` counter, read live rather than computed on entry.
+That element is the fix for the problem this application exists for.
+
+Templates open to a detail screen with `Start session` as the primary action
+rather than starting on tap — nothing gets started by accident, at the cost of
+one tap before training.
+
+`formatTarget` split out of `formatSlotTarget` so a session shows the same words
+the plan did. The first attempt called `.replace()` on formatted output to strip
+the rest-timer half, which is string surgery on a rendered label and breaks the
+moment the wording changes.
+
+### Step 4 — Logging
+
+`app/entry/[id].tsx`, `features/session/set-log.tsx`, and the numeric input of
+DESIGN.md §6.2.
+
+**A field per metric, whatever its type.** §7.2 reserves the single tap-to-time
+button for a duration-primary exercise and that is Phase 5; §8 keeps manual
+entry available regardless. A hold is typed in seconds today rather than being
+unloggable for a phase.
+
+**The steppers dropped taps.** Computing the next number from the `value` prop
+meant two taps inside one render both read the stale figure and wrote the same
+result — nine rapid taps produced 5. They take an updater now. This is the
+second time reading state instead of deriving from the freshest value has caused
+a bug in this project, after the live-query draft trap.
+
+`To failure` began as a ghost button sized to its own text; a scripted tap
+missed it, which was evidence enough. It uses the chip treatment the metric type
+selector already had.
+
+### Step 5 — Set operations, notes and the override
+
+A logged set expands in place into the fields that recorded it (§7.3). Editing
+upserts, so a metric that had no row gains one — verified by adding a load to a
+set logged without one. Deleting renumbers the rest so `set_index` stays 0..n-1.
+
+### Step 6 — Lifecycle
+
+Home carries §6.3's launch prompt. Pausing is explicit; resuming folds the pause
+into `accumulated_pause_ms`.
+
+Haptics fire **after** the write, and `setsUntilTarget` is computed before it —
+reacting to the count afterwards would fire on every re-render that satisfied
+the condition rather than on the set that got there. Every call swallows its own
+failure, because a device without a motor must not turn a saved set into an
+error.
+
+`expo-keep-awake` and `expo-haptics` contain native code, so the dev client
+needed a full `expo run:android` rebuild. **Adding an Expo module with native
+code invalidates the installed dev client**; Metro alone is not enough.
+
+### Step 7 — Verification
+
+Five of six exit criteria verified end to end on device.
+
+**DoD 2** — a session starts from a template with all five slots snapshotted,
+field for field.
+
+**DoD 3** — a second session from the same template shows `Last time  8` from
+the first. It also shows `Target  3 x 9 reps`, the template value, **not** the
+`3 x 6` override the previous session carried — which is the override proving
+itself session-local.
+
+**DoD 5** — the session survived repeated force-stops and a full APK reinstall
+during the native rebuild.
+
+**Criterion 5** — with a completed session holding `3 x 6`, the template slot
+was moved to `42 x 99`; the completed entry did not change. It kept the
+override, so both the snapshot and the in-session change persist into history
+exactly as logged.
+
+**Criterion 6** — a blank field writes no row, and the logged set reads
+`9 reps`, never `9 reps . 0 kg`.
+
+**Criterion 4 is verified by mechanism and by persistence, not by the race.**
+`logSet` is one `db.transaction` that resolves only after COMMIT, and the UI
+does nothing until it resolves; sets survived every force-stop and the reinstall
+above. But the specific "kill within milliseconds of the tap" could not be
+scripted: `adb shell input tap` returns when the event is *injected*, not when
+the app has handled it, so a kill issued straight afterwards lands before React
+dispatches `onPress` and tests nothing. Three attempts produced no saved set and
+no information. **Worth doing by hand on a physical device.**
+
+**Harness note.** Screenshot byte size is an unreliable readiness signal — a
+blank dev-client screen and a rendered one can both exceed any threshold worth
+setting. `adb shell uiautomator dump` and matching on app-specific text is
+reliable, and tapping the centre of a matched node's bounds survives layout
+shifts that break fixed coordinates. Two verification attempts were wasted
+before switching.

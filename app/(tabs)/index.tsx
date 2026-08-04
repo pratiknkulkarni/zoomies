@@ -11,11 +11,13 @@ import { Screen } from '@/components/ui/screen';
 import { SectionLabel } from '@/components/ui/section-label';
 import { Separator } from '@/components/ui/separator';
 import { Text } from '@/components/ui/text';
+import { activeSession } from '@/db/queries/sessions';
 import {
   allSlots,
   allTemplates,
   indexSlotsByTemplate,
 } from '@/db/queries/templates';
+import { ResumePrompt } from '@/features/session/session-controls';
 import { formatSlotCount } from '@/lib/format';
 
 const PlusIcon = iconWithClassName(Plus);
@@ -34,6 +36,9 @@ const PlusIcon = iconWithClassName(Plus);
 export default function HomeScreen() {
   const { data: templates } = useLiveQuery(allTemplates());
   const { data: slots } = useLiveQuery(allSlots());
+  const { data: active } = useLiveQuery(activeSession());
+
+  const session = active.at(0);
 
   const slotsByTemplate = useMemo(() => indexSlotsByTemplate(slots), [slots]);
 
@@ -48,6 +53,19 @@ export default function HomeScreen() {
             <Text className="px-xl pt-xl font-sans-semibold text-display text-text">
               Home
             </Text>
+
+            {/*
+              An unfinished session is the most urgent thing on this screen, so
+              it sits above the templates. The full Resume · Complete · Discard
+              prompt of §6.3 arrives in step 6; this is the way back into it.
+            */}
+            {session ? (
+              <View className="gap-sm px-xl pt-2xl">
+                <SectionLabel>In progress</SectionLabel>
+                <ResumePrompt session={session} />
+              </View>
+            ) : null}
+
             <View className="flex-row items-center justify-between pl-xl pr-md pt-2xl">
               <SectionLabel>Templates</SectionLabel>
               <IconButton
