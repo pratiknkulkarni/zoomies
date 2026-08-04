@@ -58,6 +58,57 @@ function nameWithUnit({
 }
 
 /**
+ * What a template row says it contains. Counted at read time from the slots —
+ * nothing aggregated is stored (invariant 3).
+ */
+export function formatSlotCount(count: number): string {
+  if (count === 0) {
+    return 'No exercises';
+  }
+
+  return count === 1 ? '1 exercise' : `${count} exercises`;
+}
+
+/**
+ * What a template slot plans: `3 × 8 reps · 60s rest`.
+ *
+ * Every part is nullable and each null means something specific (§5.1). No
+ * target sets shows the completed count alone during a session; no rest
+ * seconds means no timer at all, which is how handstand practice avoids being
+ * interrupted. Both are stated rather than omitted, because a blank line would
+ * read as "not configured yet" instead of "decided".
+ */
+export function formatSlotTarget(
+  slot: {
+    targetSets: number | null;
+    targetValue: number | null;
+    restSeconds: number | null;
+  },
+  metric: { name: string; unit: string | null } | undefined,
+): string {
+  const measure =
+    slot.targetValue !== null && metric
+      ? `${slot.targetValue} ${metric.unit ?? metric.name.toLowerCase()}`
+      : null;
+
+  let target: string;
+  if (slot.targetSets !== null && measure) {
+    target = `${slot.targetSets} × ${measure}`;
+  } else if (slot.targetSets !== null) {
+    target = slot.targetSets === 1 ? '1 set' : `${slot.targetSets} sets`;
+  } else if (measure) {
+    target = measure;
+  } else {
+    target = 'No target';
+  }
+
+  const rest =
+    slot.restSeconds === null ? 'No rest timer' : `${slot.restSeconds}s rest`;
+
+  return [target, rest].join(SEPARATOR);
+}
+
+/**
  * The half of a metric that cannot be edited: `Primary · Duration`.
  *
  * The first metric drives the logging UI (FEATURES.md §4.1), which is worth

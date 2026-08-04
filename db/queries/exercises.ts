@@ -96,6 +96,23 @@ export function suggestedExercises() {
     .orderBy(asc(exercises.family), asc(exercises.name));
 }
 
+/**
+ * Every exercise that still exists, for resolving an id to a name.
+ *
+ * Deliberately includes archived and inactive rows. A template slot written
+ * last month may point at an exercise archived since, and the slot still has to
+ * render as something better than a UUID. Pickers use `activeExercises`; this
+ * is for lookup, not for offering.
+ */
+export function allLiveExercises() {
+  return db.select().from(exercises).where(alive).orderBy(asc(exercises.name));
+}
+
+/** Keys the result of `allLiveExercises` by id. */
+export function indexExercisesById(rows: Exercise[]): Map<string, Exercise> {
+  return new Map(rows.map((exercise) => [exercise.id, exercise]));
+}
+
 /** One exercise, for the detail screen. Includes archived; excludes deleted. */
 export function exerciseById(id: string) {
   return db
@@ -132,6 +149,13 @@ export function allMetrics() {
     .from(exerciseMetrics)
     .where(isNull(exerciseMetrics.deletedAt))
     .orderBy(asc(exerciseMetrics.displayOrder));
+}
+
+/** Keys metrics by id, for resolving a stored `target_metric_id` to a name. */
+export function indexMetricsById(
+  metrics: ExerciseMetric[],
+): Map<string, ExerciseMetric> {
+  return new Map(metrics.map((metric) => [metric.id, metric]));
 }
 
 /** Groups the result of `allMetrics` by exercise, preserving display order. */

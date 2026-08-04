@@ -356,3 +356,121 @@ turns a caption into documentation.
 
 No `DESIGN.md` amendment. The line uses `bodySm` in `text-2`, the same treatment
 as the empty-state text already on that screen, so there is no new visual rule.
+
+---
+
+## Phase 3 — Templates
+
+Branch: `phase-3-templates`
+
+### Step 1 — Read layer
+
+`db/queries/templates.ts`: `allTemplates`, `templateById`, `slotsForTemplate`,
+`slotById`, `allSlots`, and the pure `indexSlotsByTemplate`.
+
+Rooted per table for the third time, for the same reason: `useLiveQuery` watches
+only the root, so a template list joining its slots would never move when a slot
+was added. Counts are joined in memory.
+
+`allLiveExercises` and `indexExercisesById` were added to the exercise queries
+because a slot written last month may name an exercise archived since, and still
+has to render as something better than a UUID. The picker keeps using
+`activeExercises` — §3.5 puts archived exercises out of pickers. **Lookup and
+offering are different jobs**, and this is the first place that mattered.
+
+`allTemplates` orders by `display_order`, not name. A training week has a shape.
+
+### Step 2 — Write layer
+
+`db/mutations/templates.ts`, and `renumber` extracted to
+`db/mutations/ordering.ts` alongside a new `movedOnePlace`.
+
+Two tables now carry a user-arranged `display_order` meaning entirely different
+things — which measurement is primary within an exercise, and what order
+exercises are trained in — with identical arithmetic. Writing the second copy
+was the moment to extract the first. The update is passed as a callback, so each
+caller stays typed against its own table instead of fighting Drizzle's generics.
+The extraction also removed a defensive `if (moved)` that would have silently
+dropped a row from the ordering; `movedOnePlace` throws there instead.
+
+**Deleting a template takes its slots. Deleting an exercise leaves its metrics.**
+The asymmetry is deliberate: logged sets point at metrics by id, so those must
+outlive their exercise, while nothing points at a slot — `exercise_entries`
+copies a target's value and metric, never the slot — so orphans would only make
+`allSlots` lie.
+
+`setSlotTarget` writes metric and value together because either alone is
+meaningless. Making it one call means they cannot drift apart.
+
+### Step 3 — The template list on Home
+
+`FEATURES.md` defined templates fully and never said how they are reached —
+the same omission §3.5 had for archiving. Home is where training starts, so the
+list lives there, as a section beneath the screen title rather than as the title,
+leaving room for the §11.3 dashboard blocks to arrive around it in Phase 9.
+
+A template has no separate read view. An exercise earns one because Phase 8
+hangs history and records off it; a template is a plan, and everything on it is
+a thing to change.
+
+The name commits on blur rather than behind a Save button. Everything else on
+that screen writes as you act on it, and one field is not a form.
+
+Not built: reordering templates. §5.2 lists reordering slots and not templates,
+and inventing it would be assuming an intent the spec does not state.
+
+### Step 4 — Slots
+
+`features/templates/slot-list.tsx` and `app/template/[id]/add.tsx`. The detail
+screen moved into a directory route to make room for the picker.
+
+The picker adds on tap and stays, because templates are built several exercises
+at a time. The header count is the acknowledgement; a per-row "added" mark would
+be a lie, since the same exercise may legitimately appear twice in one template.
+
+A slot whose exercise was deleted renders as `Deleted exercise` rather than
+disappearing. Removing it silently would be editing the template on the user's
+behalf.
+
+**Metro must be restarted after a route file moves.** `git mv`-ing
+`[id].tsx` into `[id]/index.tsx` left Metro's tree stale: the app rendered blank
+with no JS error and no red box, which looks exactly like a code fault. Bundles
+kept succeeding at "1 module". `npx expo start --clear` and a full 3805-module
+rebuild fixed it. Check this before debugging the code.
+
+### Step 5 — Slot targets
+
+`app/slot/[id].tsx`, `lib/parse.ts`, and `formatSlotTarget`.
+
+Its own screen: the slot row already carries three 48×48 controls, and four more
+fields would not fit under a thumb. Reached by slot id alone, since v7 ids are
+globally unique and the route needs no template to scope it.
+
+**`lib/parse.ts` is where invariant 2 is enforced at the edge.** An empty field
+is null because the user said nothing; `0` is a recorded value that happens to be
+zero; neither may become the other. `rest_seconds` is exactly this distinction —
+null is no timer at all, which is what lets handstand practice run
+uninterrupted — and it is the phase's second exit criterion. Unit tested, and
+verified on device across all three states.
+
+### Step 6 — Verification
+
+Both exit criteria pass against a reset database.
+
+**DoD 1** — a template `Rings` created from Home, `Chin-Up` and `Dip` added,
+`Chin-Up` targeted at 3 × 8 reps. Slots appended at `display_order` 0/1/2;
+reordering renumbered contiguously and moved the right row; removing the middle
+one soft-deleted it and closed the gap.
+
+**Criterion 2** — `rest_seconds` read back as SQLite type `null`, not integer
+`0`. Proven against both other states in the same table at the same time: one
+slot null, one slot `0`, the default `60` before either was touched.
+
+**A note on the device.** Two rows appeared during this phase that no command of
+mine created — a metric named `10` and a template named `Push day`, the latter
+at a minute when only files were being saved. Neither is reachable in code
+without a button press. The emulator shares a desktop with a human, which is the
+likeliest explanation. Both were removed and the tables reset before the
+criteria above were run, but the lesson stands: **check the tables a change does
+not touch, not only the ones it does.** That is the second time this has bitten,
+after the Phase 2 step 7 baseline.

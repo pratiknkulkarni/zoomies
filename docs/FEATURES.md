@@ -260,6 +260,15 @@ data.
 
 A reusable plan. Ordered list of slots.
 
+**Templates live on Home.** That is where training starts — a session
+originates from one (§6.1) — so the first screen carries the thing the user
+came to do. They are a section beneath the screen title, not the title itself,
+so the §11.3 dashboard blocks arrive around the list rather than displacing it.
+
+Slots carry the targets, never the exercise. The same Push-Up can be targeted at
+10 reps in one template and 20 in another, and §7.4 allows a further override
+for a single session. Nothing about a target belongs on `exercises`.
+
 ### 5.1 Template Slot
 
 | Field | Purpose |
@@ -278,6 +287,14 @@ short repeated attempts are not interrupted by a countdown.
 
 Create, rename, add/remove slots, reorder slots, edit targets, delete. Templates
 change infrequently and are edited outside of training.
+
+Slots are reordered; **templates themselves are not**. New ones append. If a
+training week ever needs an order of its own, that is an addition to this list,
+not an assumption to be read into it.
+
+Deleting a template deletes its slots. Nothing points at a slot —
+`exercise_entries` copies a target's value and metric, never the slot — so
+unlike an exercise's metrics, they have no reason to outlive their parent.
 
 ---
 
@@ -631,3 +648,4 @@ Without reading documentation.
 | Aug 2026 | `DESIGN.md` created and made authoritative for visuals. Per-exercise doodles cut. |
 | Aug 2026 | Two §2 amendments found while building Phase 1. `suggestion_dismissed_at` added to `exercises` — §3.3 required dismissals to persist but nothing stored them. `target_metric_id` added to `exercise_entries` — the snapshot recorded the target's value but not which metric it belonged to, so rendering it meant reading through the template slot, which would have let a template edit rewrite completed sessions. |
 | Aug 2026 | Two amendments after reviewing Phase 2. §3.3 now states that archived exercises still count toward owned families — "active" was ambiguous between `is_active` and not-archived, and the narrower reading hid suggestions at the moment archiving made them most relevant. §3.5 names the Archived screen, which the spec had assumed without ever describing, leaving archiving one-way in the build. |
+| Aug 2026 | Phase 3 amendments. §5 now says templates live on Home — the spec defined them fully but never said how they are reached, the same omission §3.5 had for archiving. §5.2 records that templates themselves do not reorder, and that deleting one takes its slots, which is the opposite of the call made for an exercise's metrics and for the opposite reason: nothing points at a slot. |
