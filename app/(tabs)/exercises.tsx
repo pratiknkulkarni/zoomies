@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { router } from 'expo-router';
-import { Plus, X } from 'lucide-react-native';
+import { Archive, Plus, X } from 'lucide-react-native';
 import { useMemo, type ReactNode } from 'react';
 import { Pressable, SectionList, View } from 'react-native';
 
@@ -15,6 +15,7 @@ import { activateExercise, dismissSuggestion } from '@/db/mutations/exercises';
 import {
   activeExercises,
   allMetrics,
+  archivedExercises,
   indexMetricsByExercise,
   suggestedExercises,
   type Exercise,
@@ -23,6 +24,7 @@ import { formatMetricSummary } from '@/lib/format';
 
 const PlusIcon = iconWithClassName(Plus);
 const DismissIcon = iconWithClassName(X);
+const ArchiveIcon = iconWithClassName(Archive);
 
 type Section = {
   kind: 'library' | 'suggested';
@@ -41,6 +43,9 @@ export default function ExercisesScreen() {
   const { data: library } = useLiveQuery(activeExercises());
   const { data: suggestions } = useLiveQuery(suggestedExercises());
   const { data: metrics } = useLiveQuery(allMetrics());
+  // Read for its length alone: the way to the archive exists only while there
+  // is something in it.
+  const { data: archived } = useLiveQuery(archivedExercises());
 
   const metricsByExercise = useMemo(
     () => indexMetricsByExercise(metrics),
@@ -71,12 +76,26 @@ export default function ExercisesScreen() {
             <Text className="font-sans-semibold text-display text-text">
               Exercises
             </Text>
-            <IconButton
-              label="New exercise"
-              onPress={() => router.push('/exercise/new')}
-            >
-              <PlusIcon size={24} strokeWidth={1.5} className="text-text-2" />
-            </IconButton>
+            <View className="flex-row items-center">
+              {archived.length > 0 ? (
+                <IconButton
+                  label="Archived exercises"
+                  onPress={() => router.push('/exercise/archived')}
+                >
+                  <ArchiveIcon
+                    size={24}
+                    strokeWidth={1.5}
+                    className="text-text-2"
+                  />
+                </IconButton>
+              ) : null}
+              <IconButton
+                label="New exercise"
+                onPress={() => router.push('/exercise/new')}
+              >
+                <PlusIcon size={24} strokeWidth={1.5} className="text-text-2" />
+              </IconButton>
+            </View>
           </View>
         }
         renderSectionHeader={({ section }) => (

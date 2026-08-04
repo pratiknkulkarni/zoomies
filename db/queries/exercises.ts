@@ -38,9 +38,9 @@ export function activeExercises() {
 }
 
 /**
- * Archived exercises. Not in FEATURES.md as a surface, but archiving without
- * anywhere to see the result is a one-way door — this is what makes it
- * reversible.
+ * Archived exercises (§3.5). Backs `app/exercise/archived.tsx`, and the count
+ * decides whether the Exercises tab offers a way there at all — archiving with
+ * nowhere to see the result is a one-way door.
  */
 export function archivedExercises() {
   return db

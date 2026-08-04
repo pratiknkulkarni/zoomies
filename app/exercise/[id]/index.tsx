@@ -1,10 +1,9 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
-import { Alert, Pressable, ScrollView, View } from 'react-native';
+import { Alert, ScrollView, View } from 'react-native';
 
+import { BackButton } from '@/components/ui/back-button';
 import { Button } from '@/components/ui/button';
-import { iconWithClassName } from '@/components/ui/icon';
 import { ListRow } from '@/components/ui/list-row';
 import { Screen } from '@/components/ui/screen';
 import { SectionLabel } from '@/components/ui/section-label';
@@ -17,8 +16,6 @@ import {
 } from '@/db/mutations/exercises';
 import { exerciseById, metricsForExercise } from '@/db/queries/exercises';
 import { formatMetricDetail } from '@/lib/format';
-
-const BackIcon = iconWithClassName(ChevronLeft);
 
 /**
  * One exercise: what it is and what it records. History and personal records
@@ -65,14 +62,7 @@ export default function ExerciseDetailScreen() {
   return (
     <Screen bleed>
       <ScrollView contentContainerClassName="pb-3xl">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-          onPress={() => router.back()}
-          className="ml-md min-h-touch min-w-touch items-center justify-center self-start active:bg-muted"
-        >
-          <BackIcon size={24} strokeWidth={1.5} className="text-text-2" />
-        </Pressable>
+        <BackButton />
 
         {!exercise ? (
           settled ? (
