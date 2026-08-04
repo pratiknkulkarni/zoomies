@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatMetricDetail, formatMetricSummary } from './format';
+import {
+  formatMetricDetail,
+  formatMetricRole,
+  formatMetricSummary,
+} from './format';
 
 describe('formatMetricSummary', () => {
   it('appends a unit that says something the name does not', () => {
@@ -32,6 +36,15 @@ describe('formatMetricSummary', () => {
   // entirely rather than rendering a blank line under the name.
   it('is undefined when an exercise records nothing', () => {
     expect(formatMetricSummary([])).toBeUndefined();
+  });
+});
+
+describe('formatMetricRole', () => {
+  // The editor makes name and unit fields, so its caption can only describe
+  // what is fixed.
+  it('describes only what cannot be edited', () => {
+    expect(formatMetricRole('duration', true)).toBe('Primary · Duration');
+    expect(formatMetricRole('number', false)).toBe('Number');
   });
 });
 

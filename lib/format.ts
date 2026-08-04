@@ -58,20 +58,31 @@ function nameWithUnit({
 }
 
 /**
- * What a metric's own row says beneath its name: `Primary · Duration · s`.
+ * The half of a metric that cannot be edited: `Primary · Duration`.
  *
  * The first metric drives the logging UI (FEATURES.md §4.1), which is worth
- * saying out loud rather than leaving implied by its position.
+ * saying out loud rather than leaving implied by its position. Type is fixed at
+ * creation (see `db/mutations/exercises.ts`), so in the editor — where name and
+ * unit are fields — this is the whole of what a caption can say.
+ */
+export function formatMetricRole(
+  type: MetricType,
+  isPrimary: boolean,
+): string {
+  return [isPrimary ? 'Primary' : undefined, formatMetricType(type)]
+    .filter(Boolean)
+    .join(SEPARATOR);
+}
+
+/**
+ * What a metric's own row says beneath its name where nothing is editable:
+ * `Primary · Duration · s`.
  */
 export function formatMetricDetail(
   metric: Pick<ExerciseMetricRow, 'type' | 'unit'>,
   isPrimary: boolean,
 ): string {
-  return [
-    isPrimary ? 'Primary' : undefined,
-    formatMetricType(metric.type),
-    metric.unit ?? undefined,
-  ]
+  return [formatMetricRole(metric.type, isPrimary), metric.unit ?? undefined]
     .filter(Boolean)
     .join(SEPARATOR);
 }
