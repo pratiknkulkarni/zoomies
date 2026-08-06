@@ -59,6 +59,25 @@ export function MetricEditor({
   const { data: unitRows } = useLiveQuery(distinctUnits());
   const units = toOptions(unitRows);
 
+  /**
+   * The form is closed until asked for, and closes again after adding.
+   *
+   * Left open it reset itself and offered to add a third metric, then a fourth,
+   * with no way to say "done" — which read as an unbounded loop rather than as
+   * a finished list. There is genuinely nothing to save: each add, reorder and
+   * delete commits on its own (see `app/exercise/[id]/edit.tsx`), so the fix is
+   * to make the resting state of the screen the metrics themselves. It also
+   * gives §4.1's soft cap of four somewhere to be felt.
+   */
+  const [adding, setAdding] = useState(false);
+
+  const close = () => {
+    setAdding(false);
+    setName('');
+    setUnit('');
+    setType('number');
+  };
+
   const submit = () => {
     const trimmed = name.trim();
     if (trimmed.length === 0) {
@@ -69,11 +88,7 @@ export function MetricEditor({
       name: trimmed,
       type,
       unit: toNullable(unit),
-    }).then(() => {
-      setName('');
-      setUnit('');
-      setType('number');
-    });
+    }).then(close);
   };
 
   return (
@@ -119,57 +134,83 @@ export function MetricEditor({
         </Text>
       ) : null}
 
-      <View className="gap-md px-xl pt-xl">
-        <SectionLabel>Add a metric</SectionLabel>
-
-        {/*
-          `Reps` as the name placeholder read as a value already filled in —
-          grey placeholder text in a filled box looks like content. Labelling
-          the field says what it wants, so the example can go.
-        */}
-        <View className="gap-xs">
-          <SectionLabel>Name</SectionLabel>
-          <Input
-            value={name}
-            onChangeText={setName}
-            accessibilityLabel="Name of the new metric"
-            autoCapitalize="sentences"
-          />
+      {!adding ? (
+        <View className="px-xl pt-xl">
+          <Button variant="secondary" onPress={() => setAdding(true)}>
+            <Text>Add a metric</Text>
+          </Button>
         </View>
+      ) : (
+        <View className="gap-md px-xl pt-xl">
+          <SectionLabel>Add a metric</SectionLabel>
 
-        <View className="gap-xs">
-          <SectionLabel>Type</SectionLabel>
-          <View className="flex-row gap-sm">
-            {TYPES.map((option) => (
-              <Chip
-                key={option}
-                label={formatMetricType(option)}
-                selected={type === option}
-                onPress={() => setType(option)}
-                className="flex-1"
-              />
-            ))}
+          {/*
+            `Reps` as the name placeholder read as a value already filled in —
+            grey placeholder text in a filled box looks like content. Labelling
+            the field says what it wants, so the example can go.
+          */}
+          <View className="gap-xs">
+            <SectionLabel>Name</SectionLabel>
+            <Input
+              value={name}
+              onChangeText={setName}
+              accessibilityLabel="Name of the new metric"
+              autoCapitalize="sentences"
+              autoFocus
+            />
+          </View>
+
+          <View className="gap-xs">
+            <SectionLabel>Type</SectionLabel>
+            <View className="flex-row gap-sm">
+              {TYPES.map((option) => (
+                <Chip
+                  key={option}
+                  label={formatMetricType(option)}
+                  selected={type === option}
+                  onPress={() => setType(option)}
+                  className="flex-1"
+                />
+              ))}
+            </View>
+          </View>
+
+          <OptionField
+            label="Unit"
+            value={unit}
+            onChange={setUnit}
+            options={units}
+            placeholder="reps, kg, s"
+            accessibilityLabel="Unit of the new metric"
+            autoCapitalize="none"
+          />
+
+          {/*
+            Neither of these is `primary`. The exercise's own Save button is
+            still on screen above, and §6.1 allows one main action per screen —
+            a second accent button here would put the accent in a fourth place
+            app-wide, which §3.2 does not permit. Ghost against secondary
+            separates them instead.
+          */}
+          <View className="flex-row gap-md">
+            <View className="flex-1">
+              <Button variant="ghost" onPress={close} className="w-full">
+                <Text>Cancel</Text>
+              </Button>
+            </View>
+            <View className="flex-1">
+              <Button
+                variant="secondary"
+                disabled={name.trim().length === 0}
+                onPress={submit}
+                className="w-full"
+              >
+                <Text>Add</Text>
+              </Button>
+            </View>
           </View>
         </View>
-
-        <OptionField
-          label="Unit"
-          value={unit}
-          onChange={setUnit}
-          options={units}
-          placeholder="reps, kg, s"
-          accessibilityLabel="Unit of the new metric"
-          autoCapitalize="none"
-        />
-
-        <Button
-          variant="secondary"
-          disabled={name.trim().length === 0}
-          onPress={submit}
-        >
-          <Text>Add metric</Text>
-        </Button>
-      </View>
+      )}
     </View>
   );
 }

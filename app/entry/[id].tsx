@@ -135,9 +135,20 @@ function Logging({ entryId }: { entryId: string }) {
         <Text className="flex-1 font-sans-semibold text-display text-text">
           {exercise.at(0)?.name ?? 'Exercise'}
         </Text>
-        <Text className="pt-sm font-mono text-metricSm text-text-2">
-          {formatSetCount(performed.length, entry.targetSets)}
-        </Text>
+        {/*
+          The figure alone said nothing. With a target it read `4 / 3` and
+          without one it was a lone `0` floating beside the exercise name —
+          FEATURES.md §7.1 gets away with the bare `2 / 4` on the session list
+          because a column of them reads as a column, and this screen has no
+          such context. The §2.4 label supplies the noun without changing the
+          figure, so the session list stays exactly as specified.
+        */}
+        <View className="items-end pt-sm">
+          <Text className="font-mono text-metricSm text-text-2">
+            {formatSetCount(performed.length, entry.targetSets)}
+          </Text>
+          <SectionLabel>Sets</SectionLabel>
+        </View>
       </View>
 
       <View className="gap-sm px-xl pt-xl">
