@@ -114,6 +114,17 @@ export function formatLastTime(values: (number | null)[]): string {
 }
 
 /**
+ * How many slots in a template already use one exercise: `× 2`.
+ *
+ * The same exercise may appear more than once — pull-ups to open and again as a
+ * finisher — so the picker counts rather than toggling. Absent at zero: a row
+ * saying `× 0` would be noise on every exercise not yet chosen.
+ */
+export function formatSlotTally(count: number): string | undefined {
+  return count > 0 ? `× ${count}` : undefined;
+}
+
+/**
  * What a template slot plans: `3 × 8 reps · 60s rest`.
  *
  * Every part is nullable and each null means something specific (§5.1). No

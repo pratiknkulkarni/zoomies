@@ -301,6 +301,13 @@ short repeated attempts are not interrupted by a countdown.
 Create, rename, add/remove slots, reorder slots, edit targets, delete. Templates
 change infrequently and are edited outside of training.
 
+**The same exercise may appear in a template more than once** — pull-ups to open
+and again as a finisher are two slots with their own targets, not one slot with
+a larger `target_sets`. So the picker counts what has been added and offers to
+remove one, rather than toggling an exercise in and out. The count and its
+control sit on the row itself: a stray double-tap has to be visible where it
+happened, not discovered later on the template screen.
+
 Slots are reordered; **templates themselves are not**. New ones append. If a
 training week ever needs an order of its own, that is an addition to this list,
 not an assumption to be read into it.

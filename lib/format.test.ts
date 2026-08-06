@@ -4,7 +4,19 @@ import {
   formatMetricDetail,
   formatMetricRole,
   formatMetricSummary,
+  formatSlotTally,
 } from './format';
+
+describe('formatSlotTally', () => {
+  it('is absent at zero, so unchosen rows carry nothing', () => {
+    expect(formatSlotTally(0)).toBeUndefined();
+  });
+
+  it('counts rather than toggling, because a duplicate slot is legitimate', () => {
+    expect(formatSlotTally(1)).toBe('× 1');
+    expect(formatSlotTally(3)).toBe('× 3');
+  });
+});
 
 describe('formatMetricSummary', () => {
   it('appends a unit that says something the name does not', () => {
