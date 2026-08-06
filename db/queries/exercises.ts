@@ -113,6 +113,55 @@ export function indexExercisesById(rows: Exercise[]): Map<string, Exercise> {
   return new Map(rows.map((exercise) => [exercise.id, exercise]));
 }
 
+/**
+ * Every `family` in use, for the picker on the exercise form.
+ *
+ * Offering what exists is what stops `Push-up`, `push up` and `Push Ups`
+ * becoming three families that never group together — `suggestedExercises`
+ * matches on the exact string, so a typo silently costs a suggestion rather
+ * than failing loudly.
+ *
+ * Archived and inactive rows count. A family is still in use even if nothing
+ * active belongs to it, and offering it is how an exercise gets put back into
+ * one.
+ */
+export function distinctFamilies() {
+  return db
+    .selectDistinct({ value: exercises.family })
+    .from(exercises)
+    .where(and(alive, isNotNull(exercises.family)))
+    .orderBy(asc(exercises.family));
+}
+
+/**
+ * Every `unit` in use, for the picker in the metric editor. Same job as
+ * `distinctFamilies` — `kg`, `KG` and `Kg` are one unit written three ways, and
+ * units are display-only (FEATURES.md §4.1) so nothing catches the divergence.
+ *
+ * Rooted at `exercise_metrics`, so adding a metric with a new unit refreshes
+ * the list that offers it.
+ */
+export function distinctUnits() {
+  return db
+    .selectDistinct({ value: exerciseMetrics.unit })
+    .from(exerciseMetrics)
+    .where(
+      and(isNull(exerciseMetrics.deletedAt), isNotNull(exerciseMetrics.unit)),
+    )
+    .orderBy(asc(exerciseMetrics.unit));
+}
+
+/**
+ * `selectDistinct` on a nullable column types as `(string | null)[]` even
+ * behind an `IS NOT NULL`, since the type comes from the schema rather than
+ * from the predicate. This is the one place that narrowing happens.
+ */
+export function toOptions(rows: { value: string | null }[]): string[] {
+  return rows
+    .map((row) => row.value)
+    .filter((value): value is string => value !== null);
+}
+
 /** One exercise, for the detail screen. Includes archived; excludes deleted. */
 export function exerciseById(id: string) {
   return db

@@ -1,7 +1,10 @@
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { View } from 'react-native';
 
 import { Input } from '@/components/ui/input';
+import { OptionField } from '@/components/ui/option-field';
 import { SectionLabel } from '@/components/ui/section-label';
+import { distinctFamilies, toOptions } from '@/db/queries/exercises';
 
 export type ExerciseFormValues = {
   name: string;
@@ -32,6 +35,11 @@ export function ExerciseForm({
   const set = (key: keyof ExerciseFormValues) => (text: string) =>
     onChange({ ...values, [key]: text });
 
+  // Live, so a family invented on this screen is offered on the next one
+  // without a refetch.
+  const { data: familyRows } = useLiveQuery(distinctFamilies());
+  const families = toOptions(familyRows);
+
   return (
     <View className="gap-lg">
       <View className="gap-xs">
@@ -44,15 +52,14 @@ export function ExerciseForm({
         />
       </View>
 
-      <View className="gap-xs">
-        <SectionLabel>Family</SectionLabel>
-        <Input
-          value={values.family}
-          onChangeText={set('family')}
-          placeholder="Front lever"
-          autoCapitalize="sentences"
-        />
-      </View>
+      <OptionField
+        label="Family"
+        value={values.family}
+        onChange={set('family')}
+        options={families}
+        placeholder="Front lever"
+        accessibilityLabel="Family"
+      />
 
       <View className="gap-xs">
         <SectionLabel>Notes</SectionLabel>

@@ -1,10 +1,13 @@
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react-native';
 import { useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { iconWithClassName } from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
+import { OptionField } from '@/components/ui/option-field';
 import { SectionLabel } from '@/components/ui/section-label';
 import { Separator } from '@/components/ui/separator';
 import { Text } from '@/components/ui/text';
@@ -14,6 +17,7 @@ import {
   moveMetric,
   updateMetric,
 } from '@/db/mutations/exercises';
+import { distinctUnits, toOptions } from '@/db/queries/exercises';
 import type { ExerciseMetric } from '@/db/queries/exercises';
 import { toNullable } from '@/features/exercises/exercise-form';
 import { formatMetricRole, formatMetricType } from '@/lib/format';
@@ -46,6 +50,14 @@ export function MetricEditor({
   const [name, setName] = useState('');
   const [unit, setUnit] = useState('');
   const [type, setType] = useState<MetricType>('number');
+
+  /**
+   * Read once here and passed down rather than queried inside each row — a
+   * `useLiveQuery` per metric would be one subscription per row for a list that
+   * is identical in all of them.
+   */
+  const { data: unitRows } = useLiveQuery(distinctUnits());
+  const units = toOptions(unitRows);
 
   const submit = () => {
     const trimmed = name.trim();
@@ -94,6 +106,7 @@ export function MetricEditor({
           <MetricRow
             exerciseId={exerciseId}
             metric={metric}
+            units={units}
             isFirst={index === 0}
             isLast={index === metrics.length - 1}
           />
@@ -128,26 +141,26 @@ export function MetricEditor({
           <SectionLabel>Type</SectionLabel>
           <View className="flex-row gap-sm">
             {TYPES.map((option) => (
-              <TypeChip
+              <Chip
                 key={option}
                 label={formatMetricType(option)}
                 selected={type === option}
                 onPress={() => setType(option)}
+                className="flex-1"
               />
             ))}
           </View>
         </View>
 
-        <View className="gap-xs">
-          <SectionLabel>Unit</SectionLabel>
-          <Input
-            value={unit}
-            onChangeText={setUnit}
-            accessibilityLabel="Unit of the new metric"
-            placeholder="reps, kg, s"
-            autoCapitalize="none"
-          />
-        </View>
+        <OptionField
+          label="Unit"
+          value={unit}
+          onChange={setUnit}
+          options={units}
+          placeholder="reps, kg, s"
+          accessibilityLabel="Unit of the new metric"
+          autoCapitalize="none"
+        />
 
         <Button
           variant="secondary"
@@ -172,11 +185,13 @@ export function MetricEditor({
 function MetricRow({
   exerciseId,
   metric,
+  units,
   isFirst,
   isLast,
 }: {
   exerciseId: string;
   metric: ExerciseMetric;
+  units: string[];
   isFirst: boolean;
   isLast: boolean;
 }) {
@@ -198,8 +213,13 @@ function MetricRow({
     }
   };
 
-  const commitUnit = () => {
-    const next = toNullable(unit);
+  /**
+   * Takes the value rather than reading state, because choosing a chip has to
+   * commit immediately and `setUnit` has not landed at that point. Blur passes
+   * the state it already has.
+   */
+  const commitUnitValue = (raw: string) => {
+    const next = toNullable(raw);
 
     if (next !== metric.unit) {
       void updateMetric(metric.id, { unit: next });
@@ -241,17 +261,20 @@ function MetricRow({
         />
       </View>
 
-      <View className="gap-xs">
-        <SectionLabel>Unit</SectionLabel>
-        <Input
-          value={unit}
-          onChangeText={setUnit}
-          onBlur={commitUnit}
-          accessibilityLabel={`Unit of ${metric.name}`}
-          placeholder="reps, kg, s"
-          autoCapitalize="none"
-        />
-      </View>
+      <OptionField
+        label="Unit"
+        value={unit}
+        onChange={setUnit}
+        onSelect={(next) => {
+          setUnit(next);
+          commitUnitValue(next);
+        }}
+        onBlur={() => commitUnitValue(unit)}
+        options={units}
+        placeholder="reps, kg, s"
+        accessibilityLabel={`Unit of ${metric.name}`}
+        autoCapitalize="none"
+      />
 
       <View className="flex-row items-center gap-md">
         <Text className="flex-1 text-caption text-text-2">
@@ -280,42 +303,6 @@ function MetricRow({
   );
 }
 
-/**
- * §3.1 names `muted` as the inactive chip fill, so selection cannot be shown by
- * making the chosen one muted. It reads as `surface` against the fill, carried
- * by weight as well — §9 forbids colour alone.
- */
-function TypeChip({
-  label,
-  selected,
-  onPress,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="radio"
-      accessibilityState={{ selected }}
-      accessibilityLabel={label}
-      onPress={onPress}
-      className={cn(
-        'min-h-touch flex-1 items-center justify-center rounded-full px-lg',
-        selected ? 'border border-border bg-surface' : 'bg-muted',
-      )}
-    >
-      <Text
-        className={cn(
-          'text-bodySm',
-          selected ? 'font-sans-semibold text-text' : 'text-text-2',
-        )}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
 
 function IconButton({
   label,
