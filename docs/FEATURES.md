@@ -113,7 +113,7 @@ set_metric_values
 ### 2.1 Storage Rules
 
 - **A set stores no measurements.** Values live one table down, one row per
-  metric. `12 reps @ +10kg` is one `sets` row and two `set_metric_values` rows.
+  metric. `12 reps, felt strong` is one `sets` row and two `set_metric_values` rows.
 - **Nothing aggregated is stored.** `24 reps` does not exist in the database —
   it is a `SUM` at read time. The `12 · 12` breakdown is the rows themselves.
 - **Null means not recorded. Zero means zero.** An unrecorded value is never
@@ -125,7 +125,8 @@ set_metric_values
   the target. Resolving it through the template slot at read time would let a
   later template edit change what a completed session says. Editing a template
   never rewrites history.
-- **Load is added load, in kg. Durations are seconds.**
+- **Durations are seconds. A count carries no unit at all** — `Reps` is
+  already the word (§4.1.1).
 
 ---
 
@@ -240,7 +241,7 @@ needed.
 
 | Type | Stores | Examples |
 |---|---|---|
-| **Number** | `value_num` | reps, added load (kg) |
+| **Number** | `value_num` | reps |
 | **Duration** | `value_num` (seconds) | hold time |
 | **Notes** | `value_text` | free text |
 
@@ -267,21 +268,25 @@ needed.
 | Choice | `name` | `type` | `unit` | Measures |
 |---|---|---|---|---|
 | Reps | `Reps` | `number` | — | a count |
-| Added load | `Added load` | `number` | `kg` | kilograms |
 | Hold | `Hold` | `duration` | `s` | seconds |
 | Notes | `Notes` | `notes` | — | text |
 
-Defined in `lib/metrics.ts`. Four choices also give the soft cap of four a
-natural ceiling.
+Defined in `lib/metrics.ts`. Three choices sit comfortably under the soft cap
+of four.
 
 **Nothing composes them by hand.** The three columns were once three fields on
-screen, which required knowing that a count is a `number` with no unit while a
-load is a `number` with `kg`. It produced *reps measured in kilograms* — because
-`number` covers two unrelated things, so a unit list scoped by type could only
-ever offer `kg` to both. Three successive fixes to that list each addressed a
-symptom. Choosing the whole metric makes the bad combination unreachable rather
-than discouraged, and agrees with §15, which cut a custom metric registry as
-"an entire CRUD surface for one user".
+screen, which required knowing that a count is a `number` with no unit while an
+added load was a `number` with `kg`. It produced *reps measured in kilograms* —
+because `number` covered two unrelated things, so a unit list scoped by type
+could only ever offer `kg` to both. Three successive fixes to that list each
+addressed a symptom. Choosing the whole metric makes the bad combination
+unreachable rather than discouraged, and agrees with §15, which cut a custom
+metric registry as "an entire CRUD surface for one user".
+
+**A metric no preset covers is described, not rejected.** Added load metrics
+still exist in databases that predate §15's removal, and read as
+`a number in kg`. Nothing breaks on them and nothing logged against them is
+lost.
 
 **A count has no unit.** `Reps` is the name, so a `reps` unit beneath it repeats
 the word. Display falls back to the metric's name, so a set still reads `9 reps`
@@ -436,7 +441,7 @@ outstanding. This is the specific element that solves the original problem.
 ```
 Pull-Up                                    2 / 4
 
-  Target      4 × 8  +10kg
+  Target      4 × 8 reps
   Last time   8 · 8 · 7 · 6
 ```
 
@@ -531,7 +536,7 @@ screen. This is the payoff for making Exercise permanent.
 
 **v1:**
 - Every set ever logged, newest first, with its session and date
-- Personal records per metric — most reps, longest hold, heaviest added load
+- Personal records per metric — most reps, longest hold
 - Best-set trend over time
 - Which sessions it appeared in
 - Its metric configuration
@@ -673,6 +678,7 @@ Not built in v1. Recorded so the schema does not preclude them.
 | Weighted rope interval matrix | §4.3 | One exercise's metric config, not a subsystem |
 | Proof-of-work heatmap | §4.4 | Gamification the design notes ban by name; nags on rest days |
 | Fatigue / tendon load index | §4.5 | Prescribes rather than records; edges into medical claims; an invented risk number is worse than body signal |
+| **Added load** | Seeded from the start, cut Aug 2026 | This is a bodyweight app. A weighted variant is its own exercise, which is already how progressions are modelled (§3.1), so the metric earned its place only by habit. Removing it also removes the last fractional value and the last unit that was not seconds. Migration 0004 **soft-deletes** the metrics and clears any target pointing at one; `set_metric_values` rows are untouched, so restoring it later is one preset entry and clearing `deleted_at`, not a reconstruction |
 | **Rest timer** | Considered Aug 2026, cut before Phase 5 | A countdown that pushes you back to the bar works against the way this app is actually used — an unhurried two-hour session, one exercise at a time, at your own pace. Removed `expo-notifications` with it, and with that the scheduling, cancelling and deliver-to-a-killed-app machinery that was the largest part of the phase. `rest_seconds` dropped from `template_slots` by migration 0003 |
 | Rating metric type | `reuirements_two.md` §8.6 | Removed by decision |
 | Selection metric type | §8.6 | No remaining use case once progressions are names |

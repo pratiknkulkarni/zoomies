@@ -17,13 +17,18 @@ const PlusIcon = iconWithClassName(Plus);
  * rather than the 48 floor §9 sets for everything else. The keyboard is there
  * when a number is far away; the steppers are there when it is one off.
  */
+/**
+ * One. Everything this app records is a whole number — a count or a number of
+ * seconds. Added load was the only fractional metric and it is removed (§15),
+ * so the step is no longer a decision any caller makes.
+ */
+const STEP = 1;
+
 function NumericField({
   value,
   onChangeText,
   unit,
-  step = 1,
   accessibilityLabel,
-  keyboardType = 'number-pad',
   /**
    * DESIGN.md §6.8 — empty, not `—`. The dash means *not recorded* on display
    * surfaces; in an input it claims a value was withheld rather than awaited,
@@ -44,10 +49,7 @@ function NumericField({
    */
   onChangeText: (next: string | ((current: string) => string)) => void;
   unit?: string | null;
-  /** Reps move by 1; a load in kg is more useful in halves or 2.5s. */
-  step?: number;
   accessibilityLabel: string;
-  keyboardType?: 'number-pad' | 'decimal-pad';
   placeholder?: string;
 }) {
   const nudge = (by: number) => {
@@ -57,15 +59,14 @@ function NumericField({
         Number.isFinite(parsed) && current.trim().length > 0 ? parsed : 0;
       const next = base + by;
 
-      // Nothing recorded here is ever negative — no rep count, no hold, no
-      // added load. Clamping beats letting a stepper produce a value that
-      // cannot mean anything.
+      // Nothing recorded here is ever negative — no rep count and no hold.
+      // Clamping beats letting a stepper produce a value that cannot mean
+      // anything.
       if (next < 0) {
         return current;
       }
 
-      // Avoids 12.300000000000001 from repeated fractional steps.
-      return String(Math.round(next * 100) / 100);
+      return String(next);
     });
   };
 
@@ -73,7 +74,7 @@ function NumericField({
     <View className="flex-row items-center gap-sm">
       <Stepper
         label={`Decrease ${accessibilityLabel}`}
-        onPress={() => nudge(-step)}
+        onPress={() => nudge(-STEP)}
       >
         <MinusIcon size={24} strokeWidth={1.5} className="text-text-2" />
       </Stepper>
@@ -83,7 +84,7 @@ function NumericField({
           value={value}
           onChangeText={onChangeText}
           accessibilityLabel={accessibilityLabel}
-          keyboardType={keyboardType}
+          keyboardType="number-pad"
           placeholder={placeholder}
           selectTextOnFocus
           className="min-w-touch text-center font-mono text-metric text-text placeholder:text-text-3"
@@ -93,7 +94,7 @@ function NumericField({
 
       <Stepper
         label={`Increase ${accessibilityLabel}`}
-        onPress={() => nudge(step)}
+        onPress={() => nudge(STEP)}
       >
         <PlusIcon size={24} strokeWidth={1.5} className="text-text-2" />
       </Stepper>

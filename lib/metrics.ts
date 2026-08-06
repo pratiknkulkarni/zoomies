@@ -14,29 +14,27 @@ export type MetricPreset = {
 };
 
 /**
- * The four things an exercise can record.
+ * The three things an exercise can record.
  *
  * **Name, type and unit arrive together and are never composed by hand.** The
  * screen used to offer all three as separate fields, which asked the user to
  * know that a count is a `number` with no unit while a load is a `number` with
- * `kg` — and got them "reps measured in kilograms", because `number` covers two
+ * `kg` — and got them "reps measured in kilograms", because `number` covered two
  * unrelated things and the unit list could only be scoped to the type. Choosing
  * a whole metric instead makes that combination unreachable rather than merely
  * discouraged.
  *
  * FEATURES.md §15 cut a custom metric registry as "an entire CRUD surface for
- * one user". This list is what remains, and it is the vocabulary `db/seed.ts`
- * has always used. A fifth entry is one row here, not a feature.
+ * one user". This list is what remains.
+ *
+ * **Added load was removed** (§15) — bodyweight training is what this app is
+ * for, and a weighted variant can be its own exercise. Restoring it is one row
+ * here plus a preset entry, not a rebuild: nothing was deleted, existing load
+ * metrics were soft-deleted by migration 0004, and their logged values are
+ * still on disk.
  */
 export const METRIC_PRESETS: MetricPreset[] = [
   { key: 'reps', name: 'Reps', type: 'number', unit: null, measure: 'a count' },
-  {
-    key: 'load',
-    name: 'Added load',
-    type: 'number',
-    unit: 'kg',
-    measure: 'kilograms',
-  },
   { key: 'hold', name: 'Hold', type: 'duration', unit: 's', measure: 'seconds' },
   { key: 'notes', name: 'Notes', type: 'notes', unit: null, measure: 'text' },
 ];

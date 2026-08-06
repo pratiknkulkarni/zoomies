@@ -70,7 +70,10 @@ Violating any of these is a bug even if the feature works.
 7. **Every table gets** a UUID v7 primary key, `created_at`, `updated_at` (epoch
    millis), and `deleted_at` for user-owned data. Soft delete only.
 8. **No network calls.** If a solution requires one, stop and flag it.
-9. **Units are kg (added load) and seconds.** No conversion layer in v1.
+9. **The only unit is seconds.** Added load was removed (`FEATURES.md` §15) —
+   this is a bodyweight app, and a weighted variant is its own exercise. A count
+   stores no unit at all, because `Reps` is already the word. No conversion
+   layer in v1.
 
 ---
 
@@ -89,7 +92,7 @@ Key shape: a `set` row stores **no measurements**. It records that an effort
 happened (`set_index`, `to_failure`, `performed_at`). The values live in
 `set_metric_values`, one row per metric.
 
-`12 reps @ +10kg` = one `sets` row + two `set_metric_values` rows.
+`12 reps, felt strong` = one `sets` row + two `set_metric_values` rows.
 
 This exists so changing an exercise's metrics never touches historical data.
 **Do not "simplify" it into columns on `sets`.**

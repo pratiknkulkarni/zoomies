@@ -177,8 +177,6 @@ function Editor({
               onChangeText={update(metric.id)}
               unit={metric.unit}
               accessibilityLabel={metric.name}
-              step={metric.unit === 'kg' ? 2.5 : 1}
-              keyboardType={metric.unit === 'kg' ? 'decimal-pad' : 'number-pad'}
             />
           </View>
         ),
