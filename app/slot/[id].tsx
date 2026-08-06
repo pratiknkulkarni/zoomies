@@ -76,7 +76,6 @@ function Editor({ slot }: { slot: TemplateSlot }) {
 
   const [sets, setSets] = useState(fromNullableNumber(slot.targetSets));
   const [value, setValue] = useState(fromNullableNumber(slot.targetValue));
-  const [rest, setRest] = useState(fromNullableNumber(slot.restSeconds));
   const [metricId, setMetricId] = useState(slot.targetMetricId);
 
   /**
@@ -97,11 +96,6 @@ function Editor({ slot }: { slot: TemplateSlot }) {
   const changeSets = (next: string) => {
     setSets(next);
     void updateSlot(slot.id, { targetSets: toNullableInt(next) });
-  };
-
-  const changeRest = (next: string) => {
-    setRest(next);
-    void updateSlot(slot.id, { restSeconds: toNullableInt(next) });
   };
 
   const changeValue = (next: string) => {
@@ -187,20 +181,6 @@ function Editor({ slot }: { slot: TemplateSlot }) {
           )}
         </View>
 
-        <View className="gap-xs">
-          <SectionLabel>Rest</SectionLabel>
-          <Input
-            value={rest}
-            onChangeText={changeRest}
-            accessibilityLabel="Rest seconds"
-            keyboardType="number-pad"
-            placeholder="No rest timer"
-          />
-          <Text className="text-caption text-text-2">
-            Seconds. Left empty there is no timer at all, so repeated attempts
-            are never interrupted by a countdown.
-          </Text>
-        </View>
       </View>
     </>
   );

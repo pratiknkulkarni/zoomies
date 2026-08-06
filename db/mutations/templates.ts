@@ -19,7 +19,7 @@ import { movedOnePlace, renumber } from './ordering';
 
 export type SlotTargets = Pick<
   typeof templateSlots.$inferInsert,
-  'targetSets' | 'restSeconds'
+  'targetSets'
 >;
 
 // ---------------------------------------------------------------------------
@@ -75,9 +75,9 @@ export async function deleteTemplate(id: string): Promise<void> {
 /**
  * Adds an exercise to the end of a template.
  *
- * `rest_seconds` is left to the schema default of 60 rather than passed. The
- * same exercise can appear twice — a template that opens and closes with ring
- * support holds is a legitimate plan, not a mistake to guard against.
+ * The same exercise can appear twice — a template that opens and closes with
+ * ring support holds is a legitimate plan, not a mistake to guard against
+ * (§5.2).
  */
 export async function addSlot(
   templateId: string,
@@ -136,8 +136,8 @@ export async function moveSlot(
 }
 
 /**
- * `target_sets` and `rest_seconds`, both nullable and meaning different things
- * when null: no set target, and no rest timer.
+ * `target_sets`, nullable: null means no set target, and the session counts
+ * what you do without anything to reach.
  *
  * Passing `null` writes null. Omitting a key leaves it alone. That distinction
  * is the whole point — null is a recorded decision, not an absence.

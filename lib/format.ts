@@ -85,6 +85,26 @@ export function formatSetValues(
 }
 
 /**
+ * A running timer: `0:30`, `1:05`, `12:00`.
+ *
+ * Minutes are unpadded and seconds always two digits, so the figure does not
+ * change width as it counts and the display stops jittering — it is set in
+ * Geist Mono at `display` size (DESIGN.md §6.3), where a shifting digit is very
+ * visible.
+ *
+ * Rounds **up**, so a timer started at 30 seconds reads `0:30` for its first
+ * moment rather than flicking to `0:29` immediately, and only reads `0:00` when
+ * the time is genuinely gone.
+ */
+export function formatClock(ms: number): string {
+  const total = Math.ceil(Math.max(0, ms) / 1000);
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+/**
  * The `2 / 4` counter of DESIGN.md §6.4 — the element that solves the original
  * problem, because it says what is outstanding without opening the exercise.
  *
@@ -117,34 +137,15 @@ export function formatSlotTally(count: number): string | undefined {
 }
 
 /**
- * What a template slot plans: `3 × 8 reps · 60s rest`.
- *
- * Every part is nullable and each null means something specific (§5.1). No
- * target sets shows the completed count alone during a session; no rest
- * seconds means no timer at all, which is how handstand practice avoids being
- * interrupted. Both are stated rather than omitted, because a blank line would
- * read as "not configured yet" instead of "decided".
- */
-export function formatSlotTarget(
-  slot: {
-    targetSets: number | null;
-    targetValue: number | null;
-    restSeconds: number | null;
-  },
-  metric: MetricLabel | undefined,
-): string {
-  const rest =
-    slot.restSeconds === null ? 'No rest timer' : `${slot.restSeconds}s rest`;
-
-  return [formatTarget(slot, metric), rest].join(SEPARATOR);
-}
-
-/**
- * The target alone: `3 × 8 reps`.
+ * What a plan says: `3 × 8 reps`.
  *
  * Shared by template slots and by the exercise entries they are snapshotted
- * onto, so a session shows the same words the plan did. An entry has no rest
- * seconds of its own — that stays on the slot, because it is not history.
+ * onto, so a session shows the same words the plan did.
+ *
+ * Every part is nullable and each null means something specific (§5.1). No
+ * target sets shows the completed count alone during a session. `No target` is
+ * stated rather than omitted, because a blank line would read as "not
+ * configured yet" instead of "decided".
  */
 export function formatTarget(
   target: { targetSets: number | null; targetValue: number | null },
