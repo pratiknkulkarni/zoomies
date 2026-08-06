@@ -1,10 +1,38 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  formatClock,
   formatMetricDetail,
   formatMetricSummary,
   formatSlotTally,
 } from './format';
+
+describe('formatClock', () => {
+  it('pads seconds so the figure does not change width as it counts', () => {
+    expect(formatClock(5_000)).toBe('0:05');
+    expect(formatClock(65_000)).toBe('1:05');
+    expect(formatClock(600_000)).toBe('10:00');
+  });
+
+  /**
+   * Rounding up, so a 30-second timer reads 0:30 for its first moment instead
+   * of flicking to 0:29 the instant it starts.
+   */
+  it('rounds up, so a full duration reads as itself', () => {
+    expect(formatClock(30_000)).toBe('0:30');
+    expect(formatClock(29_001)).toBe('0:30');
+  });
+
+  it('reads zero only when the time is genuinely gone', () => {
+    expect(formatClock(1)).toBe('0:01');
+    expect(formatClock(0)).toBe('0:00');
+  });
+
+  /** `remainingMs` clamps, but nothing should depend on that to render. */
+  it('never renders a negative clock', () => {
+    expect(formatClock(-5_000)).toBe('0:00');
+  });
+});
 
 describe('formatSlotTally', () => {
   it('is absent at zero, so unchosen rows carry nothing', () => {

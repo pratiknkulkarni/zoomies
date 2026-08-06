@@ -63,7 +63,7 @@ const twMerge = extendTailwindMerge({
       'font-family': [{ font: FONT_FAMILIES }],
       rounded: [{ rounded: RADII }],
       w: [{ w: ['field', 'label'] }],
-      h: [{ h: ['control', 'field'] }],
+      h: [{ h: ['control', 'field', 'hairline'] }],
       p: [{ p: SPACING }],
       px: [{ px: SPACING }],
       py: [{ py: SPACING }],

@@ -131,6 +131,10 @@ module.exports = {
       height: {
         control: '48px', // button
         field: '56px', // numeric input
+        // §6.3 — the timer's progress track. The same 1px as a border, but a
+        // height rather than a border width, because the track is a filled
+        // element and not an edge.
+        hairline: '1px',
       },
       width: {
         // §6.2 — a stepper is square against the field it flanks. Larger than

@@ -3,6 +3,7 @@ import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
+import { HoldTimer } from '@/features/session/hold-timer';
 import { Input } from '@/components/ui/input';
 import { NumericField } from '@/components/ui/numeric-field';
 import { SectionLabel } from '@/components/ui/section-label';
@@ -34,6 +35,7 @@ export function SetLog({
   entryId,
   metrics,
   setsUntilTarget,
+  durationTargetMs,
   onLogged,
 }: {
   entryId: string;
@@ -44,8 +46,15 @@ export function SetLog({
    * would fire on every re-render rather than on the set that got there.
    */
   setsUntilTarget: number | null;
+  /**
+   * The entry's duration target in millis, when it applies to the primary
+   * metric — the timer counts down from it and records itself at zero. Null
+   * counts up instead.
+   */
+  durationTargetMs: number | null;
   onLogged?: () => void;
 }) {
+  const primary = metrics.at(0);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [toFailure, setToFailure] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -72,21 +81,24 @@ export function SetLog({
     toFailure ||
     metrics.some((metric) => (draft[metric.id] ?? '').trim().length > 0);
 
-  const save = () => {
-    if (saving || !recordsSomething) {
-      return;
-    }
-    setSaving(true);
-
-    const values: SetValueInput[] = metrics.map((metric) =>
+  /** What the fields hold, for every metric the timer does not own. */
+  const drafted = (from: ExerciseMetric[]): SetValueInput[] =>
+    from.map((metric) =>
       metric.type === 'notes'
         ? { metricId: metric.id, text: draft[metric.id]?.trim() || null }
         : { metricId: metric.id, num: toNullableFloat(draft[metric.id] ?? '') },
     );
 
-    // The write completes before anything is cleared or navigated, so a
-    // force-quit between the tap and the screen changing loses nothing.
-    void logSet(entryId, values, toFailure)
+  /**
+   * The one write path, shared by the Save button and the hold timer.
+   *
+   * The write completes before anything is cleared or navigated, so a
+   * force-quit between the tap and the screen changing loses nothing.
+   */
+  const commit = (values: SetValueInput[]) => {
+    setSaving(true);
+
+    return logSet(entryId, values, toFailure)
       .then(() => {
         // After the write, never before: the haptic reports what happened.
         if (setsUntilTarget === 1) {
@@ -102,11 +114,41 @@ export function SetLog({
       .finally(() => setSaving(false));
   };
 
+  const save = () => {
+    if (saving || !recordsSomething) {
+      return;
+    }
+
+    void commit(drafted(metrics));
+  };
+
+  /**
+   * §7.2 — the logging UI is decided by the primary metric, the one the editor
+   * labels `Logged first`. A duration on top gives the timer; anything else
+   * gives the fields below.
+   *
+   * The remaining metrics keep their fields either way, because a weighted ring
+   * support hold is a duration *and* an added load, and the timer only owns the
+   * duration. Stopping records all of them as one set.
+   */
+  const timed = primary?.type === 'duration';
+  const typed = timed ? metrics.slice(1) : metrics;
+
   return (
     <View className="gap-lg">
       <SectionLabel>Log a set</SectionLabel>
 
-      {metrics.map((metric) =>
+      {timed && primary ? (
+        <HoldTimer
+          targetMs={durationTargetMs}
+          disabled={saving}
+          onComplete={(seconds) =>
+            commit([{ metricId: primary.id, num: seconds }, ...drafted(typed)])
+          }
+        />
+      ) : null}
+
+      {typed.map((metric) =>
         metric.type === 'notes' ? (
           <View key={metric.id} className="gap-xs">
             <Text className="text-caption text-text-2">{metric.name}</Text>
@@ -152,13 +194,17 @@ export function SetLog({
         />
       </View>
 
-      <Button
-        variant="primary"
-        disabled={saving || !recordsSomething}
-        onPress={save}
-      >
-        <Text>Save set</Text>
-      </Button>
+      {/* The timer is the action when there is one; a second one would ask
+          which of them records the set. */}
+      {timed ? null : (
+        <Button
+          variant="primary"
+          disabled={saving || !recordsSomething}
+          onPress={save}
+        >
+          <Text>Save set</Text>
+        </Button>
+      )}
     </View>
   );
 }

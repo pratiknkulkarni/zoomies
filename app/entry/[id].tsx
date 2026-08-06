@@ -187,6 +187,19 @@ function Logging({ entryId }: { entryId: string }) {
                 ? null
                 : entry.targetSets - performed.length
             }
+            /*
+              Only when the target is on the primary metric. An exercise can be
+              targeted at 10kg of added load while holding for time, and
+              counting down from 10 seconds because of that would be nonsense.
+            */
+            durationTargetMs={
+              primary &&
+              primary.type === 'duration' &&
+              entry.targetMetricId === primary.id &&
+              entry.targetValue !== null
+                ? entry.targetValue * 1000
+                : null
+            }
           />
         )}
       </View>
