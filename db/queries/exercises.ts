@@ -2,7 +2,7 @@ import { and, asc, eq, inArray, isNotNull, isNull } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 
 import { db } from '../client';
-import { exerciseMetrics, exercises } from '../schema';
+import { exerciseMetrics, exercises, setMetricValues } from '../schema';
 
 /**
  * Reads for the exercise library. Every function returns a query builder, not
@@ -134,39 +134,27 @@ export function distinctFamilies() {
 }
 
 /**
- * Units already in use, paired with the metric type that uses them.
+ * Metrics that something has been logged against, so the editor knows which
+ * ones can still change what they measure.
  *
- * The type comes back so the picker can offer `kg` to a number and `s` to a
- * duration without running a query per row — `lib/units.ts` holds the canonical
- * list and this supplies only what the user has added beyond it. Offering
- * everything regardless of type is how a duration could be measured in
- * kilograms.
+ * Rooted at `set_metric_values`, so logging the first set locks its metric live
+ * rather than on the next visit. `exercise_metric_id` is indexed.
  *
- * Rooted at `exercise_metrics`, so a unit created on one exercise is offered on
- * the next without a refetch.
+ * **Soft-deleted values count.** A deleted set's rows stay on disk and go into
+ * the Phase 10 export, so converting the metric would silently reinterpret them
+ * there — a 30-second hold reappearing as 30kg. The stricter rule costs only
+ * the case of a metric whose sets were all deleted, where removing it and
+ * adding another still works.
  */
-export function distinctUnits() {
+export function metricsWithValues() {
   return db
-    .selectDistinct({
-      value: exerciseMetrics.unit,
-      type: exerciseMetrics.type,
-    })
-    .from(exerciseMetrics)
-    .where(
-      and(isNull(exerciseMetrics.deletedAt), isNotNull(exerciseMetrics.unit)),
-    )
-    .orderBy(asc(exerciseMetrics.unit));
+    .selectDistinct({ metricId: setMetricValues.exerciseMetricId })
+    .from(setMetricValues);
 }
 
-/** The units in use for one metric type, narrowed of the nulls the schema types in. */
-export function unitsInUse(
-  rows: { value: string | null; type: ExerciseMetric['type'] }[],
-  type: ExerciseMetric['type'],
-): string[] {
-  return rows
-    .filter((row) => row.type === type)
-    .map((row) => row.value)
-    .filter((value): value is string => value !== null);
+/** Keys `metricsWithValues` for lookup while rendering rows. */
+export function toMetricIdSet(rows: { metricId: string }[]): Set<string> {
+  return new Set(rows.map((row) => row.metricId));
 }
 
 /**

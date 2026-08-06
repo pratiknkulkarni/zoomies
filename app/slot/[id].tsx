@@ -15,7 +15,7 @@ import {
   type ExerciseMetric,
 } from '@/db/queries/exercises';
 import { slotById, type TemplateSlot } from '@/db/queries/templates';
-import { formatMetricType } from '@/lib/format';
+import { describeMeasure } from '@/lib/metrics';
 import { fromNullableNumber, toNullableFloat, toNullableInt } from '@/lib/parse';
 import { cn } from '@/lib/utils';
 
@@ -145,7 +145,7 @@ function Editor({ slot }: { slot: TemplateSlot }) {
                   <MetricChip
                     key={metric.id}
                     label={metric.name}
-                    hint={formatMetricType(metric.type)}
+                    hint={describeMeasure(metric)}
                     selected={metricId === metric.id}
                     onPress={() => chooseMetric(metric)}
                   />

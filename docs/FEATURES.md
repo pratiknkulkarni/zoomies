@@ -259,19 +259,45 @@ needed.
   stray tap is not, and it used to produce a set reading `Recorded` with nothing
   behind it.
 - Unrecorded values are null, never zero.
-- Units are declared per metric, are display-only, and are **chosen rather than
-  typed**. The canonical set is `kg` for a number and `s` for a duration
-  (invariant 9); anything else is a deliberate addition made through the
-  picker's Create row, and is offered everywhere afterwards. The list is scoped
-  by metric type, so a duration is never offered kilograms.
-- **A count has no unit.** `Reps` is the metric's name, so a `reps` unit beneath
-  it repeats the same word — which is how it read on screen. Display falls back
-  to the metric's name, so a set still reads `9 reps` with nothing stored.
 
-  Free text was the original design and it produced `rep`, `reps`, `s` and
-  `secund` side by side. A picker built from `SELECT DISTINCT unit` then kept
-  them alive, because a list derived from the data can only be as clean as the
-  data.
+### 4.1.1 A Metric Is Chosen Whole
+
+**There are four metrics, and `name`, `type` and `unit` arrive together.**
+
+| Choice | `name` | `type` | `unit` | Measures |
+|---|---|---|---|---|
+| Reps | `Reps` | `number` | — | a count |
+| Added load | `Added load` | `number` | `kg` | kilograms |
+| Hold | `Hold` | `duration` | `s` | seconds |
+| Notes | `Notes` | `notes` | — | text |
+
+Defined in `lib/metrics.ts`. Four choices also give the soft cap of four a
+natural ceiling.
+
+**Nothing composes them by hand.** The three columns were once three fields on
+screen, which required knowing that a count is a `number` with no unit while a
+load is a `number` with `kg`. It produced *reps measured in kilograms* — because
+`number` covers two unrelated things, so a unit list scoped by type could only
+ever offer `kg` to both. Three successive fixes to that list each addressed a
+symptom. Choosing the whole metric makes the bad combination unreachable rather
+than discouraged, and agrees with §15, which cut a custom metric registry as
+"an entire CRUD surface for one user".
+
+**A count has no unit.** `Reps` is the name, so a `reps` unit beneath it repeats
+the word. Display falls back to the metric's name, so a set still reads `9 reps`
+with nothing stored.
+
+**The name stays editable; what it measures does not, once used.**
+`set_metric_values` holds a bare number, and the metric's `type` and `unit` are
+the only record of what that number meant — converting afterwards would turn
+every logged 30-second hold into 30kg. So a metric can be switched freely until
+the first set is logged against it, and is fixed after that, with the row saying
+why. Removing it keeps the values already recorded.
+
+The guard lives in `convertMetric`, not only in the editor: a mutation that can
+rewrite the meaning of history must not depend on a screen having been drawn
+correctly. Soft-deleted values count — they remain on disk and go into the §12
+export.
 
 ### 4.2 Set-Level Flag
 

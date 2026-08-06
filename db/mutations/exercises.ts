@@ -1,7 +1,7 @@
 import { and, asc, eq, isNull } from 'drizzle-orm';
 
 import { db, type Transaction } from '../client';
-import { exerciseMetrics, exercises } from '../schema';
+import { exerciseMetrics, exercises, setMetricValues } from '../schema';
 import { movedOnePlace, renumber } from './ordering';
 
 /**
@@ -130,12 +130,11 @@ export async function deleteExercise(id: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 /**
- * Appends a metric. §4.1 puts a soft cap of four per exercise — a guideline,
- * not enforced here.
+ * Appends a metric. §4.1 puts a soft cap of four per exercise, which the four
+ * presets in `lib/metrics.ts` now give a natural ceiling.
  *
- * There is deliberately no way to change a metric's `type`. Reinterpreting
- * `value_num` from reps to seconds would silently rewrite the meaning of every
- * set already logged against it. Delete the metric and add another instead.
+ * What it measures can still be changed afterwards, but only until something is
+ * logged against it — see `convertMetric`.
  */
 export async function addMetric(
   exerciseId: string,
@@ -147,18 +146,59 @@ export async function addMetric(
   });
 }
 
+/**
+ * Renames a metric. Only the label — `type` and `unit` decide what the stored
+ * numbers mean and move together through `convertMetric`.
+ */
 export async function updateMetric(
   metricId: string,
-  edits: Partial<Pick<MetricInput, 'name' | 'unit'>>,
+  edits: Pick<MetricInput, 'name'>,
 ): Promise<void> {
-  if (Object.values(edits).every((value) => value === undefined)) {
-    return;
-  }
-
   await db
     .update(exerciseMetrics)
     .set(edits)
     .where(eq(exerciseMetrics.id, metricId));
+}
+
+/**
+ * Changes what a metric measures — reps to a hold, a count to added load.
+ *
+ * **Refused once anything has been logged against it.** `set_metric_values`
+ * stores a bare number; the metric's `type` and `unit` are the only record of
+ * what it meant. Converting afterwards would turn a 30-second hold into 30kg
+ * across every set silently, which is the one thing this schema exists to
+ * prevent.
+ *
+ * Before the first set there is nothing to reinterpret, so a metric chosen
+ * wrongly a minute ago is simply fixed. The check runs inside the transaction
+ * rather than only in the editor: the UI hides the control, but a mutation that
+ * can rewrite history must not depend on a screen having been drawn correctly.
+ *
+ * Returns whether it converted, so a caller can say why nothing happened.
+ * Soft-deleted values count — see `metricsWithValues`.
+ */
+export async function convertMetric(
+  metricId: string,
+  preset: Pick<MetricInput, 'name' | 'type' | 'unit'>,
+): Promise<boolean> {
+  return db.transaction(async (tx) => {
+    const logged = await tx
+      .select({ id: setMetricValues.id })
+      .from(setMetricValues)
+      .where(eq(setMetricValues.exerciseMetricId, metricId))
+      .limit(1);
+
+    if (logged.length > 0) {
+      return false;
+    }
+
+    await tx
+      .update(exerciseMetrics)
+      .set({ name: preset.name, type: preset.type, unit: preset.unit })
+      .where(eq(exerciseMetrics.id, metricId));
+
+    return true;
+  });
 }
 
 /**

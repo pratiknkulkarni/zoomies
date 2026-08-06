@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import {
   formatMetricDetail,
-  formatMetricRole,
   formatMetricSummary,
   formatSlotTally,
 } from './format';
@@ -51,31 +50,29 @@ describe('formatMetricSummary', () => {
   });
 });
 
-describe('formatMetricRole', () => {
-  // The editor makes name and unit fields, so its caption can only describe
-  // what is fixed.
-  it('describes only what cannot be edited', () => {
-    expect(formatMetricRole('duration', true)).toBe('Logged first · Duration');
-    expect(formatMetricRole('number', false)).toBe('Number');
-  });
-});
-
 describe('formatMetricDetail', () => {
-  it('names the primary metric, since position alone does not say it', () => {
+  it('names the metric logged first, since position alone does not say it', () => {
     expect(formatMetricDetail({ type: 'duration', unit: 's' }, true)).toBe(
-      'Logged first · Duration · s',
+      'Logged first · seconds',
     );
   });
 
-  it('says nothing extra about the others', () => {
+  it('says only what the others measure', () => {
     expect(formatMetricDetail({ type: 'number', unit: 'kg' }, false)).toBe(
-      'Number · kg',
+      'kilograms',
     );
   });
 
-  it('leaves out a unit that was never recorded', () => {
-    expect(formatMetricDetail({ type: 'notes', unit: null }, false)).toBe(
-      'Notes',
+  // A count's name is its unit, so it stores none — see lib/metrics.ts.
+  it('describes a count without inventing a unit for it', () => {
+    expect(formatMetricDetail({ type: 'number', unit: null }, false)).toBe(
+      'a count',
+    );
+  });
+
+  it('describes a metric no preset covers rather than calling it invalid', () => {
+    expect(formatMetricDetail({ type: 'number', unit: 'm' }, false)).toBe(
+      'a number in m',
     );
   });
 });
