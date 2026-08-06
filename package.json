@@ -9,7 +9,13 @@
     "ios": "expo run:ios",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "apk": "android/gradlew -p android assembleDebug -PreactNativeArchitectures=${ZOOMIES_ABI:-arm64-v8a}",
+    "apk:release": "android/gradlew -p android assembleRelease -PreactNativeArchitectures=${ZOOMIES_ABI:-arm64-v8a}",
+    "deploy": "npm run apk && adb ${ZOOMIES_DEVICE:+-s $ZOOMIES_DEVICE} install -r android/app/build/outputs/apk/debug/app-debug.apk && npm run reverse",
+    "deploy:release": "npm run apk:release && adb ${ZOOMIES_DEVICE:+-s $ZOOMIES_DEVICE} install -r android/app/build/outputs/apk/release/app-release.apk",
+    "reverse": "adb ${ZOOMIES_DEVICE:+-s $ZOOMIES_DEVICE} reverse tcp:8081 tcp:8081",
+    "device": "adb ${ZOOMIES_DEVICE:+-s $ZOOMIES_DEVICE} shell getprop ro.product.model"
   },
   "dependencies": {
     "@expo-google-fonts/geist": "^0.4.2",
