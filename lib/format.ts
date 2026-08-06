@@ -164,25 +164,30 @@ export function formatTarget(
 type MetricLabel = { name: string; unit: string | null };
 
 /**
- * The half of a metric that cannot be edited: `Primary · Duration`.
+ * The half of a metric that cannot be edited: `Logged first · Duration`.
  *
- * The first metric drives the logging UI (FEATURES.md §4.1), which is worth
- * saying out loud rather than leaving implied by its position. Type is fixed at
- * creation (see `db/mutations/exercises.ts`), so in the editor — where name and
- * unit are fields — this is the whole of what a caption can say.
+ * **Not `Primary`.** That named a rank without saying what the rank does, and
+ * `Primary · Number` put two pieces of jargon side by side — it was the one
+ * thing on the metric editor still unexplained after everything else on the
+ * screen had been labelled. `Logged first` states the consequence, which is all
+ * FEATURES.md §4.1 means by primary: this metric decides the logging UI.
+ *
+ * Type is fixed at creation (see `db/mutations/exercises.ts`), so in the editor
+ * — where name and unit are fields — this is the whole of what a caption can
+ * say.
  */
 export function formatMetricRole(
   type: MetricType,
   isPrimary: boolean,
 ): string {
-  return [isPrimary ? 'Primary' : undefined, formatMetricType(type)]
+  return [isPrimary ? 'Logged first' : undefined, formatMetricType(type)]
     .filter(Boolean)
     .join(SEPARATOR);
 }
 
 /**
  * What a metric's own row says beneath its name where nothing is editable:
- * `Primary · Duration · s`.
+ * `Logged first · Duration · s`.
  */
 export function formatMetricDetail(
   metric: Pick<ExerciseMetricRow, 'type' | 'unit'>,

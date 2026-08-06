@@ -69,15 +69,15 @@ export function MetricEditor({
       <SectionLabel className="px-xl pb-sm">Metrics</SectionLabel>
 
       {/*
-        Order and targets are the two things this screen cannot show on its own.
-        `Primary` means nothing until you know it decides the logging UI, and
-        the absence of a target field reads as an omission rather than a
-        decision. Said here, where the arrows are, and nowhere else.
+        This line used to carry the whole explanation — what `Primary` bought
+        you, and that targets live on templates — because nothing else on the
+        screen said either. It read as documentation and was not understood.
+
+        The rows below now label their own fields and say `Logged first` rather
+        than `Primary`, so the caption only has to name the section.
       */}
       <Text className="px-xl pb-md text-bodySm text-text-2">
-        The first metric drives logging: a duration metric on top gives a
-        stopwatch instead of fields to type into. Targets belong to templates,
-        not here.
+        What this exercise measures.
       </Text>
 
       {metrics.map((metric, index) => (
@@ -109,30 +109,45 @@ export function MetricEditor({
       <View className="gap-md px-xl pt-xl">
         <SectionLabel>Add a metric</SectionLabel>
 
-        <Input
-          value={name}
-          onChangeText={setName}
-          placeholder="Reps"
-          autoCapitalize="sentences"
-        />
-
-        <View className="flex-row gap-sm">
-          {TYPES.map((option) => (
-            <TypeChip
-              key={option}
-              label={formatMetricType(option)}
-              selected={type === option}
-              onPress={() => setType(option)}
-            />
-          ))}
+        {/*
+          `Reps` as the name placeholder read as a value already filled in —
+          grey placeholder text in a filled box looks like content. Labelling
+          the field says what it wants, so the example can go.
+        */}
+        <View className="gap-xs">
+          <SectionLabel>Name</SectionLabel>
+          <Input
+            value={name}
+            onChangeText={setName}
+            accessibilityLabel="Name of the new metric"
+            autoCapitalize="sentences"
+          />
         </View>
 
-        <Input
-          value={unit}
-          onChangeText={setUnit}
-          placeholder="Unit — reps, kg, s"
-          autoCapitalize="none"
-        />
+        <View className="gap-xs">
+          <SectionLabel>Type</SectionLabel>
+          <View className="flex-row gap-sm">
+            {TYPES.map((option) => (
+              <TypeChip
+                key={option}
+                label={formatMetricType(option)}
+                selected={type === option}
+                onPress={() => setType(option)}
+              />
+            ))}
+          </View>
+        </View>
+
+        <View className="gap-xs">
+          <SectionLabel>Unit</SectionLabel>
+          <Input
+            value={unit}
+            onChangeText={setUnit}
+            accessibilityLabel="Unit of the new metric"
+            placeholder="reps, kg, s"
+            autoCapitalize="none"
+          />
+        </View>
 
         <Button
           variant="secondary"
@@ -208,21 +223,35 @@ function MetricRow({
 
   return (
     <View className="gap-sm px-xl py-md">
-      <Input
-        value={name}
-        onChangeText={setName}
-        onBlur={commitName}
-        accessibilityLabel={`Name of ${metric.name}`}
-        autoCapitalize="sentences"
-      />
-      <Input
-        value={unit}
-        onChangeText={setUnit}
-        onBlur={commitUnit}
-        accessibilityLabel={`Unit of ${metric.name}`}
-        placeholder="Unit — reps, kg, s"
-        autoCapitalize="none"
-      />
+      {/*
+        Both fields carried an `accessibilityLabel` and nothing visible, so a
+        screen reader knew which was the name and which the unit while everyone
+        else saw two identical boxes reading `Reps` and `reps`. The screen
+        labels NAME, FAMILY and NOTES directly above; half a screen labelling
+        its fields is worse than none of it doing so.
+      */}
+      <View className="gap-xs">
+        <SectionLabel>Name</SectionLabel>
+        <Input
+          value={name}
+          onChangeText={setName}
+          onBlur={commitName}
+          accessibilityLabel={`Name of ${metric.name}`}
+          autoCapitalize="sentences"
+        />
+      </View>
+
+      <View className="gap-xs">
+        <SectionLabel>Unit</SectionLabel>
+        <Input
+          value={unit}
+          onChangeText={setUnit}
+          onBlur={commitUnit}
+          accessibilityLabel={`Unit of ${metric.name}`}
+          placeholder="reps, kg, s"
+          autoCapitalize="none"
+        />
+      </View>
 
       <View className="flex-row items-center gap-md">
         <Text className="flex-1 text-caption text-text-2">

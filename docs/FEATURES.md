@@ -242,7 +242,9 @@ needed.
 ### 4.1 Rules
 
 - Metrics are ordered. The first metric is the **primary metric** and drives the
-  logging UI (see §7.2).
+  logging UI (see §7.2). The interface calls it **`Logged first`**, not
+  `Primary` — a rank named without its consequence explained nothing, and
+  `Primary · Number` read as two pieces of jargon side by side.
 - Soft cap of four metrics per exercise. A guideline, not enforced.
 - Nothing is required. Save a set with whatever was recorded.
 - Unrecorded values are null, never zero.

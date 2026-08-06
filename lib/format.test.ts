@@ -43,7 +43,7 @@ describe('formatMetricRole', () => {
   // The editor makes name and unit fields, so its caption can only describe
   // what is fixed.
   it('describes only what cannot be edited', () => {
-    expect(formatMetricRole('duration', true)).toBe('Primary · Duration');
+    expect(formatMetricRole('duration', true)).toBe('Logged first · Duration');
     expect(formatMetricRole('number', false)).toBe('Number');
   });
 });
@@ -51,7 +51,7 @@ describe('formatMetricRole', () => {
 describe('formatMetricDetail', () => {
   it('names the primary metric, since position alone does not say it', () => {
     expect(formatMetricDetail({ type: 'duration', unit: 's' }, true)).toBe(
-      'Primary · Duration · s',
+      'Logged first · Duration · s',
     );
   });
 
