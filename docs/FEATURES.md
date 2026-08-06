@@ -246,7 +246,13 @@ needed.
   `Primary` — a rank named without its consequence explained nothing, and
   `Primary · Number` read as two pieces of jargon side by side.
 - Soft cap of four metrics per exercise. A guideline, not enforced.
-- Nothing is required. Save a set with whatever was recorded.
+- Nothing is required **per metric**. Save a set with whatever was recorded —
+  reps without the load is a complete set, and the load is simply unrecorded.
+- **A set must record something**, though: at least one value or `to_failure`.
+  Save is disabled until then. `to_failure` on its own counts — "I went to
+  failure and did not count" is an observation. An untouched form submitted by a
+  stray tap is not, and it used to produce a set reading `Recorded` with nothing
+  behind it.
 - Unrecorded values are null, never zero.
 - Units are declared per metric (`reps`, `kg`, `s`) and are display-only.
 

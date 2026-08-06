@@ -21,9 +21,14 @@ import { cn } from '@/lib/utils';
  * stopwatch later — every exercise is loggable now rather than some waiting a
  * phase.
  *
- * Nothing is required (§4.1). A set with every field blank still records that
- * the effort happened, which is the difference between an unrecorded value and
- * a value of zero.
+ * **Nothing is required per metric** (§4.1) — log reps without the load and the
+ * load simply goes unrecorded, which is not the same as a load of zero. But a
+ * set has to record *something*, so Save is disabled until one field holds a
+ * value or `to_failure` is on.
+ *
+ * `to_failure` alone is enough. "I went to failure and did not count" is a real
+ * observation; an untouched form submitted by a stray tap is not, and it used
+ * to produce a set reading `Recorded` with nothing behind it.
  */
 export function SetLog({
   entryId,
@@ -58,8 +63,17 @@ export function SetLog({
           typeof next === 'function' ? next(current[metricId] ?? '') : next,
       }));
 
+  /**
+   * Whitespace is not a value, so it trims first — a space typed into a field
+   * would otherwise arm the button and then save nothing, since
+   * `toNullableFloat` reads it as not recorded.
+   */
+  const recordsSomething =
+    toFailure ||
+    metrics.some((metric) => (draft[metric.id] ?? '').trim().length > 0);
+
   const save = () => {
-    if (saving) {
+    if (saving || !recordsSomething) {
       return;
     }
     setSaving(true);
@@ -148,7 +162,11 @@ export function SetLog({
         </Text>
       </Pressable>
 
-      <Button variant="primary" disabled={saving} onPress={save}>
+      <Button
+        variant="primary"
+        disabled={saving || !recordsSomething}
+        onPress={save}
+      >
         <Text>Save set</Text>
       </Button>
     </View>
