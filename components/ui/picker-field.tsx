@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { SectionLabel } from '@/components/ui/section-label';
 import { Separator } from '@/components/ui/separator';
 import { Text } from '@/components/ui/text';
+import { matchesQuery } from '@/lib/search';
 import { cn } from '@/lib/utils';
 
 const ChevronIcon = iconWithClassName(ChevronDown);
@@ -113,11 +114,8 @@ function Sheet({
   const needle = search.trim().toLowerCase();
 
   const matches = useMemo(
-    () =>
-      needle.length === 0
-        ? options
-        : options.filter((option) => option.toLowerCase().includes(needle)),
-    [options, needle],
+    () => options.filter((option) => matchesQuery(option, search)),
+    [options, search],
   );
 
   /**

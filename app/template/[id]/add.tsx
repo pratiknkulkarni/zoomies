@@ -1,12 +1,13 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { useLocalSearchParams } from 'expo-router';
 import { Minus } from 'lucide-react-native';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 
 import { BackButton } from '@/components/ui/back-button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { iconWithClassName } from '@/components/ui/icon';
+import { Input } from '@/components/ui/input';
 import { Screen } from '@/components/ui/screen';
 import { Separator } from '@/components/ui/separator';
 import { Text } from '@/components/ui/text';
@@ -24,6 +25,7 @@ import {
   formatSlotCount,
   formatSlotTally,
 } from '@/lib/format';
+import { matchesQuery } from '@/lib/search';
 
 const MinusIcon = iconWithClassName(Minus);
 
@@ -73,23 +75,53 @@ export default function AddExerciseScreen() {
     return byExercise;
   }, [slots]);
 
+  const [query, setQuery] = useState('');
+
+  /**
+   * Filtered in memory rather than in SQL: the list is at most the catalogue's
+   * size, and re-running a live query per keystroke would tear down and rebuild
+   * the subscription for nothing.
+   */
+  const shown = useMemo(
+    () => library.filter((exercise) => matchesQuery(exercise.name, query)),
+    [library, query],
+  );
+
+  const searching = query.trim().length > 0;
+
   return (
     <Screen bleed>
+      {/*
+        The header sits outside the FlatList, not in `ListHeaderComponent`. A
+        TextInput inside a list header is remounted as the list re-renders and
+        drops the keyboard mid-word — and on a list long enough to need
+        searching, a search box that scrolls away is the wrong one.
+      */}
+      <View>
+        <BackButton />
+        <Text className="px-xl pt-sm font-sans-semibold text-display text-text">
+          Add an exercise
+        </Text>
+        <Text className="px-xl pb-md pt-xs text-bodySm text-text-2">
+          {formatSlotCount(slots.length)} in this template
+        </Text>
+        <View className="px-xl pb-lg">
+          <Input
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search"
+            accessibilityLabel="Search exercises"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        </View>
+      </View>
+
       <FlatList
-        data={library}
+        data={shown}
         keyExtractor={(exercise) => exercise.id}
         ItemSeparatorComponent={Separator}
-        ListHeaderComponent={
-          <View>
-            <BackButton />
-            <Text className="px-xl pt-sm font-sans-semibold text-display text-text">
-              Add an exercise
-            </Text>
-            <Text className="px-xl pb-xl pt-xs text-bodySm text-text-2">
-              {formatSlotCount(slots.length)} in this template
-            </Text>
-          </View>
-        }
+        keyboardShouldPersistTaps="handled"
         renderItem={({ item }) => (
           <PickerRow
             templateId={id}
@@ -100,10 +132,20 @@ export default function AddExerciseScreen() {
         )}
         ListEmptyComponent={
           <View className="px-xl">
-            <EmptyState
-              title="Nothing to add"
-              body="Your library is empty. Exercises come from the Exercises tab."
-            />
+            {/*
+              An empty library and an empty result are different facts. Saying
+              "your library is empty" while a search is running would be a lie.
+            */}
+            {searching ? (
+              <Text className="text-bodySm text-text-2">
+                No exercise matches {query.trim()}.
+              </Text>
+            ) : (
+              <EmptyState
+                title="Nothing to add"
+                body="Your library is empty. Exercises come from the Exercises tab."
+              />
+            )}
           </View>
         }
       />
