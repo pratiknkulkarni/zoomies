@@ -608,3 +608,113 @@ setting. `adb shell uiautomator dump` and matching on app-specific text is
 reliable, and tapping the centre of a matched node's bounds survives layout
 shifts that break fixed coordinates. Two verification attempts were wasted
 before switching.
+
+---
+
+## Phase 4 follow-ups — the smoke test round
+
+Branch: `phase-4-followups`
+
+A full walk of Phases 0–4 on a Pixel 7a, recorded in `docs/SMOKE_TEST.md`. The
+data layer and the training loop came through clean — logging, editing,
+renumbering, the target override, snapshot isolation, lifecycle and the
+force-quit invariant all passed. **Every finding was interface, wording or
+input handling**, which is the useful shape for a smoke test to have.
+
+Seventeen items across two rounds. What follows is only what is not obvious
+from the diff.
+
+### The keyboard bug was an Android 15 behaviour change
+
+`AndroidManifest.xml` sets `windowSoftInputMode="adjustResize"` and always had.
+It stopped working because `app.json` enables edge-to-edge, and from Android 15
+the system no longer resizes the window for an edge-to-edge app — so
+`adjustResize` is inert and a plain `ScrollView` never learns the keyboard
+exists. The add-a-metric form sat entirely underneath it.
+
+Keyboard avoidance went into `components/ui/screen.tsx` rather than onto each
+screen, so one added in a later phase inherits it. `className` on
+`KeyboardAvoidingView` is registered in `react-native-css-interop`, so the
+tokens still apply.
+
+### That fix then caused a data-loss bug
+
+`keyboardShouldPersistTaps="handled"` went on with it. It means a tap on Back is
+handled by the button **without dismissing the keyboard first**, so a focused
+field never blurs, and six fields that committed on blur silently discarded
+their edits: target sets, target value, rest seconds, a template rename, a
+metric rename and an exercise entry's notes.
+
+It surfaced as "rest always defaults to 60s" — it never did. 60 is what
+`addSlot` inserts, sitting untouched because the edit was never written.
+
+The entry notes field had carried `handled` since Phase 4, so that one had the
+bug all along. The smoke test marked notes as FINE, which it would have been if
+the tester happened to tap elsewhere before leaving.
+
+**Commit-on-blur was the real defect, not the prop.** A screen left with a field
+focused unmounts without ever firing blur. All six now write as you type, which
+is what invariant 1 asks for everywhere else. A debounce was considered and
+rejected: it reintroduces the same question about a screen going away mid-wait.
+
+### The metric editor was rebuilt, not patched a fourth time
+
+Three rounds of fixes to this screen each addressed a symptom — labelling the
+fields, renaming `Primary` to `Logged first`, replacing free-text units with a
+picker — and the user was still confused. The cause was the model the screen
+exposed: **name, type and unit as three orthogonal fields to compose.**
+
+`number` covers both a count and a load, so a unit list scoped by `type` could
+only ever offer `kg` to both. Hence reps measured in kilograms, and the question
+that ended it: "KG what?"
+
+`lib/metrics.ts` now holds four whole metrics — Reps, Added load, Hold, Notes —
+and choosing one settles all three columns at once. The bad combination is
+unreachable rather than discouraged. This is the vocabulary `db/seed.ts` always
+used, and `FEATURES.md` §15 had already cut a custom metric registry as "an
+entire CRUD surface for one user"; one had been built anyway, in pieces.
+
+Identity is the `(type, unit)` pair, never the name.
+
+**What a metric measures is now changeable until the first set is logged against
+it.** Before that there is nothing to reinterpret. After it, a conversion would
+turn every logged 30-second hold into 30kg, so it locks and the row says why.
+The guard is inside `convertMetric`'s transaction, not only in the editor —
+soft-deleted values count, because they stay on disk and go into the §12 export.
+
+### A picker built from the data can only be as clean as the data
+
+The first unit picker offered `SELECT DISTINCT unit`, which meant every typo
+ever made became a permanent suggestion and the next one joined it: `rep`,
+`reps`, `s` and `secund` in one list. Deriving a vocabulary from the rows it is
+meant to constrain does not work. The canonical list in code was the fix, and
+migration 0002 cleaned up what free text had left behind.
+
+### Two data migrations, both label-only
+
+- **0001** rewrote `family` from slugs (`pull_up`) to readable text (`Pull-up`).
+  It was shown to the user verbatim, underscores and all.
+- **0002** normalised unit spellings and dropped units that only restate their
+  metric's name — which is what made `Reps` sit above `reps`.
+
+Both were written by hand via `drizzle-kit generate --custom`: this is data, not
+schema, and nothing about the tables changed. Both were verified offline against
+a scratch database built from migration 0000 before going near the device, which
+is worth doing for any migration that rewrites rows — a user-typed family and a
+deliberate `m` unit both had to survive, and testing that is cheaper than
+discovering it.
+
+### Harness notes
+
+- **`expo-sqlite` stores its database at `files/SQLite/zoomies.db`**, not
+  Android's `databases/`. Two pull attempts failed on the wrong path first.
+- **A migration added mid-session does not apply until a cold start.**
+  `useMigrations` runs when `RootLayout` mounts, and Fast Refresh replaces
+  modules without remounting the root. Force-stop before checking migration
+  results, or you are reading the previous schema.
+- **A release APK never contacts Metro** — its JS is bundled in. Time was lost
+  testing a release build against changes that only existed in the dev server.
+  `run-as` also refuses it, since it is not `debuggable`.
+- Hermes bytecode does not grep for plain strings, so a release APK's bundle
+  cannot be checked that way. The Metro bundle can, and is a good proxy for
+  "did this compile and reach the device".
