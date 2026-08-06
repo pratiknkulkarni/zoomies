@@ -160,25 +160,30 @@ All built-in exercises are seeded into the `exercises` table. Only a subset is
 Roughly fifteen are active on first launch. The rest sit dormant and cost
 nothing.
 
+**`family` is human-readable text, not a slug.** It is shown to the user on the
+exercise detail screen and groups the Suggested section; nothing joins on it and
+no code branches on its value. It was seeded as `pull_up` and displayed
+verbatim, underscores and all. Sentence case, per `DESIGN.md` §2.5.
+
 **Active on first launch:**
 
 | Exercise | Family | Metrics |
 |---|---|---|
-| Pull-Up | pull_up | reps, load |
-| Chin-Up | pull_up | reps, load |
-| Ring Row | row | reps |
-| Ring Dip | dip | reps, load |
-| Dip | dip | reps, load |
-| Push-Up | push_up | reps |
-| Ring Support Hold | support_hold | duration |
-| L-Sit | l_sit | duration |
-| Front Lever (Tuck) | front_lever | duration |
-| Back Lever (Tuck) | back_lever | duration |
-| Handstand | handstand | duration |
-| Handstand Push-Up | hspu | reps |
-| Pike Push-Up | hspu | reps |
-| Pistol Squat | squat | reps, load |
-| Hanging Leg Raise | core_hang | reps |
+| Pull-Up | Pull-up | reps, load |
+| Chin-Up | Pull-up | reps, load |
+| Ring Row | Row | reps |
+| Ring Dip | Dip | reps, load |
+| Dip | Dip | reps, load |
+| Push-Up | Push-up | reps |
+| Ring Support Hold | Support hold | duration |
+| L-Sit | L-sit | duration |
+| Front Lever (Tuck) | Front lever | duration |
+| Back Lever (Tuck) | Back lever | duration |
+| Handstand | Handstand | duration |
+| Handstand Push-Up | Handstand push-up | reps |
+| Pike Push-Up | Handstand push-up | reps |
+| Pistol Squat | Squat | reps, load |
+| Hanging Leg Raise | Core hang | reps |
 
 ### 3.3 Exercise Suggestions
 
@@ -242,11 +247,57 @@ needed.
 ### 4.1 Rules
 
 - Metrics are ordered. The first metric is the **primary metric** and drives the
-  logging UI (see §7.2).
+  logging UI (see §7.2). The interface calls it **`Logged first`**, not
+  `Primary` — a rank named without its consequence explained nothing, and
+  `Primary · Number` read as two pieces of jargon side by side.
 - Soft cap of four metrics per exercise. A guideline, not enforced.
-- Nothing is required. Save a set with whatever was recorded.
+- Nothing is required **per metric**. Save a set with whatever was recorded —
+  reps without the load is a complete set, and the load is simply unrecorded.
+- **A set must record something**, though: at least one value or `to_failure`.
+  Save is disabled until then. `to_failure` on its own counts — "I went to
+  failure and did not count" is an observation. An untouched form submitted by a
+  stray tap is not, and it used to produce a set reading `Recorded` with nothing
+  behind it.
 - Unrecorded values are null, never zero.
-- Units are declared per metric (`reps`, `kg`, `s`) and are display-only.
+
+### 4.1.1 A Metric Is Chosen Whole
+
+**There are four metrics, and `name`, `type` and `unit` arrive together.**
+
+| Choice | `name` | `type` | `unit` | Measures |
+|---|---|---|---|---|
+| Reps | `Reps` | `number` | — | a count |
+| Added load | `Added load` | `number` | `kg` | kilograms |
+| Hold | `Hold` | `duration` | `s` | seconds |
+| Notes | `Notes` | `notes` | — | text |
+
+Defined in `lib/metrics.ts`. Four choices also give the soft cap of four a
+natural ceiling.
+
+**Nothing composes them by hand.** The three columns were once three fields on
+screen, which required knowing that a count is a `number` with no unit while a
+load is a `number` with `kg`. It produced *reps measured in kilograms* — because
+`number` covers two unrelated things, so a unit list scoped by type could only
+ever offer `kg` to both. Three successive fixes to that list each addressed a
+symptom. Choosing the whole metric makes the bad combination unreachable rather
+than discouraged, and agrees with §15, which cut a custom metric registry as
+"an entire CRUD surface for one user".
+
+**A count has no unit.** `Reps` is the name, so a `reps` unit beneath it repeats
+the word. Display falls back to the metric's name, so a set still reads `9 reps`
+with nothing stored.
+
+**The name stays editable; what it measures does not, once used.**
+`set_metric_values` holds a bare number, and the metric's `type` and `unit` are
+the only record of what that number meant — converting afterwards would turn
+every logged 30-second hold into 30kg. So a metric can be switched freely until
+the first set is logged against it, and is fixed after that, with the row saying
+why. Removing it keeps the values already recorded.
+
+The guard lives in `convertMetric`, not only in the editor: a mutation that can
+rewrite the meaning of history must not depend on a screen having been drawn
+correctly. Soft-deleted values count — they remain on disk and go into the §12
+export.
 
 ### 4.2 Set-Level Flag
 
@@ -287,6 +338,13 @@ short repeated attempts are not interrupted by a countdown.
 
 Create, rename, add/remove slots, reorder slots, edit targets, delete. Templates
 change infrequently and are edited outside of training.
+
+**The same exercise may appear in a template more than once** — pull-ups to open
+and again as a finisher are two slots with their own targets, not one slot with
+a larger `target_sets`. So the picker counts what has been added and offers to
+remove one, rather than toggling an exercise in and out. The count and its
+control sit on the row itself: a stray double-tap has to be visible where it
+happened, not discovered later on the template screen.
 
 Slots are reordered; **templates themselves are not**. New ones append. If a
 training week ever needs an order of its own, that is an addition to this list,

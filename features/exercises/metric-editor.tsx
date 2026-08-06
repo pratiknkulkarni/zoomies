@@ -1,8 +1,10 @@
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react-native';
 import { useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { iconWithClassName } from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
 import { SectionLabel } from '@/components/ui/section-label';
@@ -10,31 +12,41 @@ import { Separator } from '@/components/ui/separator';
 import { Text } from '@/components/ui/text';
 import {
   addMetric,
+  convertMetric,
   deleteMetric,
   moveMetric,
   updateMetric,
 } from '@/db/mutations/exercises';
-import type { ExerciseMetric } from '@/db/queries/exercises';
-import { toNullable } from '@/features/exercises/exercise-form';
-import { formatMetricRole, formatMetricType } from '@/lib/format';
+import {
+  metricsWithValues,
+  toMetricIdSet,
+  type ExerciseMetric,
+} from '@/db/queries/exercises';
+import {
+  METRIC_PRESETS,
+  describeMeasure,
+  presetFor,
+  presetsNotOn,
+  type MetricPreset,
+} from '@/lib/metrics';
 import { cn } from '@/lib/utils';
 
 const UpIcon = iconWithClassName(ChevronUp);
 const DownIcon = iconWithClassName(ChevronDown);
 const DeleteIcon = iconWithClassName(Trash2);
 
-type MetricType = ExerciseMetric['type'];
-
-const TYPES: MetricType[] = ['number', 'duration', 'notes'];
-
 /**
- * Ordered metric configuration. Order is the whole point: the first metric is
- * the primary metric and decides the logging UI in Phase 4 (FEATURES.md §4.1),
- * so moving one is a real edit rather than cosmetics.
+ * What an exercise records, in the order it is logged.
  *
- * A metric's type is fixed once created — changing it would reinterpret every
- * value already logged against it. The selector therefore appears only when
- * adding.
+ * **A metric is chosen whole, never composed.** This screen used to offer name,
+ * type and unit as three separate fields, which asked the user to know that a
+ * count is a `number` with no unit while a load is a `number` with `kg`. It
+ * produced reps measured in kilograms, and three rounds of fixes to the unit
+ * list each addressed a symptom. `lib/metrics.ts` holds the four things an
+ * exercise can record; picking one settles all three columns at once.
+ *
+ * Order is the whole point of the arrows: the first metric decides the logging
+ * UI (FEATURES.md §4.1), which is why its caption says `Logged first`.
  */
 export function MetricEditor({
   exerciseId,
@@ -43,57 +55,46 @@ export function MetricEditor({
   exerciseId: string;
   metrics: ExerciseMetric[];
 }) {
-  const [name, setName] = useState('');
-  const [unit, setUnit] = useState('');
-  const [type, setType] = useState<MetricType>('number');
+  const [adding, setAdding] = useState(false);
 
-  const submit = () => {
-    const trimmed = name.trim();
-    if (trimmed.length === 0) {
-      return;
-    }
+  /**
+   * Rooted at `set_metric_values`, so logging the first set against a metric
+   * locks it live rather than on the next visit.
+   */
+  const { data: valueRows } = useLiveQuery(metricsWithValues());
+  const logged = toMetricIdSet(valueRows);
 
+  const unused = presetsNotOn(metrics);
+
+  const add = (preset: MetricPreset) => {
     void addMetric(exerciseId, {
-      name: trimmed,
-      type,
-      unit: toNullable(unit),
-    }).then(() => {
-      setName('');
-      setUnit('');
-      setType('number');
-    });
+      name: preset.name,
+      type: preset.type,
+      unit: preset.unit,
+    }).then(() => setAdding(false));
   };
 
   return (
     <View>
       <SectionLabel className="px-xl pb-sm">Metrics</SectionLabel>
 
-      {/*
-        Order and targets are the two things this screen cannot show on its own.
-        `Primary` means nothing until you know it decides the logging UI, and
-        the absence of a target field reads as an omission rather than a
-        decision. Said here, where the arrows are, and nowhere else.
-      */}
       <Text className="px-xl pb-md text-bodySm text-text-2">
-        The first metric drives logging: a duration metric on top gives a
-        stopwatch instead of fields to type into. Targets belong to templates,
-        not here.
+        What this exercise measures.
       </Text>
 
       {metrics.map((metric, index) => (
         <View key={metric.id}>
           {index > 0 ? <Separator /> : null}
           {/*
-            The keyed wrapper ties each `MetricRow` to one metric, so the
-            fields inside it initialise from props once and are never synced
-            afterwards. `metrics` is live: a row reading straight from props
-            would be reset mid-edit the moment anything else in the table
-            changed — reordering a metric below would wipe what was being
-            typed above.
+            Keyed on the metric so the name field initialises from props once
+            and is never synced afterwards. `metrics` is live: a field reading
+            straight from props would be reset mid-edit the moment anything
+            else in the table changed.
           */}
           <MetricRow
-            exerciseId={exerciseId}
             metric={metric}
+            exerciseId={exerciseId}
+            isLogged={logged.has(metric.id)}
             isFirst={index === 0}
             isLast={index === metrics.length - 1}
           />
@@ -102,92 +103,90 @@ export function MetricEditor({
 
       {metrics.length === 0 ? (
         <Text className="px-xl pb-md text-bodySm text-text-2">
-          Nothing is recorded for this exercise yet. Add what it should track.
+          Nothing is recorded for this exercise yet.
         </Text>
       ) : null}
 
-      <View className="gap-md px-xl pt-xl">
-        <SectionLabel>Add a metric</SectionLabel>
-
-        <Input
-          value={name}
-          onChangeText={setName}
-          placeholder="Reps"
-          autoCapitalize="sentences"
-        />
-
-        <View className="flex-row gap-sm">
-          {TYPES.map((option) => (
-            <TypeChip
-              key={option}
-              label={formatMetricType(option)}
-              selected={type === option}
-              onPress={() => setType(option)}
-            />
-          ))}
+      {!adding ? (
+        <View className="px-xl pt-xl">
+          <Button
+            variant="secondary"
+            disabled={unused.length === 0}
+            onPress={() => setAdding(true)}
+          >
+            <Text>
+              {unused.length === 0 ? 'Records everything' : 'Add a metric'}
+            </Text>
+          </Button>
         </View>
+      ) : (
+        <View className="gap-md px-xl pt-xl">
+          <SectionLabel>Add a metric</SectionLabel>
 
-        <Input
-          value={unit}
-          onChangeText={setUnit}
-          placeholder="Unit — reps, kg, s"
-          autoCapitalize="none"
-        />
+          {unused.map((preset) => (
+            <Pressable
+              key={preset.key}
+              accessibilityRole="button"
+              accessibilityLabel={`${preset.name}, ${preset.measure}`}
+              onPress={() => add(preset)}
+              className="min-h-touch flex-row items-baseline gap-md rounded-button bg-muted px-lg py-md active:bg-surface"
+            >
+              <Text className="flex-1 text-body text-text">{preset.name}</Text>
+              <Text className="text-caption text-text-2">{preset.measure}</Text>
+            </Pressable>
+          ))}
 
-        <Button
-          variant="secondary"
-          disabled={name.trim().length === 0}
-          onPress={submit}
-        >
-          <Text>Add metric</Text>
-        </Button>
-      </View>
+          <Button variant="ghost" onPress={() => setAdding(false)}>
+            <Text>Cancel</Text>
+          </Button>
+        </View>
+      )}
     </View>
   );
 }
 
 /**
- * One metric. Name and unit are fields rather than labels — a typo should cost
- * a keystroke, not a delete, which is the one operation that strands values
- * already logged against the row.
+ * One metric. The name is a field because a typo should cost a correction
+ * rather than a delete, and because `Hold (left)` is a useful thing to write.
  *
- * Both commit on blur, and the same fields appear in the same order as the
- * form below, so the two read as one thing.
+ * What it measures is not a field. It is chosen from the same four options that
+ * created it, and only until something has been logged against it.
  */
 function MetricRow({
-  exerciseId,
   metric,
+  exerciseId,
+  isLogged,
   isFirst,
   isLast,
 }: {
-  exerciseId: string;
   metric: ExerciseMetric;
+  exerciseId: string;
+  isLogged: boolean;
   isFirst: boolean;
   isLast: boolean;
 }) {
   const [name, setName] = useState(metric.name);
-  const [unit, setUnit] = useState(metric.unit ?? '');
 
-  const commitName = () => {
-    const trimmed = name.trim();
+  /**
+   * Written as you type, not on blur. Blur never fires when the screen is left
+   * with the field still focused, and `keyboardShouldPersistTaps="handled"`
+   * sends a tap on Back straight to the button without dismissing the keyboard
+   * — so a rename followed by Back wrote nothing.
+   */
+  const change = (next: string) => {
+    setName(next);
 
-    // A metric has to be called something. An emptied field reverts rather
-    // than writing a nameless row.
-    if (trimmed.length === 0) {
-      setName(metric.name);
-      return;
-    }
-
-    if (trimmed !== metric.name) {
+    // A metric has to be called something, so an empty field is held locally
+    // and never written. Blur puts the old name back.
+    const trimmed = next.trim();
+    if (trimmed.length > 0 && trimmed !== metric.name) {
       void updateMetric(metric.id, { name: trimmed });
     }
   };
 
-  const commitUnit = () => {
-    const next = toNullable(unit);
-
-    if (next !== metric.unit) {
-      void updateMetric(metric.id, { unit: next });
+  const restoreIfEmptied = () => {
+    if (name.trim().length === 0) {
+      setName(metric.name);
     }
   };
 
@@ -206,27 +205,61 @@ function MetricRow({
     );
   };
 
+  const current = presetFor(metric);
+
   return (
     <View className="gap-sm px-xl py-md">
-      <Input
-        value={name}
-        onChangeText={setName}
-        onBlur={commitName}
-        accessibilityLabel={`Name of ${metric.name}`}
-        autoCapitalize="sentences"
-      />
-      <Input
-        value={unit}
-        onChangeText={setUnit}
-        onBlur={commitUnit}
-        accessibilityLabel={`Unit of ${metric.name}`}
-        placeholder="Unit — reps, kg, s"
-        autoCapitalize="none"
-      />
+      <View className="gap-xs">
+        <SectionLabel>Name</SectionLabel>
+        <Input
+          value={name}
+          onChangeText={change}
+          onBlur={restoreIfEmptied}
+          accessibilityLabel={`Name of ${metric.name}`}
+          autoCapitalize="sentences"
+        />
+      </View>
+
+      <View className="gap-xs">
+        <SectionLabel>Measures</SectionLabel>
+
+        {isLogged ? (
+          <>
+            <Text className="text-body text-text">
+              {describeMeasure(metric)}
+            </Text>
+            {/*
+              §4.1 — `set_metric_values` stores a bare number, and this metric's
+              type and unit are the only record of what it meant. Converting now
+              would turn every logged hold into kilograms.
+            */}
+            <Text className="text-caption text-text-2">
+              Fixed, because sets have been logged against it. Removing it keeps
+              them.
+            </Text>
+          </>
+        ) : (
+          <View className="flex-row flex-wrap gap-sm">
+            {METRIC_PRESETS.map((preset) => (
+              <Chip
+                key={preset.key}
+                label={preset.name}
+                selected={preset.key === current?.key}
+                onPress={() => void convertMetric(metric.id, preset)}
+              />
+            ))}
+          </View>
+        )}
+      </View>
 
       <View className="flex-row items-center gap-md">
+        {/*
+          Only the position. What it measures is stated above, in its own
+          labelled section — repeating it here is what made the old
+          `Primary · Number` caption read as jargon.
+        */}
         <Text className="flex-1 text-caption text-text-2">
-          {formatMetricRole(metric.type, isFirst)}
+          {isFirst ? 'Logged first' : ''}
         </Text>
 
         <IconButton
@@ -248,43 +281,6 @@ function MetricRow({
         </IconButton>
       </View>
     </View>
-  );
-}
-
-/**
- * §3.1 names `muted` as the inactive chip fill, so selection cannot be shown by
- * making the chosen one muted. It reads as `surface` against the fill, carried
- * by weight as well — §9 forbids colour alone.
- */
-function TypeChip({
-  label,
-  selected,
-  onPress,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="radio"
-      accessibilityState={{ selected }}
-      accessibilityLabel={label}
-      onPress={onPress}
-      className={cn(
-        'min-h-touch flex-1 items-center justify-center rounded-full px-lg',
-        selected ? 'border border-border bg-surface' : 'bg-muted',
-      )}
-    >
-      <Text
-        className={cn(
-          'text-bodySm',
-          selected ? 'font-sans-semibold text-text' : 'text-text-2',
-        )}
-      >
-        {label}
-      </Text>
-    </Pressable>
   );
 }
 

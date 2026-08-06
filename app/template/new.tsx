@@ -33,7 +33,10 @@ export default function NewTemplateScreen() {
 
   return (
     <Screen bleed>
-      <ScrollView contentContainerClassName="pb-3xl">
+      <ScrollView
+        contentContainerClassName="pb-3xl"
+        keyboardShouldPersistTaps="handled"
+      >
         <BackButton />
 
         <Text className="px-xl pt-sm font-sans-semibold text-display text-text">

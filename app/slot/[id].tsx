@@ -15,7 +15,7 @@ import {
   type ExerciseMetric,
 } from '@/db/queries/exercises';
 import { slotById, type TemplateSlot } from '@/db/queries/templates';
-import { formatMetricType } from '@/lib/format';
+import { describeMeasure } from '@/lib/metrics';
 import { fromNullableNumber, toNullableFloat, toNullableInt } from '@/lib/parse';
 import { cn } from '@/lib/utils';
 
@@ -41,7 +41,10 @@ export default function SlotScreen() {
 
   return (
     <Screen bleed>
-      <ScrollView contentContainerClassName="pb-3xl">
+      <ScrollView
+        contentContainerClassName="pb-3xl"
+        keyboardShouldPersistTaps="handled"
+      >
         <BackButton />
 
         {!slot ? (
@@ -76,11 +79,35 @@ function Editor({ slot }: { slot: TemplateSlot }) {
   const [rest, setRest] = useState(fromNullableNumber(slot.restSeconds));
   const [metricId, setMetricId] = useState(slot.targetMetricId);
 
-  const commitSets = () =>
-    void updateSlot(slot.id, { targetSets: toNullableInt(sets) });
+  /**
+   * **Written on every keystroke, not on blur.**
+   *
+   * Blur never fires if the screen is left with the field still focused, and
+   * with `keyboardShouldPersistTaps="handled"` on the ScrollView a tap on Back
+   * goes straight to the button without dismissing the keyboard first. So
+   * typing `45` into Rest and tapping Back wrote nothing, and the slot kept the
+   * 60 that `addSlot` had defaulted it to.
+   *
+   * Committing as you type is also what invariant 1 asks for everywhere else:
+   * writes land before any UI transition. These are single integers against
+   * local SQLite, so the cost of a write per keystroke is not worth a debounce
+   * — and a debounce reintroduces the same question about what happens when the
+   * screen goes away mid-wait.
+   */
+  const changeSets = (next: string) => {
+    setSets(next);
+    void updateSlot(slot.id, { targetSets: toNullableInt(next) });
+  };
 
-  const commitRest = () =>
-    void updateSlot(slot.id, { restSeconds: toNullableInt(rest) });
+  const changeRest = (next: string) => {
+    setRest(next);
+    void updateSlot(slot.id, { restSeconds: toNullableInt(next) });
+  };
+
+  const changeValue = (next: string) => {
+    setValue(next);
+    commitTarget(metricId, next);
+  };
 
   /**
    * Metric and value travel together: a value with no metric does not say what
@@ -117,8 +144,7 @@ function Editor({ slot }: { slot: TemplateSlot }) {
           <SectionLabel>Sets</SectionLabel>
           <Input
             value={sets}
-            onChangeText={setSets}
-            onBlur={commitSets}
+            onChangeText={changeSets}
             accessibilityLabel="Target sets"
             keyboardType="number-pad"
             placeholder="No target"
@@ -142,7 +168,7 @@ function Editor({ slot }: { slot: TemplateSlot }) {
                   <MetricChip
                     key={metric.id}
                     label={metric.name}
-                    hint={formatMetricType(metric.type)}
+                    hint={describeMeasure(metric)}
                     selected={metricId === metric.id}
                     onPress={() => chooseMetric(metric)}
                   />
@@ -151,8 +177,7 @@ function Editor({ slot }: { slot: TemplateSlot }) {
 
               <Input
                 value={value}
-                onChangeText={setValue}
-                onBlur={() => commitTarget(metricId, value)}
+                onChangeText={changeValue}
                 accessibilityLabel="Target value"
                 keyboardType="decimal-pad"
                 placeholder="No target"
@@ -166,8 +191,7 @@ function Editor({ slot }: { slot: TemplateSlot }) {
           <SectionLabel>Rest</SectionLabel>
           <Input
             value={rest}
-            onChangeText={setRest}
-            onBlur={commitRest}
+            onChangeText={changeRest}
             accessibilityLabel="Rest seconds"
             keyboardType="number-pad"
             placeholder="No rest timer"

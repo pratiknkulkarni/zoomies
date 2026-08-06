@@ -1,7 +1,10 @@
 import type { exerciseMetrics } from '@/db/schema';
 
+// Relative, unlike the type import above: `@/` is a tsconfig alias the test
+// runner does not resolve, and a type import is erased before it ever tries.
+import { describeMeasure } from './metrics';
+
 type ExerciseMetricRow = typeof exerciseMetrics.$inferSelect;
-type MetricType = ExerciseMetricRow['type'];
 
 /**
  * Display formatting. Nothing here decides anything — it turns stored values
@@ -16,17 +19,6 @@ type MetricType = ExerciseMetricRow['type'];
 
 /** DESIGN.md §2.4 — the separator between items of metadata in a caption. */
 const SEPARATOR = ' · ';
-
-const METRIC_TYPES: Record<MetricType, string> = {
-  number: 'Number',
-  duration: 'Duration',
-  notes: 'Notes',
-};
-
-/** Sentence case, per DESIGN.md §2.5. Never Title Case. */
-export function formatMetricType(type: MetricType): string {
-  return METRIC_TYPES[type];
-}
 
 /**
  * What a list row says an exercise records: `Reps · Added load (kg)`.
@@ -114,6 +106,17 @@ export function formatLastTime(values: (number | null)[]): string {
 }
 
 /**
+ * How many slots in a template already use one exercise: `× 2`.
+ *
+ * The same exercise may appear more than once — pull-ups to open and again as a
+ * finisher — so the picker counts rather than toggling. Absent at zero: a row
+ * saying `× 0` would be noise on every exercise not yet chosen.
+ */
+export function formatSlotTally(count: number): string | undefined {
+  return count > 0 ? `× ${count}` : undefined;
+}
+
+/**
  * What a template slot plans: `3 × 8 reps · 60s rest`.
  *
  * Every part is nullable and each null means something specific (§5.1). No
@@ -164,31 +167,20 @@ export function formatTarget(
 type MetricLabel = { name: string; unit: string | null };
 
 /**
- * The half of a metric that cannot be edited: `Primary · Duration`.
+ * What a metric records, plus its position if that position matters:
+ * `Logged first · seconds`.
  *
- * The first metric drives the logging UI (FEATURES.md §4.1), which is worth
- * saying out loud rather than leaving implied by its position. Type is fixed at
- * creation (see `db/mutations/exercises.ts`), so in the editor — where name and
- * unit are fields — this is the whole of what a caption can say.
- */
-export function formatMetricRole(
-  type: MetricType,
-  isPrimary: boolean,
-): string {
-  return [isPrimary ? 'Primary' : undefined, formatMetricType(type)]
-    .filter(Boolean)
-    .join(SEPARATOR);
-}
-
-/**
- * What a metric's own row says beneath its name where nothing is editable:
- * `Primary · Duration · s`.
+ * **Not `Primary`, and not the raw type.** `Primary · Duration · s` put three
+ * pieces of jargon in a row and told you nothing you could act on. `Logged
+ * first` states the consequence — FEATURES.md §4.1 means only that this metric
+ * decides the logging UI — and `describeMeasure` says what is stored in the
+ * words the metric was chosen with.
  */
 export function formatMetricDetail(
   metric: Pick<ExerciseMetricRow, 'type' | 'unit'>,
   isPrimary: boolean,
 ): string {
-  return [formatMetricRole(metric.type, isPrimary), metric.unit ?? undefined]
+  return [isPrimary ? 'Logged first' : undefined, describeMeasure(metric)]
     .filter(Boolean)
     .join(SEPARATOR);
 }

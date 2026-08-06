@@ -89,6 +89,33 @@
 > Duration-primary logging (the tap-to-time button) is Phase 5 by design; holds
 > are typed in seconds today, which §8 keeps available regardless.
 >
+> **Phase 4 follow-ups. Closed 6 Aug 2026**, branch `phase-4-followups`.
+> A full smoke test of Phases 0–4 on a Pixel 7a (`docs/SMOKE_TEST.md`) found the
+> data layer and the training loop clean; every finding was interface, wording
+> or input handling. Seventeen items, fourteen commits, two data migrations.
+>
+> The three that mattered: **the keyboard covered every form**, because
+> edge-to-edge makes `adjustResize` inert from Android 15; **six fields silently
+> discarded their edits**, because `keyboardShouldPersistTaps="handled"` means a
+> focused field never blurs and all six committed on blur; and **the metric
+> editor was rebuilt rather than patched a fourth time** — it asked the user to
+> compose name, type and unit, and `number` covers both a count and a load, so a
+> unit list scoped by type could only ever offer `kg` to both.
+>
+> `lib/metrics.ts` replaces that with four whole metrics. What one measures is
+> convertible until the first set is logged against it, guarded inside the
+> mutation. `FEATURES.md` §4.1 rewritten, §3.2 and §5.2 amended; `DESIGN.md`
+> gained §6.6–6.8.
+>
+> **Verification is uneven and the gap is recorded deliberately.** The
+> migrations were proven against a scratch database and then against the pulled
+> device database — all three applied, units reduced to `null`/`s`/`kg`, no typo
+> surviving. The metric rebuild, the search and the blur fix are verified by
+> compiler, 47 unit tests and bundle contents only; the phone was locked or
+> dozing on every attempt. **Smoke test E6, K2, L2, L4 and L6 remain
+> unanswered**, and E6 — clearing rest must read `No rest timer`, never
+> `0s rest` — now sits in the code path the blur fix rewrote.
+>
 > **Next: Phase 5 — Timers.**
 
 Update this block when a phase closes. It is the first thing read at the start
@@ -553,3 +580,4 @@ before installing.
 | Aug 2026 | Phase 2 follow-ups. Two Phase 2 exports turned out to have no call site — `archivedExercises` and `updateMetric` — so archiving was one-way and metrics could not be renamed. Both given surfaces. `FEATURES.md` §3.3 amended: archived exercises still count toward owned families, because archiving is usually a graduation. §3.5 amended to name the Archived screen. Records that exit criteria only test paths someone built, so dead code passes them. |
 | Aug 2026 | Phase 3 built. `FEATURES.md` §5 amended — templates live on Home, templates themselves do not reorder, and deleting one takes its slots. `renumber` extracted to `db/mutations/ordering.ts` now that two tables carry a user-arranged `display_order`. `lib/parse.ts` added: an empty field is null, `0` is zero, and the rest-timer criterion is exactly that distinction. Harness note: Metro serves a stale route tree after a route file moves, presenting as a blank screen with no JS error. |
 | Aug 2026 | Phase 4 built. Targets snapshotted onto `exercise_entries` at session start, which makes "editing a template never rewrites history" true by construction. `expo-keep-awake` and `expo-haptics` added — both native, so the dev client needed a full rebuild. Two harness lessons: `adb input tap` returns on injection rather than on handling, so the force-quit race cannot be scripted; and screenshot byte size is a useless readiness signal next to `uiautomator dump` matched on app text. |
+| Aug 2026 | Phase 4 follow-ups, from a full smoke test on a physical Pixel 7a. Three lessons worth keeping. **Fixing the keyboard caused a data-loss bug**: `keyboardShouldPersistTaps="handled"` sends a tap on Back to the button without dismissing the keyboard, so a focused field never blurs and six commit-on-blur fields discarded their edits — commit-on-blur was the defect, and all six now write as you type, which is what invariant 1 asks for everywhere else. **The metric editor was rebuilt rather than patched a fourth time**: three fixes had each addressed a symptom of one cause, that the screen asked the user to compose name, type and unit, and `number` covers both a count and a load. **A picker built from `SELECT DISTINCT` can only be as clean as the data it is meant to constrain** — it offered every typo ever made. `FEATURES.md` §4.1 rewritten around four whole metrics, convertible until the first set is logged against them. Harness: `expo-sqlite` lives at `files/SQLite/`, a release APK never contacts Metro, and a migration added mid-session does not apply until a cold start because `useMigrations` runs on mount and Fast Refresh does not remount the root. |

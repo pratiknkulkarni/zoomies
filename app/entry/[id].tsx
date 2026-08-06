@@ -135,9 +135,24 @@ function Logging({ entryId }: { entryId: string }) {
         <Text className="flex-1 font-sans-semibold text-display text-text">
           {exercise.at(0)?.name ?? 'Exercise'}
         </Text>
-        <Text className="pt-sm font-mono text-metricSm text-text-2">
-          {formatSetCount(performed.length, entry.targetSets)}
-        </Text>
+        {/*
+          The figure alone said nothing. With a target it read `4 / 3` and
+          without one it was a lone `0` floating beside the exercise name —
+          FEATURES.md §7.1 gets away with the bare `2 / 4` on the session list
+          because a column of them reads as a column, and this screen has no
+          such context. The §2.4 label supplies the noun without changing the
+          figure, so the session list stays exactly as specified.
+
+          `Sets done` rather than `Sets`: with a target the figure reads `4 / 3`
+          and the bare noun still left which number was which unsaid — done, or
+          outstanding, or planned.
+        */}
+        <View className="items-end pt-sm">
+          <Text className="font-mono text-metricSm text-text-2">
+            {formatSetCount(performed.length, entry.targetSets)}
+          </Text>
+          <SectionLabel>Sets done</SectionLabel>
+        </View>
       </View>
 
       <View className="gap-sm px-xl pt-xl">
@@ -198,7 +213,7 @@ function Logging({ entryId }: { entryId: string }) {
   );
 }
 
-/** §2.4's label-and-value pairing. */
+/** DESIGN.md §6.7 — the label-and-value row. */
 function Row({
   label,
   value,
@@ -210,8 +225,12 @@ function Row({
 }) {
   return (
     <View className="flex-row gap-md">
-      <Text className="w-field text-caption text-text-3">{label}</Text>
-      <Text className={muted ? 'flex-1 text-bodySm text-text-3' : 'flex-1 text-body text-text'}>
+      <Text className="w-label text-caption text-text-3">{label}</Text>
+      <Text
+        className={
+          muted ? 'flex-1 text-bodySm text-text-3' : 'flex-1 text-body text-text'
+        }
+      >
         {value}
       </Text>
     </View>

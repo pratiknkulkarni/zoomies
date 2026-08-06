@@ -2,7 +2,7 @@ import { and, asc, eq, inArray, isNotNull, isNull } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 
 import { db } from '../client';
-import { exerciseMetrics, exercises } from '../schema';
+import { exerciseMetrics, exercises, setMetricValues } from '../schema';
 
 /**
  * Reads for the exercise library. Every function returns a query builder, not
@@ -111,6 +111,61 @@ export function allLiveExercises() {
 /** Keys the result of `allLiveExercises` by id. */
 export function indexExercisesById(rows: Exercise[]): Map<string, Exercise> {
   return new Map(rows.map((exercise) => [exercise.id, exercise]));
+}
+
+/**
+ * Every `family` in use, for the picker on the exercise form.
+ *
+ * Offering what exists is what stops `Push-up`, `push up` and `Push Ups`
+ * becoming three families that never group together — `suggestedExercises`
+ * matches on the exact string, so a typo silently costs a suggestion rather
+ * than failing loudly.
+ *
+ * Archived and inactive rows count. A family is still in use even if nothing
+ * active belongs to it, and offering it is how an exercise gets put back into
+ * one.
+ */
+export function distinctFamilies() {
+  return db
+    .selectDistinct({ value: exercises.family })
+    .from(exercises)
+    .where(and(alive, isNotNull(exercises.family)))
+    .orderBy(asc(exercises.family));
+}
+
+/**
+ * Metrics that something has been logged against, so the editor knows which
+ * ones can still change what they measure.
+ *
+ * Rooted at `set_metric_values`, so logging the first set locks its metric live
+ * rather than on the next visit. `exercise_metric_id` is indexed.
+ *
+ * **Soft-deleted values count.** A deleted set's rows stay on disk and go into
+ * the Phase 10 export, so converting the metric would silently reinterpret them
+ * there — a 30-second hold reappearing as 30kg. The stricter rule costs only
+ * the case of a metric whose sets were all deleted, where removing it and
+ * adding another still works.
+ */
+export function metricsWithValues() {
+  return db
+    .selectDistinct({ metricId: setMetricValues.exerciseMetricId })
+    .from(setMetricValues);
+}
+
+/** Keys `metricsWithValues` for lookup while rendering rows. */
+export function toMetricIdSet(rows: { metricId: string }[]): Set<string> {
+  return new Set(rows.map((row) => row.metricId));
+}
+
+/**
+ * `selectDistinct` on a nullable column types as `(string | null)[]` even
+ * behind an `IS NOT NULL`, since the type comes from the schema rather than
+ * from the predicate. This is the one place that narrowing happens.
+ */
+export function toOptions(rows: { value: string | null }[]): string[] {
+  return rows
+    .map((row) => row.value)
+    .filter((value): value is string => value !== null);
 }
 
 /** One exercise, for the detail screen. Includes archived; excludes deleted. */

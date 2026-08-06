@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { Input } from '@/components/ui/input';
 import { NumericField } from '@/components/ui/numeric-field';
 import { SectionLabel } from '@/components/ui/section-label';
@@ -10,7 +11,6 @@ import { logSet, type SetValueInput } from '@/db/mutations/sets';
 import type { ExerciseMetric } from '@/db/queries/exercises';
 import { tapSaved, tapTargetReached } from '@/lib/haptics';
 import { toNullableFloat } from '@/lib/parse';
-import { cn } from '@/lib/utils';
 
 /**
  * Recording one set (FEATURES.md §7.2).
@@ -21,9 +21,14 @@ import { cn } from '@/lib/utils';
  * stopwatch later — every exercise is loggable now rather than some waiting a
  * phase.
  *
- * Nothing is required (§4.1). A set with every field blank still records that
- * the effort happened, which is the difference between an unrecorded value and
- * a value of zero.
+ * **Nothing is required per metric** (§4.1) — log reps without the load and the
+ * load simply goes unrecorded, which is not the same as a load of zero. But a
+ * set has to record *something*, so Save is disabled until one field holds a
+ * value or `to_failure` is on.
+ *
+ * `to_failure` alone is enough. "I went to failure and did not count" is a real
+ * observation; an untouched form submitted by a stray tap is not, and it used
+ * to produce a set reading `Recorded` with nothing behind it.
  */
 export function SetLog({
   entryId,
@@ -58,8 +63,17 @@ export function SetLog({
           typeof next === 'function' ? next(current[metricId] ?? '') : next,
       }));
 
+  /**
+   * Whitespace is not a value, so it trims first — a space typed into a field
+   * would otherwise arm the button and then save nothing, since
+   * `toNullableFloat` reads it as not recorded.
+   */
+  const recordsSomething =
+    toFailure ||
+    metrics.some((metric) => (draft[metric.id] ?? '').trim().length > 0);
+
   const save = () => {
-    if (saving) {
+    if (saving || !recordsSomething) {
       return;
     }
     setSaving(true);
@@ -100,7 +114,6 @@ export function SetLog({
               value={draft[metric.id] ?? ''}
               onChangeText={set(metric.id)}
               accessibilityLabel={metric.name}
-              placeholder="—"
             />
           </View>
         ) : (
@@ -124,32 +137,26 @@ export function SetLog({
         §4.2 — a flag on the set, not a metric. Eight clean reps and eight
         grinding reps are different data, and every exercise can say so.
 
-        Carried by the same chip treatment as the metric type selector, rather
-        than a ghost button sized to its own text: §3.1 makes `muted` the
-        inactive fill, and a control this easy to miss is the wrong thing to
-        put on a screen used with tired hands.
+        A pill sized to its own text, not a full-width block. It was the same
+        48-tall full-width shape as `Save set` directly beneath it, so two
+        controls of very different weight competed on the screen that matters
+        most. Still a 48 touch target — this is read at a glance with tired
+        hands — but no longer shaped like the main action.
       */}
-      <Pressable
-        accessibilityRole="switch"
-        accessibilityState={{ checked: toFailure }}
-        accessibilityLabel="To failure"
-        onPress={() => setToFailure((current) => !current)}
-        className={cn(
-          'h-control items-center justify-center rounded-button',
-          toFailure ? 'border border-border bg-surface' : 'bg-muted',
-        )}
-      >
-        <Text
-          className={cn(
-            'text-body',
-            toFailure ? 'font-sans-semibold text-text' : 'text-text-2',
-          )}
-        >
-          To failure
-        </Text>
-      </Pressable>
+      <View className="flex-row">
+        <Chip
+          label="To failure"
+          selected={toFailure}
+          onPress={() => setToFailure((current) => !current)}
+          role="switch"
+        />
+      </View>
 
-      <Button variant="primary" disabled={saving} onPress={save}>
+      <Button
+        variant="primary"
+        disabled={saving || !recordsSomething}
+        onPress={save}
+      >
         <Text>Save set</Text>
       </Button>
     </View>

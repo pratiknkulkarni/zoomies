@@ -33,7 +33,10 @@ export default function EditExerciseScreen() {
 
   return (
     <Screen bleed>
-      <ScrollView contentContainerClassName="pb-3xl">
+      <ScrollView
+        contentContainerClassName="pb-3xl"
+        keyboardShouldPersistTaps="handled"
+      >
         <BackButton />
 
         {!exercise ? (

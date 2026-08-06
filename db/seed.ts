@@ -16,11 +16,18 @@ const SEED_VERSION = '1';
 type SeedMetric = {
   name: string;
   type: 'number' | 'duration' | 'notes';
-  unit: string;
+  unit: string | null;
 };
 
-/** Reps first means reps is the primary metric and drives the logging UI. */
-const REPS: SeedMetric = { name: 'Reps', type: 'number', unit: 'reps' };
+/**
+ * Reps first means reps is the primary metric and drives the logging UI.
+ *
+ * **No unit.** `Reps` is the name, so a `reps` unit under it says the same word
+ * twice — which is how it read in the metric editor, as two fields wanting the
+ * same answer. `formatSetValues` and `formatTarget` both fall back to the
+ * metric's name, so a set still reads `9 reps` with nothing stored.
+ */
+const REPS: SeedMetric = { name: 'Reps', type: 'number', unit: null };
 /** Added load — weight on top of bodyweight, never absolute. */
 const LOAD: SeedMetric = { name: 'Added load', type: 'number', unit: 'kg' };
 const HOLD: SeedMetric = { name: 'Hold', type: 'duration', unit: 's' };
@@ -45,49 +52,49 @@ type SeedExercise = {
  */
 const CATALOGUE: SeedExercise[] = [
   // pull_up
-  { name: 'Pull-Up', family: 'pull_up', isActive: true, metrics: [REPS, LOAD] },
-  { name: 'Chin-Up', family: 'pull_up', isActive: true, metrics: [REPS, LOAD] },
+  { name: 'Pull-Up', family: 'Pull-up', isActive: true, metrics: [REPS, LOAD] },
+  { name: 'Chin-Up', family: 'Pull-up', isActive: true, metrics: [REPS, LOAD] },
   {
     name: 'Archer Pull-Up',
-    family: 'pull_up',
+    family: 'Pull-up',
     isActive: false,
     metrics: [REPS],
   },
   {
     name: 'One-Arm Pull-Up (Assisted)',
-    family: 'pull_up',
+    family: 'Pull-up',
     isActive: false,
     metrics: [REPS],
   },
-  { name: 'Muscle-Up', family: 'pull_up', isActive: false, metrics: [REPS] },
+  { name: 'Muscle-Up', family: 'Pull-up', isActive: false, metrics: [REPS] },
 
   // row
-  { name: 'Ring Row', family: 'row', isActive: true, metrics: [REPS] },
+  { name: 'Ring Row', family: 'Row', isActive: true, metrics: [REPS] },
   {
     name: 'Ring Row (Feet Elevated)',
-    family: 'row',
+    family: 'Row',
     isActive: false,
     metrics: [REPS],
   },
-  { name: 'Front Lever Row', family: 'row', isActive: false, metrics: [REPS] },
+  { name: 'Front Lever Row', family: 'Row', isActive: false, metrics: [REPS] },
 
   // dip
-  { name: 'Ring Dip', family: 'dip', isActive: true, metrics: [REPS, LOAD] },
-  { name: 'Dip', family: 'dip', isActive: true, metrics: [REPS, LOAD] },
+  { name: 'Ring Dip', family: 'Dip', isActive: true, metrics: [REPS, LOAD] },
+  { name: 'Dip', family: 'Dip', isActive: true, metrics: [REPS, LOAD] },
   {
     name: 'Ring Dip (Turned Out)',
-    family: 'dip',
+    family: 'Dip',
     isActive: false,
     metrics: [REPS],
   },
-  { name: 'Bulgarian Dip', family: 'dip', isActive: false, metrics: [REPS] },
+  { name: 'Bulgarian Dip', family: 'Dip', isActive: false, metrics: [REPS] },
 
   // push_up
-  { name: 'Push-Up', family: 'push_up', isActive: true, metrics: [REPS] },
-  { name: 'Ring Push-Up', family: 'push_up', isActive: false, metrics: [REPS] },
+  { name: 'Push-Up', family: 'Push-up', isActive: true, metrics: [REPS] },
+  { name: 'Ring Push-Up', family: 'Push-up', isActive: false, metrics: [REPS] },
   {
     name: 'Pseudo Planche Push-Up',
-    family: 'push_up',
+    family: 'Push-up',
     isActive: false,
     metrics: [REPS],
   },
@@ -95,50 +102,50 @@ const CATALOGUE: SeedExercise[] = [
   // support_hold
   {
     name: 'Ring Support Hold',
-    family: 'support_hold',
+    family: 'Support hold',
     isActive: true,
     metrics: [HOLD],
   },
   {
     name: 'Ring Support Hold (Turned Out)',
-    family: 'support_hold',
+    family: 'Support hold',
     isActive: false,
     metrics: [HOLD],
   },
 
   // l_sit
-  { name: 'L-Sit', family: 'l_sit', isActive: true, metrics: [HOLD] },
-  { name: 'L-Sit (Tuck)', family: 'l_sit', isActive: false, metrics: [HOLD] },
-  { name: 'V-Sit', family: 'l_sit', isActive: false, metrics: [HOLD] },
+  { name: 'L-Sit', family: 'L-sit', isActive: true, metrics: [HOLD] },
+  { name: 'L-Sit (Tuck)', family: 'L-sit', isActive: false, metrics: [HOLD] },
+  { name: 'V-Sit', family: 'L-sit', isActive: false, metrics: [HOLD] },
 
   // front_lever — the progressions named in FEATURES.md §3.3
   {
     name: 'Front Lever (Tuck)',
-    family: 'front_lever',
+    family: 'Front lever',
     isActive: true,
     metrics: [HOLD],
   },
   {
     name: 'Front Lever (Advanced Tuck)',
-    family: 'front_lever',
+    family: 'Front lever',
     isActive: false,
     metrics: [HOLD],
   },
   {
     name: 'Front Lever (One Leg)',
-    family: 'front_lever',
+    family: 'Front lever',
     isActive: false,
     metrics: [HOLD],
   },
   {
     name: 'Front Lever (Straddle)',
-    family: 'front_lever',
+    family: 'Front lever',
     isActive: false,
     metrics: [HOLD],
   },
   {
     name: 'Front Lever (Full)',
-    family: 'front_lever',
+    family: 'Front lever',
     isActive: false,
     metrics: [HOLD],
   },
@@ -146,50 +153,50 @@ const CATALOGUE: SeedExercise[] = [
   // back_lever
   {
     name: 'Back Lever (Tuck)',
-    family: 'back_lever',
+    family: 'Back lever',
     isActive: true,
     metrics: [HOLD],
   },
   {
     name: 'Back Lever (Advanced Tuck)',
-    family: 'back_lever',
+    family: 'Back lever',
     isActive: false,
     metrics: [HOLD],
   },
   {
     name: 'Back Lever (Straddle)',
-    family: 'back_lever',
+    family: 'Back lever',
     isActive: false,
     metrics: [HOLD],
   },
   {
     name: 'Back Lever (Full)',
-    family: 'back_lever',
+    family: 'Back lever',
     isActive: false,
     metrics: [HOLD],
   },
 
   // handstand
-  { name: 'Handstand', family: 'handstand', isActive: true, metrics: [HOLD] },
+  { name: 'Handstand', family: 'Handstand', isActive: true, metrics: [HOLD] },
   {
     name: 'Handstand (Wall)',
-    family: 'handstand',
+    family: 'Handstand',
     isActive: false,
     metrics: [HOLD],
   },
   {
     name: 'Ring Handstand',
-    family: 'handstand',
+    family: 'Handstand',
     isActive: false,
     metrics: [HOLD],
   },
 
   // hspu
-  { name: 'Handstand Push-Up', family: 'hspu', isActive: true, metrics: [REPS] },
-  { name: 'Pike Push-Up', family: 'hspu', isActive: true, metrics: [REPS] },
+  { name: 'Handstand Push-Up', family: 'Handstand push-up', isActive: true, metrics: [REPS] },
+  { name: 'Pike Push-Up', family: 'Handstand push-up', isActive: true, metrics: [REPS] },
   {
     name: 'Handstand Push-Up (Wall)',
-    family: 'hspu',
+    family: 'Handstand push-up',
     isActive: false,
     metrics: [REPS],
   },
@@ -197,29 +204,29 @@ const CATALOGUE: SeedExercise[] = [
   // squat
   {
     name: 'Pistol Squat',
-    family: 'squat',
+    family: 'Squat',
     isActive: true,
     metrics: [REPS, LOAD],
   },
   {
     name: 'Pistol Squat (Assisted)',
-    family: 'squat',
+    family: 'Squat',
     isActive: false,
     metrics: [REPS],
   },
-  { name: 'Shrimp Squat', family: 'squat', isActive: false, metrics: [REPS] },
+  { name: 'Shrimp Squat', family: 'Squat', isActive: false, metrics: [REPS] },
 
   // core_hang
   {
     name: 'Hanging Leg Raise',
-    family: 'core_hang',
+    family: 'Core hang',
     isActive: true,
     metrics: [REPS],
   },
-  { name: 'Toes-to-Bar', family: 'core_hang', isActive: false, metrics: [REPS] },
+  { name: 'Toes-to-Bar', family: 'Core hang', isActive: false, metrics: [REPS] },
   {
     name: 'Windshield Wiper',
-    family: 'core_hang',
+    family: 'Core hang',
     isActive: false,
     metrics: [REPS],
   },
