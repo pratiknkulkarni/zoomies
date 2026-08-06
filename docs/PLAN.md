@@ -114,9 +114,36 @@
 > compiler, 47 unit tests and bundle contents only; the phone was locked or
 > dozing on every attempt. **Smoke test E6, K2, L2, L4 and L6 remain
 > unanswered**, and E6 — clearing rest must read `No rest timer`, never
-> `0s rest` — now sits in the code path the blur fix rewrote.
+> `0s rest` — now sits in the code path the blur fix rewrote. E6 is since
+> retired: the rest timer is cut and the column dropped.
 >
-> **Next: Phase 5 — Timers.**
+> **Phase 5 — Timers. Closed 6 Aug 2026**, branch `phase-5-timers`.
+> `lib/timers.ts` written test-first, the rest timer cut before it was built,
+> and the hold timer shipped.
+>
+> **The rest timer is cut** (`FEATURES.md` §15). A countdown pushing you back to
+> the bar works against an unhurried two-hour session. It took
+> `expo-notifications` with it — the scheduling, cancelling and
+> deliver-to-a-killed-app machinery was the largest part of the phase — and it
+> settled a problem the phase would otherwise have had to solve, since an entry
+> could no longer find its slot unambiguously once one exercise was allowed to
+> appear twice in a template. Migration 0003 drops `rest_seconds`.
+>
+> **All exit criteria verified on the Pixel 7a.** The countdown beeps at zero,
+> records the set at the target and resets for the next; stopping early records
+> what was actually held; the hairline track fills; leaving mid-hold records
+> nothing. Criterion 2 is met by 66 unit tests, including the ninety-second
+> background gap — confirmed on device, where backgrounding advances the figure
+> by the real elapsed time rather than losing it. Criterion 3 retired with the
+> rest timer.
+>
+> **A hold longer than its target cannot be logged from the timer.** Recording
+> at zero and continuing past zero cannot both be true; §8 records the trade,
+> and §7.3's inline set edit covers it.
+>
+> **Still unanswered from the follow-ups round:** smoke test K2, L2, L4 and L6.
+>
+> **Next: Phase 6 — Completion Flow & Quick Log.**
 
 Update this block when a phase closes. It is the first thing read at the start
 of a session.
@@ -588,3 +615,4 @@ before installing.
 | Aug 2026 | Phase 3 built. `FEATURES.md` §5 amended — templates live on Home, templates themselves do not reorder, and deleting one takes its slots. `renumber` extracted to `db/mutations/ordering.ts` now that two tables carry a user-arranged `display_order`. `lib/parse.ts` added: an empty field is null, `0` is zero, and the rest-timer criterion is exactly that distinction. Harness note: Metro serves a stale route tree after a route file moves, presenting as a blank screen with no JS error. |
 | Aug 2026 | Phase 4 built. Targets snapshotted onto `exercise_entries` at session start, which makes "editing a template never rewrites history" true by construction. `expo-keep-awake` and `expo-haptics` added — both native, so the dev client needed a full rebuild. Two harness lessons: `adb input tap` returns on injection rather than on handling, so the force-quit race cannot be scripted; and screenshot byte size is a useless readiness signal next to `uiautomator dump` matched on app text. |
 | Aug 2026 | Phase 4 follow-ups, from a full smoke test on a physical Pixel 7a. Three lessons worth keeping. **Fixing the keyboard caused a data-loss bug**: `keyboardShouldPersistTaps="handled"` sends a tap on Back to the button without dismissing the keyboard, so a focused field never blurs and six commit-on-blur fields discarded their edits — commit-on-blur was the defect, and all six now write as you type, which is what invariant 1 asks for everywhere else. **The metric editor was rebuilt rather than patched a fourth time**: three fixes had each addressed a symptom of one cause, that the screen asked the user to compose name, type and unit, and `number` covers both a count and a load. **A picker built from `SELECT DISTINCT` can only be as clean as the data it is meant to constrain** — it offered every typo ever made. `FEATURES.md` §4.1 rewritten around four whole metrics, convertible until the first set is logged against them. Harness: `expo-sqlite` lives at `files/SQLite/`, a release APK never contacts Metro, and a migration added mid-session does not apply until a cold start because `useMigrations` runs on mount and Fast Refresh does not remount the root. |
+| Aug 2026 | Phase 5 built, and the rest timer cut before it was. A countdown pushing you back to the bar works against an unhurried two-hour session; that removed `expo-notifications` entirely and settled a problem the phase would otherwise have had to solve, since `exercise_entries` has no `rest_seconds` and an entry could no longer find its slot unambiguously once one exercise was allowed to appear twice in a template. Migration 0003 drops the column. `lib/timers.ts` is pure with `now` as a parameter throughout, which is what makes "returning after ninety seconds shows the correct elapsed time" a unit test rather than a wait. An interval repaints but never accumulates. Recording at zero was chosen knowing it caps a hold at its target — the two cannot both be true, and §7.3's inline edit covers the rest. Harness note: `expo-audio` is absent from React Native's autolinking manifest and ungreppable in `classes.dex`, but so is `expo-haptics`, which works; `expo-modules-autolinking resolve` is what answers that question. |
