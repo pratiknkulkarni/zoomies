@@ -234,13 +234,10 @@ Expect: the template row now reads something like `3 × 8 reps · 60s rest`.
 **Observed:**
 FINE 
 
-**E6.** Open another slot and set the rest to zero — clear the field entirely,
-not `0`.
-
-Expect: it reads `No rest timer`, not `0s rest`. This distinction matters:
-handstand practice should not be interrupted by a countdown.
-
-**Observed:**
+**E6.** ~~Rest timer null-versus-zero.~~ **Retired.** The rest timer is cut
+(`FEATURES.md` §15) and `rest_seconds` is dropped by migration 0003, so there is
+nothing left to check here. The null-versus-zero rule it tested is invariant 2
+and still holds everywhere else — it lives in `lib/parse.ts` and its tests now.
 
 **E7.** Set a slot's target sets but no target value.
 

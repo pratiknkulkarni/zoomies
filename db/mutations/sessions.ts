@@ -31,11 +31,6 @@ const liveEntry = isNull(exerciseEntries.deletedAt);
  * entry keeps its own copy of `target_sets`, `target_metric_id` and
  * `target_value`.
  *
- * **`rest_seconds` is deliberately not copied.** It has no column on the entry
- * because it is not history — it configures a timer that only exists while the
- * session runs, so Phase 5 reads it live from the slot. Nothing about a
- * completed session depends on it.
- *
  * The template's name is copied onto the session so history still reads as
  * `Rings` after the template is renamed or deleted.
  */

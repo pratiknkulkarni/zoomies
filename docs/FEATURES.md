@@ -328,11 +328,8 @@ for a single session. Nothing about a target belongs on `exercises`.
 | `display_order` | Position in the session |
 | `target_sets` | Nullable. Null = no target; counter shows completed only |
 | `target_metric_id` + `target_value` | Nullable. e.g. 8 reps, or 30 seconds |
-| `rest_seconds` | Default **60**. Editable per slot. Nullable = no rest timer |
 
-**`rest_seconds` being nullable does the work a logging-mode flag would have
-done.** Ring support holds get a rest timer. Handstand practice can have none, so
-short repeated attempts are not interrupted by a countdown.
+A slot carries **no rest setting** — the rest timer is cut (§15).
 
 ### 5.2 Operations
 
@@ -479,24 +476,35 @@ screen.
 
 ---
 
-## 8. Timers
+## 8. The Hold Timer
 
-Two, both optional.
+One timer, for duration exercises. There is no rest timer (§15).
 
-**Work timer** — for duration exercises. Populates the duration metric. Manual
-entry always possible.
+It appears when the **primary metric is a duration** — the same rule §7.2 uses
+to decide the logging UI, so nothing extra configures it. Manual entry stays
+available: a hold can always be typed instead.
 
-**Rest timer** — starts automatically after saving a set when the slot has
-`rest_seconds`. Default 60 seconds, editable per template slot. Pausable,
-skippable, restartable. Never blocks interaction.
+**With a duration target**, it counts **down** from the target. At zero it
+sounds, buzzes, records the set at the target value and resets for the next one.
+Tapping Stop earlier records what was actually held and resets the same way. So
+three 30-second holds are three taps.
+
+**With no target**, it counts **up** from zero and Stop records what it reads.
+
+Start, pause and stop throughout.
+
+**A hold longer than its target cannot be logged from the timer** — recording at
+zero is what makes the set hands-free, and the two cannot both be true. Beating
+a target means editing the set afterwards, which §7.3 already allows inline.
+This is a deliberate trade, not an oversight.
 
 ### 8.1 Correctness Rules
 
-- Timers derive from a **start timestamp**, never accumulated `setInterval`
+- Timing derives from a **start timestamp**, never accumulated `setInterval`
   ticks. Returning after 90 seconds in another app shows the correct elapsed
-  time.
-- Starting a rest timer schedules a **local notification** for its end time. It
-  fires even if the application is suspended or killed.
+  time. An interval may drive repainting; it may never accumulate.
+- Leaving the exercise mid-hold discards the running timer and records nothing.
+  You have stopped holding, and nothing that was ever a set is lost.
 - `expo-keep-awake` is active for the duration of a session.
 
 ---
@@ -665,6 +673,7 @@ Not built in v1. Recorded so the schema does not preclude them.
 | Weighted rope interval matrix | §4.3 | One exercise's metric config, not a subsystem |
 | Proof-of-work heatmap | §4.4 | Gamification the design notes ban by name; nags on rest days |
 | Fatigue / tendon load index | §4.5 | Prescribes rather than records; edges into medical claims; an invented risk number is worse than body signal |
+| **Rest timer** | Considered Aug 2026, cut before Phase 5 | A countdown that pushes you back to the bar works against the way this app is actually used — an unhurried two-hour session, one exercise at a time, at your own pace. Removed `expo-notifications` with it, and with that the scheduling, cancelling and deliver-to-a-killed-app machinery that was the largest part of the phase. `rest_seconds` dropped from `template_slots` by migration 0003 |
 | Rating metric type | `reuirements_two.md` §8.6 | Removed by decision |
 | Selection metric type | §8.6 | No remaining use case once progressions are names |
 | Per-exercise doodles | Considered Aug 2026 | Twenty illustrations that must look like one hand drew them, for no functional gain. Reintroducing requires amending `DESIGN.md` |

@@ -8,7 +8,7 @@ import { Text } from '@/components/ui/text';
 import { moveSlot, removeSlot } from '@/db/mutations/templates';
 import type { Exercise, ExerciseMetric } from '@/db/queries/exercises';
 import type { TemplateSlot } from '@/db/queries/templates';
-import { formatSlotTarget } from '@/lib/format';
+import { formatTarget } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const UpIcon = iconWithClassName(ChevronUp);
@@ -122,7 +122,7 @@ function SlotRow({
           {name}
         </Text>
         <Text className="pt-xs text-caption text-text-2">
-          {formatSlotTarget(slot, targetMetric)}
+          {formatTarget(slot, targetMetric)}
         </Text>
       </Pressable>
 

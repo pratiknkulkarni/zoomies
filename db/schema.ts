@@ -132,12 +132,6 @@ export const templateSlots = sqliteTable(
       () => exerciseMetrics.id,
     ),
     targetValue: real('target_value'),
-    /**
-     * Nullable on purpose — this does the work a logging-mode flag would have
-     * done. Null means no rest timer, so handstand practice is not interrupted
-     * by a countdown (FEATURES.md §5.1).
-     */
-    restSeconds: integer('rest_seconds').default(60),
     ...lifecycle,
   },
   (t) => [

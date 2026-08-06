@@ -273,8 +273,7 @@ starts from one.
 
 - Template list; create, rename, delete
 - Slots: add an exercise, remove, reorder
-- Per slot: `target_sets`, `target_metric_id` + `target_value`, `rest_seconds`
-  defaulting to 60 and nullable for no rest timer
+- Per slot: `target_sets`, `target_metric_id` + `target_value`
 
 **Creates:** `db/queries/templates.ts`, `db/mutations/templates.ts`,
 `app/template/`
@@ -282,7 +281,11 @@ starts from one.
 **Exit criteria**
 
 1. **DoD 1** — create a template with exercises and targets.
-2. A slot with `rest_seconds` null saves and reads back as null, not 0.
+2. ~~A slot with `rest_seconds` null saves and reads back as null, not 0.~~
+   **Retired in Phase 5** with the rest timer (`FEATURES.md` §15); the column is
+   dropped by migration 0003. It passed when it applied. The null-versus-zero
+   rule it tested is invariant 2 and still holds everywhere else — `lib/parse.ts`
+   and its tests are where it lives now.
 
 ---
 
@@ -340,24 +343,28 @@ worth getting right on their own.
 - `lib/timers.ts` **written test-first** — elapsed time derived from a start
   timestamp, pause accumulation, resume after backgrounding. Never accumulated
   `setInterval` ticks.
-- Work timer: the duration-primary logging UI. One large button, tap to start,
+- Hold timer: the duration-primary logging UI. One large card, tap to start,
   tap to stop, set recorded, tap again for the next. Fifteen holds in three
   minutes with no typing. Manual entry stays possible.
-- Rest timer: starts automatically after saving a set when the slot has
-  `rest_seconds`. Pausable, skippable, restartable. Never blocks interaction.
-- Starting a rest timer schedules a **local notification** for its end time so
-  it fires with the app suspended or killed
-- `expo-audio` cues; haptic on completion
+  - With a duration target it counts **down** and records at zero, so a set of
+    three holds is three taps. Without one it counts up.
+- `expo-audio` beep and a haptic when a target is reached
 
-**Creates:** `lib/timers.ts`, `lib/timers.test.ts`, `lib/notifications.ts`,
-`features/session/` timer components
+**The rest timer is cut** (`FEATURES.md` §15), and `expo-notifications` with it.
+A countdown pushing you back to the bar works against an unhurried two-hour
+session. That removes the scheduling, cancelling and deliver-to-a-killed-app
+machinery, which was the largest and most failure-prone part of this phase.
+
+**Creates:** `lib/timers.ts`, `lib/timers.test.ts`, `lib/sound.ts`,
+`features/session/hold-timer.tsx`
 
 **Exit criteria**
 
 1. **DoD 4** — time a hold without leaving the application.
 2. Unit tests pass, including a 90-second background gap resuming at the correct
    elapsed time.
-3. The rest notification fires with the application killed.
+3. ~~The rest notification fires with the application killed.~~ **Retired with
+   the rest timer.**
 4. The timer conveys state through the figure and a hairline track — never a
    colour change.
 
