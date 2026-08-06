@@ -41,7 +41,10 @@ export default function SlotScreen() {
 
   return (
     <Screen bleed>
-      <ScrollView contentContainerClassName="pb-3xl">
+      <ScrollView
+        contentContainerClassName="pb-3xl"
+        keyboardShouldPersistTaps="handled"
+      >
         <BackButton />
 
         {!slot ? (
