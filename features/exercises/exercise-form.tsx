@@ -2,7 +2,7 @@ import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { View } from 'react-native';
 
 import { Input } from '@/components/ui/input';
-import { OptionField } from '@/components/ui/option-field';
+import { PickerField } from '@/components/ui/picker-field';
 import { SectionLabel } from '@/components/ui/section-label';
 import { distinctFamilies, toOptions } from '@/db/queries/exercises';
 
@@ -52,12 +52,13 @@ export function ExerciseForm({
         />
       </View>
 
-      <OptionField
+      <PickerField
         label="Family"
         value={values.family}
         onChange={set('family')}
         options={families}
-        placeholder="Front lever"
+        placeholder="Choose a family"
+        emptyLabel="No family"
         accessibilityLabel="Family"
       />
 

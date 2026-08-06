@@ -134,21 +134,39 @@ export function distinctFamilies() {
 }
 
 /**
- * Every `unit` in use, for the picker in the metric editor. Same job as
- * `distinctFamilies` — `kg`, `KG` and `Kg` are one unit written three ways, and
- * units are display-only (FEATURES.md §4.1) so nothing catches the divergence.
+ * Units already in use, paired with the metric type that uses them.
  *
- * Rooted at `exercise_metrics`, so adding a metric with a new unit refreshes
- * the list that offers it.
+ * The type comes back so the picker can offer `kg` to a number and `s` to a
+ * duration without running a query per row — `lib/units.ts` holds the canonical
+ * list and this supplies only what the user has added beyond it. Offering
+ * everything regardless of type is how a duration could be measured in
+ * kilograms.
+ *
+ * Rooted at `exercise_metrics`, so a unit created on one exercise is offered on
+ * the next without a refetch.
  */
 export function distinctUnits() {
   return db
-    .selectDistinct({ value: exerciseMetrics.unit })
+    .selectDistinct({
+      value: exerciseMetrics.unit,
+      type: exerciseMetrics.type,
+    })
     .from(exerciseMetrics)
     .where(
       and(isNull(exerciseMetrics.deletedAt), isNotNull(exerciseMetrics.unit)),
     )
     .orderBy(asc(exerciseMetrics.unit));
+}
+
+/** The units in use for one metric type, narrowed of the nulls the schema types in. */
+export function unitsInUse(
+  rows: { value: string | null; type: ExerciseMetric['type'] }[],
+  type: ExerciseMetric['type'],
+): string[] {
+  return rows
+    .filter((row) => row.type === type)
+    .map((row) => row.value)
+    .filter((value): value is string => value !== null);
 }
 
 /**

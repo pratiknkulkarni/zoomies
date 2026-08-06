@@ -136,7 +136,7 @@ module.exports = {
         // §6.2 — a stepper is square against the field it flanks. Larger than
         // the §9 floor on purpose: tapping one must never need precision.
         field: '56px',
-        // §6.6 — the label column of a label-and-value row. Wide enough that
+        // §6.7 — the label column of a label-and-value row. Wide enough that
         // `Last time` sets on one line; `field` was borrowed for this and is
         // 6px short of it.
         label: '72px',

@@ -15,6 +15,13 @@
       "when": 1785996998930,
       "tag": "0001_readable_families",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1786004950084,
+      "tag": "0002_canonical_units",
+      "breakpoints": true
     }
   ]
 }

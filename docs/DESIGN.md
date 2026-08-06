@@ -264,7 +264,24 @@ between rows, not cards — dense lists use bordered rows.
 One `heading` line naming the space, one `bodySm` line in `text-2`, one
 `secondary` button. No illustration. No apology. Never "Nothing here yet."
 
-### 6.6 Label-and-Value Row
+### 6.6 Picker Sheet
+
+For choosing one of a growing list of short values — an exercise's family, a
+metric's unit. Rises from the bottom, `bg` fill, `sheet` radius on the top two
+corners only, over a scrim of `text` at 40%.
+
+Contents in order: the §2.4 label, a search field, the options as `body` rows at
+the §9 touch minimum with a hairline between them, and a `secondary` Cancel. The
+chosen row is marked by weight and a check, never by colour alone (§9).
+
+**The field that opens it is not a text input.** It is a `control`-height row in
+`muted` showing the current value with a chevron. Typing happens only inside the
+sheet, only to filter, and creating a new value takes a deliberate press — free
+text is what lets `push up` and `Push-Up` both exist.
+
+A wrapping row of chips was tried first. It does not survive a list that grows.
+
+### 6.7 Label-and-Value Row
 
 The §2.4 pairing as a row: a fixed 72px label column in `caption` over `text-3`,
 the value filling the rest. The column is fixed so that stacked rows align down
@@ -273,7 +290,7 @@ a common edge; 72 is the width at which `Last time` sets on one line.
 Do not borrow the 56px numeric-field width for this. It is 6px short, which
 wraps the label rather than clipping it — a failure that looks like a choice.
 
-### 6.7 Placeholders
+### 6.8 Placeholders
 
 An input's placeholder describes what to type. It is never `—`.
 

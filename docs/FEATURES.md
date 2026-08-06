@@ -259,7 +259,19 @@ needed.
   stray tap is not, and it used to produce a set reading `Recorded` with nothing
   behind it.
 - Unrecorded values are null, never zero.
-- Units are declared per metric (`reps`, `kg`, `s`) and are display-only.
+- Units are declared per metric, are display-only, and are **chosen rather than
+  typed**. The canonical set is `kg` for a number and `s` for a duration
+  (invariant 9); anything else is a deliberate addition made through the
+  picker's Create row, and is offered everywhere afterwards. The list is scoped
+  by metric type, so a duration is never offered kilograms.
+- **A count has no unit.** `Reps` is the metric's name, so a `reps` unit beneath
+  it repeats the same word — which is how it read on screen. Display falls back
+  to the metric's name, so a set still reads `9 reps` with nothing stored.
+
+  Free text was the original design and it produced `rep`, `reps`, `s` and
+  `secund` side by side. A picker built from `SELECT DISTINCT unit` then kept
+  them alive, because a list derived from the data can only be as clean as the
+  data.
 
 ### 4.2 Set-Level Flag
 

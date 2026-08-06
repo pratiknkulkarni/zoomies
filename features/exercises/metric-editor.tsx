@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { iconWithClassName } from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
-import { OptionField } from '@/components/ui/option-field';
+import { PickerField } from '@/components/ui/picker-field';
 import { SectionLabel } from '@/components/ui/section-label';
 import { Separator } from '@/components/ui/separator';
 import { Text } from '@/components/ui/text';
@@ -17,8 +17,9 @@ import {
   moveMetric,
   updateMetric,
 } from '@/db/mutations/exercises';
-import { distinctUnits, toOptions } from '@/db/queries/exercises';
+import { distinctUnits, unitsInUse } from '@/db/queries/exercises';
 import type { ExerciseMetric } from '@/db/queries/exercises';
+import { unitsFor } from '@/lib/units';
 import { toNullable } from '@/features/exercises/exercise-form';
 import { formatMetricRole, formatMetricType } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -54,10 +55,9 @@ export function MetricEditor({
   /**
    * Read once here and passed down rather than queried inside each row — a
    * `useLiveQuery` per metric would be one subscription per row for a list that
-   * is identical in all of them.
+   * is identical in all of them. Each row narrows it to its own type.
    */
   const { data: unitRows } = useLiveQuery(distinctUnits());
-  const units = toOptions(unitRows);
 
   /**
    * The form is closed until asked for, and closes again after adding.
@@ -121,7 +121,7 @@ export function MetricEditor({
           <MetricRow
             exerciseId={exerciseId}
             metric={metric}
-            units={units}
+            units={unitsFor(metric.type, unitsInUse(unitRows, metric.type))}
             isFirst={index === 0}
             isLast={index === metrics.length - 1}
           />
@@ -175,14 +175,19 @@ export function MetricEditor({
             </View>
           </View>
 
-          <OptionField
+          {/*
+            Scoped to the type chosen above, so a duration is never offered
+            kilograms. A count needs no unit at all — `Reps` is the metric's
+            name — which is what `No unit` is for, and it is the default.
+          */}
+          <PickerField
             label="Unit"
             value={unit}
             onChange={setUnit}
-            options={units}
-            placeholder="reps, kg, s"
+            options={unitsFor(type, unitsInUse(unitRows, type))}
+            placeholder="No unit"
+            emptyLabel="No unit"
             accessibilityLabel="Unit of the new metric"
-            autoCapitalize="none"
           />
 
           {/*
@@ -255,9 +260,9 @@ function MetricRow({
   };
 
   /**
-   * Takes the value rather than reading state, because choosing a chip has to
-   * commit immediately and `setUnit` has not landed at that point. Blur passes
-   * the state it already has.
+   * Takes the value rather than reading state: choosing from the sheet commits
+   * immediately and `setUnit` has not landed at that point. There is no blur to
+   * wait for any more — picking is an explicit act, unlike typing.
    */
   const commitUnitValue = (raw: string) => {
     const next = toNullable(raw);
@@ -302,19 +307,17 @@ function MetricRow({
         />
       </View>
 
-      <OptionField
+      <PickerField
         label="Unit"
         value={unit}
-        onChange={setUnit}
-        onSelect={(next) => {
+        onChange={(next) => {
           setUnit(next);
           commitUnitValue(next);
         }}
-        onBlur={() => commitUnitValue(unit)}
         options={units}
-        placeholder="reps, kg, s"
+        placeholder="No unit"
+        emptyLabel="No unit"
         accessibilityLabel={`Unit of ${metric.name}`}
-        autoCapitalize="none"
       />
 
       <View className="flex-row items-center gap-md">

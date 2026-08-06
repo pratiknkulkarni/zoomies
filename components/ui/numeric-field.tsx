@@ -25,7 +25,7 @@ function NumericField({
   accessibilityLabel,
   keyboardType = 'number-pad',
   /**
-   * DESIGN.md §6.7 — empty, not `—`. The dash means *not recorded* on display
+   * DESIGN.md §6.8 — empty, not `—`. The dash means *not recorded* on display
    * surfaces; in an input it claims a value was withheld rather than awaited,
    * and here it also puts a third dash-shaped glyph between two steppers, only
    * one of which is a button.

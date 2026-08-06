@@ -142,12 +142,16 @@ function Logging({ entryId }: { entryId: string }) {
           because a column of them reads as a column, and this screen has no
           such context. The §2.4 label supplies the noun without changing the
           figure, so the session list stays exactly as specified.
+
+          `Sets done` rather than `Sets`: with a target the figure reads `4 / 3`
+          and the bare noun still left which number was which unsaid — done, or
+          outstanding, or planned.
         */}
         <View className="items-end pt-sm">
           <Text className="font-mono text-metricSm text-text-2">
             {formatSetCount(performed.length, entry.targetSets)}
           </Text>
-          <SectionLabel>Sets</SectionLabel>
+          <SectionLabel>Sets done</SectionLabel>
         </View>
       </View>
 
@@ -209,7 +213,7 @@ function Logging({ entryId }: { entryId: string }) {
   );
 }
 
-/** DESIGN.md §6.6 — the label-and-value row. */
+/** DESIGN.md §6.7 — the label-and-value row. */
 function Row({
   label,
   value,

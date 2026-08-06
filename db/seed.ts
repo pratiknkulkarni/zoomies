@@ -16,11 +16,18 @@ const SEED_VERSION = '1';
 type SeedMetric = {
   name: string;
   type: 'number' | 'duration' | 'notes';
-  unit: string;
+  unit: string | null;
 };
 
-/** Reps first means reps is the primary metric and drives the logging UI. */
-const REPS: SeedMetric = { name: 'Reps', type: 'number', unit: 'reps' };
+/**
+ * Reps first means reps is the primary metric and drives the logging UI.
+ *
+ * **No unit.** `Reps` is the name, so a `reps` unit under it says the same word
+ * twice — which is how it read in the metric editor, as two fields wanting the
+ * same answer. `formatSetValues` and `formatTarget` both fall back to the
+ * metric's name, so a set still reads `9 reps` with nothing stored.
+ */
+const REPS: SeedMetric = { name: 'Reps', type: 'number', unit: null };
 /** Added load — weight on top of bodyweight, never absolute. */
 const LOAD: SeedMetric = { name: 'Added load', type: 'number', unit: 'kg' };
 const HOLD: SeedMetric = { name: 'Hold', type: 'duration', unit: 's' };
