@@ -41,7 +41,7 @@ export function TargetRow({
         onPress={() => setEditing(true)}
         className="min-h-touch flex-row items-center gap-md active:bg-muted"
       >
-        <Text className="w-field text-caption text-text-3">Target</Text>
+        <Text className="w-label text-caption text-text-3">Target</Text>
         <Text className="flex-1 text-body text-text">
           {formatTarget(entry, targetMetric)}
         </Text>
@@ -97,7 +97,6 @@ function Override({
           value={sets}
           onChangeText={setSets}
           accessibilityLabel="Target sets"
-          placeholder="—"
         />
       </View>
 
@@ -112,7 +111,6 @@ function Override({
           accessibilityLabel="Target value"
           step={metric?.unit === 'kg' ? 2.5 : 1}
           keyboardType={metric?.unit === 'kg' ? 'decimal-pad' : 'number-pad'}
-          placeholder="—"
         />
       </View>
 

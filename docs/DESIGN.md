@@ -264,6 +264,28 @@ between rows, not cards — dense lists use bordered rows.
 One `heading` line naming the space, one `bodySm` line in `text-2`, one
 `secondary` button. No illustration. No apology. Never "Nothing here yet."
 
+### 6.6 Label-and-Value Row
+
+The §2.4 pairing as a row: a fixed 72px label column in `caption` over `text-3`,
+the value filling the rest. The column is fixed so that stacked rows align down
+a common edge; 72 is the width at which `Last time` sets on one line.
+
+Do not borrow the 56px numeric-field width for this. It is 6px short, which
+wraps the label rather than clipping it — a failure that looks like a choice.
+
+### 6.7 Placeholders
+
+An input's placeholder describes what to type. It is never `—`.
+
+`—` means **not recorded** and belongs to display surfaces alone — a logged set
+missing a value, an exercise with no family. Putting it in an empty input claims
+a value was withheld rather than that one is awaited, and in the numeric field it
+also puts a third dash-shaped glyph between two stepper buttons.
+
+A placeholder must set on one line at 360dp. A multiline `TextInput` is sized by
+its content and not by its placeholder, so a second line is clipped rather than
+grown into.
+
 ---
 
 ## 7. Motion

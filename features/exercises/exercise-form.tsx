@@ -56,10 +56,17 @@ export function ExerciseForm({
 
       <View className="gap-xs">
         <SectionLabel>Notes</SectionLabel>
+        {/*
+          One line at 360dp. React Native sizes a multiline TextInput from its
+          content, never its placeholder, so an empty field stays at
+          `min-h-field` and anything that wraps to a second line is clipped
+          mid-word. Raising the minimum instead would leave every empty notes
+          field oversized for the sake of text that vanishes on first keypress.
+        */}
         <Input
           value={values.notes}
           onChangeText={set('notes')}
-          placeholder="Cues, setup, anything worth remembering"
+          placeholder="Cues and setup"
           multiline
           className="h-auto min-h-field py-md"
         />

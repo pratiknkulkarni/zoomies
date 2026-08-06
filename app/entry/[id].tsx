@@ -198,7 +198,7 @@ function Logging({ entryId }: { entryId: string }) {
   );
 }
 
-/** §2.4's label-and-value pairing. */
+/** DESIGN.md §6.6 — the label-and-value row. */
 function Row({
   label,
   value,
@@ -210,8 +210,12 @@ function Row({
 }) {
   return (
     <View className="flex-row gap-md">
-      <Text className="w-field text-caption text-text-3">{label}</Text>
-      <Text className={muted ? 'flex-1 text-bodySm text-text-3' : 'flex-1 text-body text-text'}>
+      <Text className="w-label text-caption text-text-3">{label}</Text>
+      <Text
+        className={
+          muted ? 'flex-1 text-bodySm text-text-3' : 'flex-1 text-body text-text'
+        }
+      >
         {value}
       </Text>
     </View>

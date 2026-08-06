@@ -100,7 +100,6 @@ export function SetLog({
               value={draft[metric.id] ?? ''}
               onChangeText={set(metric.id)}
               accessibilityLabel={metric.name}
-              placeholder="—"
             />
           </View>
         ) : (
