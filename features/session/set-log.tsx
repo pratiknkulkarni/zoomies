@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { Input } from '@/components/ui/input';
 import { NumericField } from '@/components/ui/numeric-field';
 import { SectionLabel } from '@/components/ui/section-label';
@@ -10,7 +11,6 @@ import { logSet, type SetValueInput } from '@/db/mutations/sets';
 import type { ExerciseMetric } from '@/db/queries/exercises';
 import { tapSaved, tapTargetReached } from '@/lib/haptics';
 import { toNullableFloat } from '@/lib/parse';
-import { cn } from '@/lib/utils';
 
 /**
  * Recording one set (FEATURES.md §7.2).
@@ -137,30 +137,20 @@ export function SetLog({
         §4.2 — a flag on the set, not a metric. Eight clean reps and eight
         grinding reps are different data, and every exercise can say so.
 
-        Carried by the same chip treatment as the metric type selector, rather
-        than a ghost button sized to its own text: §3.1 makes `muted` the
-        inactive fill, and a control this easy to miss is the wrong thing to
-        put on a screen used with tired hands.
+        A pill sized to its own text, not a full-width block. It was the same
+        48-tall full-width shape as `Save set` directly beneath it, so two
+        controls of very different weight competed on the screen that matters
+        most. Still a 48 touch target — this is read at a glance with tired
+        hands — but no longer shaped like the main action.
       */}
-      <Pressable
-        accessibilityRole="switch"
-        accessibilityState={{ checked: toFailure }}
-        accessibilityLabel="To failure"
-        onPress={() => setToFailure((current) => !current)}
-        className={cn(
-          'h-control items-center justify-center rounded-button',
-          toFailure ? 'border border-border bg-surface' : 'bg-muted',
-        )}
-      >
-        <Text
-          className={cn(
-            'text-body',
-            toFailure ? 'font-sans-semibold text-text' : 'text-text-2',
-          )}
-        >
-          To failure
-        </Text>
-      </Pressable>
+      <View className="flex-row">
+        <Chip
+          label="To failure"
+          selected={toFailure}
+          onPress={() => setToFailure((current) => !current)}
+          role="switch"
+        />
+      </View>
 
       <Button
         variant="primary"

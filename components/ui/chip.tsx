@@ -16,16 +16,25 @@ export function Chip({
   selected,
   onPress,
   className,
+  role = 'radio',
 }: {
   label: string;
   selected: boolean;
   onPress: () => void;
   className?: string;
+  /**
+   * `radio` for one of several, `switch` for a flag that stands alone —
+   * `to_failure` is the latter, and the two announce differently to a screen
+   * reader even though they look identical.
+   */
+  role?: 'radio' | 'switch';
 }) {
   return (
     <Pressable
-      accessibilityRole="radio"
-      accessibilityState={{ selected }}
+      accessibilityRole={role}
+      accessibilityState={
+        role === 'switch' ? { checked: selected } : { selected }
+      }
       accessibilityLabel={label}
       onPress={onPress}
       className={cn(

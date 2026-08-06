@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { iconWithClassName } from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
 import { NumericField } from '@/components/ui/numeric-field';
@@ -17,7 +18,6 @@ import type { ExerciseMetric } from '@/db/queries/exercises';
 import type { LoggedSet, SetMetricValue } from '@/db/queries/sessions';
 import { formatSetValues } from '@/lib/format';
 import { fromNullableNumber, toNullableFloat } from '@/lib/parse';
-import { cn } from '@/lib/utils';
 
 const DeleteIcon = iconWithClassName(Trash2);
 
@@ -184,25 +184,16 @@ function Editor({
         ),
       )}
 
-      <Pressable
-        accessibilityRole="switch"
-        accessibilityState={{ checked: failed }}
-        accessibilityLabel="To failure"
-        onPress={() => setFailed((current) => !current)}
-        className={cn(
-          'h-control items-center justify-center rounded-button',
-          failed ? 'border border-border bg-bg' : 'bg-muted',
-        )}
-      >
-        <Text
-          className={cn(
-            'text-body',
-            failed ? 'font-sans-semibold text-text' : 'text-text-2',
-          )}
-        >
-          To failure
-        </Text>
-      </Pressable>
+      {/* The same control as in `SetLog`, so correcting a set looks like
+          logging one. */}
+      <View className="flex-row">
+        <Chip
+          label="To failure"
+          selected={failed}
+          onPress={() => setFailed((current) => !current)}
+          role="switch"
+        />
+      </View>
 
       <View className="flex-row gap-md">
         <View className="flex-1">
