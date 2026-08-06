@@ -65,10 +65,10 @@ describe('formatMetricSummary', () => {
   it('joins several metrics in the order given', () => {
     expect(
       formatMetricSummary([
-        { name: 'Reps', unit: 'reps' },
-        { name: 'Added load', unit: 'kg' },
+        { name: 'Hold', unit: 's' },
+        { name: 'Cues', unit: null },
       ]),
-    ).toBe('Reps · Added load (kg)');
+    ).toBe('Hold (s) · Cues');
   });
 
   // The caller passes this straight to `ListRow`, which omits the subtitle
@@ -86,8 +86,8 @@ describe('formatMetricDetail', () => {
   });
 
   it('says only what the others measure', () => {
-    expect(formatMetricDetail({ type: 'number', unit: 'kg' }, false)).toBe(
-      'kilograms',
+    expect(formatMetricDetail({ type: 'duration', unit: 's' }, false)).toBe(
+      'seconds',
     );
   });
 

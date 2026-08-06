@@ -173,7 +173,7 @@ function Editor({ slot }: { slot: TemplateSlot }) {
                 value={value}
                 onChangeText={changeValue}
                 accessibilityLabel="Target value"
-                keyboardType="decimal-pad"
+                keyboardType="number-pad"
                 placeholder="No target"
                 editable={metricId !== null}
               />

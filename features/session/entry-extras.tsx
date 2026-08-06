@@ -109,8 +109,6 @@ function Override({
           onChangeText={setValue}
           unit={metric?.unit}
           accessibilityLabel="Target value"
-          step={metric?.unit === 'kg' ? 2.5 : 1}
-          keyboardType={metric?.unit === 'kg' ? 'decimal-pad' : 'number-pad'}
         />
       </View>
 

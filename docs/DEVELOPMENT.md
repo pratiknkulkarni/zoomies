@@ -798,3 +798,48 @@ and grepping `classes.dex` for its class names found nothing — but neither did
 autolinking; Expo modules link through their own mechanism. The answer comes
 from `npx expo-modules-autolinking resolve -p android --json`, which lists all
 25 of them.
+
+---
+
+## Added load removed
+
+Branch: `remove-added-load`
+
+Cut because this is a bodyweight app: a weighted variant is its own exercise,
+which is already how progressions are modelled (§3.1), so the metric was there
+by habit rather than by need. Removing it also takes out the last fractional
+value and the last unit that was not seconds — `NumericField` no longer needs a
+`step` or a `keyboardType` prop, and both are gone rather than left with no
+callers.
+
+**Soft delete, not deletion.** Migration 0004 sets `deleted_at` exactly as
+`deleteMetric` does, so every `set_metric_values` row survives and Phase 8 can
+still name what it is reading. Restoring the feature is one preset entry plus
+clearing a flag.
+
+Three things the migration has to do beyond the obvious, all verified against a
+scratch database:
+
+- **Renumber.** An exercise ordered `[Added load, Hold]` would otherwise keep
+  Hold at `display_order` 1, leaving the primary metric — the one that decides
+  the logging UI, and now whether the timer appears at all — pointing at a row
+  that no longer exists. Every survivor is renumbered to its rank within its
+  exercise.
+- **Clear targets on `template_slots`.** A target whose metric is gone renders
+  as a value with nothing to measure it in. Metric and value clear together,
+  the same rule `setSlotTarget` enforces.
+- **Clear targets on `exercise_entries` too.** The snapshot means an
+  in-progress session carries its own copy. It keeps its sets; it just stops
+  claiming a target it can no longer describe.
+
+Matched on `unit = 'kg'` rather than on the name, since the name is editable and
+a renamed load metric still stores kilograms.
+
+`presetFor` now returns undefined for a kg metric and `describeMeasure` falls
+back to `a number in kg`. That path is tested: a database predating the removal,
+or one restored from an export, must describe such a metric rather than break on
+it.
+
+`CLAUDE.md` invariant 9 amended — it said "units are kg (added load) and
+seconds", which this contradicts. Flagged before the work rather than left to
+disagree with the code.

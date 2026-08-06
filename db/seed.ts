@@ -28,8 +28,6 @@ type SeedMetric = {
  * metric's name, so a set still reads `9 reps` with nothing stored.
  */
 const REPS: SeedMetric = { name: 'Reps', type: 'number', unit: null };
-/** Added load — weight on top of bodyweight, never absolute. */
-const LOAD: SeedMetric = { name: 'Added load', type: 'number', unit: 'kg' };
 const HOLD: SeedMetric = { name: 'Hold', type: 'duration', unit: 's' };
 
 type SeedExercise = {
@@ -52,8 +50,8 @@ type SeedExercise = {
  */
 const CATALOGUE: SeedExercise[] = [
   // pull_up
-  { name: 'Pull-Up', family: 'Pull-up', isActive: true, metrics: [REPS, LOAD] },
-  { name: 'Chin-Up', family: 'Pull-up', isActive: true, metrics: [REPS, LOAD] },
+  { name: 'Pull-Up', family: 'Pull-up', isActive: true, metrics: [REPS] },
+  { name: 'Chin-Up', family: 'Pull-up', isActive: true, metrics: [REPS] },
   {
     name: 'Archer Pull-Up',
     family: 'Pull-up',
@@ -79,8 +77,8 @@ const CATALOGUE: SeedExercise[] = [
   { name: 'Front Lever Row', family: 'Row', isActive: false, metrics: [REPS] },
 
   // dip
-  { name: 'Ring Dip', family: 'Dip', isActive: true, metrics: [REPS, LOAD] },
-  { name: 'Dip', family: 'Dip', isActive: true, metrics: [REPS, LOAD] },
+  { name: 'Ring Dip', family: 'Dip', isActive: true, metrics: [REPS] },
+  { name: 'Dip', family: 'Dip', isActive: true, metrics: [REPS] },
   {
     name: 'Ring Dip (Turned Out)',
     family: 'Dip',
@@ -206,7 +204,7 @@ const CATALOGUE: SeedExercise[] = [
     name: 'Pistol Squat',
     family: 'Squat',
     isActive: true,
-    metrics: [REPS, LOAD],
+    metrics: [REPS],
   },
   {
     name: 'Pistol Squat (Assisted)',
