@@ -49,8 +49,8 @@ export function ExerciseForm({
         <Input
           value={values.family}
           onChangeText={set('family')}
-          placeholder="front_lever"
-          autoCapitalize="none"
+          placeholder="Front lever"
+          autoCapitalize="sentences"
         />
       </View>
 

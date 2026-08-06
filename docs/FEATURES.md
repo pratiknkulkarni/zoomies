@@ -160,25 +160,30 @@ All built-in exercises are seeded into the `exercises` table. Only a subset is
 Roughly fifteen are active on first launch. The rest sit dormant and cost
 nothing.
 
+**`family` is human-readable text, not a slug.** It is shown to the user on the
+exercise detail screen and groups the Suggested section; nothing joins on it and
+no code branches on its value. It was seeded as `pull_up` and displayed
+verbatim, underscores and all. Sentence case, per `DESIGN.md` §2.5.
+
 **Active on first launch:**
 
 | Exercise | Family | Metrics |
 |---|---|---|
-| Pull-Up | pull_up | reps, load |
-| Chin-Up | pull_up | reps, load |
-| Ring Row | row | reps |
-| Ring Dip | dip | reps, load |
-| Dip | dip | reps, load |
-| Push-Up | push_up | reps |
-| Ring Support Hold | support_hold | duration |
-| L-Sit | l_sit | duration |
-| Front Lever (Tuck) | front_lever | duration |
-| Back Lever (Tuck) | back_lever | duration |
-| Handstand | handstand | duration |
-| Handstand Push-Up | hspu | reps |
-| Pike Push-Up | hspu | reps |
-| Pistol Squat | squat | reps, load |
-| Hanging Leg Raise | core_hang | reps |
+| Pull-Up | Pull-up | reps, load |
+| Chin-Up | Pull-up | reps, load |
+| Ring Row | Row | reps |
+| Ring Dip | Dip | reps, load |
+| Dip | Dip | reps, load |
+| Push-Up | Push-up | reps |
+| Ring Support Hold | Support hold | duration |
+| L-Sit | L-sit | duration |
+| Front Lever (Tuck) | Front lever | duration |
+| Back Lever (Tuck) | Back lever | duration |
+| Handstand | Handstand | duration |
+| Handstand Push-Up | Handstand push-up | reps |
+| Pike Push-Up | Handstand push-up | reps |
+| Pistol Squat | Squat | reps, load |
+| Hanging Leg Raise | Core hang | reps |
 
 ### 3.3 Exercise Suggestions
 
