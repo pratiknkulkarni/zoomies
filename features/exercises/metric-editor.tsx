@@ -167,18 +167,26 @@ function MetricRow({
 }) {
   const [name, setName] = useState(metric.name);
 
-  const commitName = () => {
-    const trimmed = name.trim();
+  /**
+   * Written as you type, not on blur. Blur never fires when the screen is left
+   * with the field still focused, and `keyboardShouldPersistTaps="handled"`
+   * sends a tap on Back straight to the button without dismissing the keyboard
+   * — so a rename followed by Back wrote nothing.
+   */
+  const change = (next: string) => {
+    setName(next);
 
-    // A metric has to be called something. An emptied field reverts rather
-    // than writing a nameless row.
-    if (trimmed.length === 0) {
-      setName(metric.name);
-      return;
-    }
-
-    if (trimmed !== metric.name) {
+    // A metric has to be called something, so an empty field is held locally
+    // and never written. Blur puts the old name back.
+    const trimmed = next.trim();
+    if (trimmed.length > 0 && trimmed !== metric.name) {
       void updateMetric(metric.id, { name: trimmed });
+    }
+  };
+
+  const restoreIfEmptied = () => {
+    if (name.trim().length === 0) {
+      setName(metric.name);
     }
   };
 
@@ -205,8 +213,8 @@ function MetricRow({
         <SectionLabel>Name</SectionLabel>
         <Input
           value={name}
-          onChangeText={setName}
-          onBlur={commitName}
+          onChangeText={change}
+          onBlur={restoreIfEmptied}
           accessibilityLabel={`Name of ${metric.name}`}
           autoCapitalize="sentences"
         />

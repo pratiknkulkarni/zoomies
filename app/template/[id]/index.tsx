@@ -204,24 +204,31 @@ function StartButton({
 }
 
 /**
- * The name commits on blur rather than behind a Save button. Everything else on
- * this screen writes as you act on it, and one field is not a form.
+ * The name writes as you type rather than behind a Save button. Everything else
+ * on this screen writes as you act on it, and one field is not a form.
+ *
+ * **Not on blur.** Blur never fires when the screen is left with the field
+ * still focused, and `keyboardShouldPersistTaps="handled"` sends a tap on Back
+ * straight to the button without dismissing the keyboard first — so a rename
+ * followed by Back wrote nothing.
  */
 function Name({ template }: { template: Template }) {
   const [name, setName] = useState(template.name);
 
-  const commit = () => {
-    const trimmed = name.trim();
+  const change = (next: string) => {
+    setName(next);
 
-    // A template has to be called something. An emptied field reverts rather
-    // than writing a nameless row.
-    if (trimmed.length === 0) {
-      setName(template.name);
-      return;
-    }
-
-    if (trimmed !== template.name) {
+    // A template has to be called something, so an empty field is held locally
+    // and never written. Blur puts the old name back.
+    const trimmed = next.trim();
+    if (trimmed.length > 0 && trimmed !== template.name) {
       void renameTemplate(template.id, trimmed);
+    }
+  };
+
+  const restoreIfEmptied = () => {
+    if (name.trim().length === 0) {
+      setName(template.name);
     }
   };
 
@@ -230,8 +237,8 @@ function Name({ template }: { template: Template }) {
       <SectionLabel>Name</SectionLabel>
       <Input
         value={name}
-        onChangeText={setName}
-        onBlur={commit}
+        onChangeText={change}
+        onBlur={restoreIfEmptied}
         accessibilityLabel="Template name"
         autoCapitalize="words"
       />

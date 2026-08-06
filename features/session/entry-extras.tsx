@@ -144,12 +144,20 @@ function Override({
 export function EntryNotes({ entry }: { entry: ExerciseEntry }) {
   const [notes, setNotes] = useState(entry.notes ?? '');
 
-  const commit = () => {
-    const next = notes.trim().length > 0 ? notes.trim() : null;
+  /**
+   * Written as you type. Blur never fires when the screen is left with the
+   * field still focused, and this screen has kept
+   * `keyboardShouldPersistTaps="handled"` since Phase 4 — so a tap on Back went
+   * to the button without dismissing the keyboard, and the note was lost.
+   *
+   * A note written mid-session is exactly the thing invariant 1 exists for. One
+   * UPDATE per keystroke against local SQLite is cheaper than a lost note.
+   */
+  const change = (next: string) => {
+    setNotes(next);
 
-    if (next !== entry.notes) {
-      void setEntryNotes(entry.id, next);
-    }
+    const trimmed = next.trim();
+    void setEntryNotes(entry.id, trimmed.length > 0 ? trimmed : null);
   };
 
   return (
@@ -157,8 +165,7 @@ export function EntryNotes({ entry }: { entry: ExerciseEntry }) {
       <SectionLabel>Notes</SectionLabel>
       <Input
         value={notes}
-        onChangeText={setNotes}
-        onBlur={commit}
+        onChangeText={change}
         accessibilityLabel="Notes for this exercise"
         placeholder="How it felt, what to change"
         multiline
