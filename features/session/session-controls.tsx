@@ -4,12 +4,24 @@ import { Alert, View } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import {
-  completeSession,
   discardSession,
   pauseSession,
   resumeSession,
 } from '@/db/mutations/sessions';
 import type { Session } from '@/db/queries/sessions';
+
+/**
+ * Finishing goes through the review of §6.5 and §6.6 rather than writing
+ * `completed_at` on the spot.
+ *
+ * Both ways out of a session lead here — from inside it, and from the launch
+ * prompt's `Complete it now` — because an untrained exercise and a beaten
+ * target are worth the same look whichever route was taken. The screen there
+ * carries the only button that actually completes.
+ */
+function review(session: Session) {
+  router.push({ pathname: '/complete/[id]', params: { id: session.id } });
+}
 
 /**
  * Discarding throws away entries, sets and values for good — the one genuine
@@ -55,7 +67,7 @@ export function ResumePrompt({ session }: { session: Session }) {
           <Button
             variant="secondary"
             className="w-full"
-            onPress={() => void completeSession(session.id)}
+            onPress={() => review(session)}
           >
             <Text>Complete it now</Text>
           </Button>
@@ -96,10 +108,7 @@ export function SessionControls({ session }: { session: Session }) {
         <Text>{paused ? 'Resume training' : 'Pause'}</Text>
       </Button>
 
-      <Button
-        variant="primary"
-        onPress={() => void completeSession(session.id).then(() => router.back())}
-      >
+      <Button variant="primary" onPress={() => review(session)}>
         <Text>Finish session</Text>
       </Button>
 

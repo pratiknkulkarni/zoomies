@@ -44,27 +44,44 @@ export async function logSet(
   values: SetValueInput[],
   toFailure = false,
 ): Promise<string> {
-  return db.transaction(async (tx) => {
-    const existing = await liveSets(tx, entryId);
+  return db.transaction((tx) => logSetIn(tx, entryId, values, toFailure));
+}
 
-    const [created] = await tx
-      .insert(sets)
-      .values({
-        exerciseEntryId: entryId,
-        setIndex: existing.length,
-        toFailure,
-        performedAt: Date.now(),
-      })
-      .returning({ id: sets.id });
+/**
+ * The same write, inside a transaction someone else opened.
+ *
+ * A quick log creates its session, its entry and its set together or not at
+ * all, so it cannot call `logSet` — that would open a second transaction inside
+ * the first. Sharing the body rather than copying it is what makes exit
+ * criterion 4 true by construction: a quick log produces the same rows as a
+ * session because it runs the same code, not because two functions currently
+ * agree.
+ */
+export async function logSetIn(
+  tx: Transaction,
+  entryId: string,
+  values: SetValueInput[],
+  toFailure = false,
+): Promise<string> {
+  const existing = await liveSets(tx, entryId);
 
-    if (!created) {
-      throw new Error(`Failed to log a set against entry ${entryId}`);
-    }
+  const [created] = await tx
+    .insert(sets)
+    .values({
+      exerciseEntryId: entryId,
+      setIndex: existing.length,
+      toFailure,
+      performedAt: Date.now(),
+    })
+    .returning({ id: sets.id });
 
-    await writeValues(tx, created.id, values);
+  if (!created) {
+    throw new Error(`Failed to log a set against entry ${entryId}`);
+  }
 
-    return created.id;
-  });
+  await writeValues(tx, created.id, values);
+
+  return created.id;
 }
 
 /**

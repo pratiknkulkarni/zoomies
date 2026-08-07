@@ -34,6 +34,7 @@ export type TargetRaise = {
   entryId: string;
   slotId: string;
   name: string;
+  metricId: string;
   metric: { name: string; unit: string | null };
   /** What was trained against — the entry's snapshot, override included. */
   target: number;
@@ -262,6 +263,7 @@ async function collectRaises(
       entryId: entry.id,
       slotId: slot.id,
       name: entry.name,
+      metricId: entry.targetMetricId,
       metric,
       target: entry.targetValue,
       slotTarget: slot.targetValue,
