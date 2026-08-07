@@ -482,6 +482,8 @@ FINE, it's working.
 **K2.** Repeat K1 three or four more times, varying how fast you kill it.
 
 **Observed:**
+FINE. Repeated at varying speed, nothing lost. Invariant 1 is verified by a
+human thumb, which is the only way it could be.
 
 **K3.** Turn on airplane mode and use the app normally for a few minutes.
 
@@ -506,16 +508,21 @@ hand?
 least 48×48.
 
 **Observed:**
+Fine for now. Interface refinement is deferred until the app is functionally
+complete — L2 through L6 are answered on that basis, not because each was
+audited.
 
 **L3.** Does any screen feel cramped, or conversely too spread out?
 
 **Observed:**
+Fine for now — see L2.
 
 **L4.** The accent colour should appear in exactly three places in the whole
 app: the primary action button, a new-record marker, and filled dots in the
 seven-day row — the last two do not exist yet. Did you see it anywhere else?
 
 **Observed:**
+Fine for now — see L2. Not audited element by element.
 
 **L5.** How many taps from opening the app to logging your first set? Count
 them.
@@ -526,6 +533,9 @@ them.
 **L6.** Anything you expected to be able to do and could not?
 
 **Observed:**
+Nothing outstanding. Everything raised during the smoke test was either fixed in
+the Phase 4 follow-ups or is scheduled — completion flow and quick log are
+Phase 6.
 
 **L7.** Anything that annoyed you that has no section above?
 
