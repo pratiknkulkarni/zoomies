@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react-native';
 import { useMemo, type ReactNode } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 
+import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { iconWithClassName } from '@/components/ui/icon';
 import { ListRow } from '@/components/ui/list-row';
@@ -99,6 +100,24 @@ export default function HomeScreen() {
                 onPress: () => router.push('/template/new'),
               }}
             />
+          </View>
+        }
+        ListFooterComponent={
+          /*
+            §6.1 — training outside a session. It sits under the templates
+            rather than beside them because it is the exception: most training
+            starts from a plan, and five pull-ups in the evening does not.
+
+            `secondary`, so Home keeps to one primary button (DESIGN.md §10).
+          */
+          <View className="px-xl pt-2xl">
+            <Button
+              variant="secondary"
+              className="w-full"
+              onPress={() => router.push('/quick-log')}
+            >
+              <Text>Quick log</Text>
+            </Button>
           </View>
         }
       />
