@@ -33,6 +33,10 @@ const liveEntry = isNull(exerciseEntries.deletedAt);
  *
  * The template's name is copied onto the session so history still reads as
  * `Rings` after the template is renamed or deleted.
+ *
+ * `template_slot_id` is written alongside the snapshot but is not part of it —
+ * it says where the entry came from, so the raise prompt of §6.6 knows which
+ * slot a beaten target belongs to. Nothing reads a target through it.
  */
 export async function startFromTemplate(templateId: string): Promise<string> {
   return db.transaction(async (tx) => {
@@ -80,6 +84,7 @@ export async function startFromTemplate(templateId: string): Promise<string> {
         targetSets: slot.targetSets,
         targetMetricId: slot.targetMetricId,
         targetValue: slot.targetValue,
+        templateSlotId: slot.id,
         isAdHoc: false,
       });
     }

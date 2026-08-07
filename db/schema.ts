@@ -192,6 +192,22 @@ export const exerciseEntries = sqliteTable(
       () => exerciseMetrics.id,
     ),
     targetValue: real('target_value'),
+    /**
+     * Which slot this entry came from — **provenance, never a target source.**
+     *
+     * The targets above are the snapshot and stay the snapshot; reading a
+     * target through this column would undo invariant 5. It answers exactly one
+     * question, for the raise prompt of FEATURES.md §6.6: which slot should a
+     * beaten target be written back to. Matching on the exercise cannot answer
+     * it, because §5.2 lets one exercise fill two slots with different targets.
+     *
+     * Null for ad-hoc entries, ad-hoc sessions and quick logs — none of which
+     * has a plan to raise. Null again if the slot is later removed, which is
+     * the same answer.
+     */
+    templateSlotId: text('template_slot_id').references(() => templateSlots.id, {
+      onDelete: 'set null',
+    }),
     notes: text('notes'),
     /** Added mid-session; carries no target and leaves the template untouched. */
     isAdHoc: integer('is_ad_hoc', { mode: 'boolean' }).notNull().default(false),
