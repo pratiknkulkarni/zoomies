@@ -141,9 +141,46 @@
 > at zero and continuing past zero cannot both be true; §8 records the trade,
 > and §7.3's inline set edit covers it.
 >
-> **Still unanswered from the follow-ups round:** smoke test K2, L2, L4 and L6.
+> **The smoke test is closed.** K2 — the force-quit race repeated at varying
+> speed — passes on a human thumb, which is the only way it could. L2 through L6
+> are answered as fine for now, with interface refinement deferred until the
+> application is functionally complete; they are recorded as deferred rather
+> than audited, because that is what they are.
 >
-> **Next: Phase 6 — Completion Flow & Quick Log.**
+> **Phase 6 — Completion Flow & Quick Log. Built 7 Aug 2026**, branch
+> `phase-6-completion`. The review between the last set and history, the target
+> raise prompt, and quick log.
+>
+> **A raised target had nowhere to land.** §6.6 makes the prompt the only
+> mechanism by which a target increases, so it has to write to the template
+> slot — but an entry recorded the exercise and a snapshot of the targets and
+> never which slot it came from, and §5.2 lets one exercise fill two slots with
+> different targets. Matching on the exercise is a guess; matching on display
+> order breaks the first time a slot is reordered. Phase 5 met the same gap from
+> the other side when the rest timer was cut. Migration 0005 adds
+> `template_slot_id` as **provenance, not a target source** — nothing reads a
+> target through it, which is what keeps invariant 5 intact.
+>
+> `lib/completion.ts` holds the majority rule, pure and tested, for the reason
+> `lib/timers.ts` is pure: a rule that lives inside a query is a rule nobody can
+> test, and a raise firing on one lucky set would rewrite the program on the
+> strength of a fluke.
+>
+> **A raise may never be a lowering.** The prompt measures against what was
+> trained against, override included, but writes only when the best set also
+> beats what the slot currently says. §6.6 amended, along with §2 — which still
+> listed `rest_seconds`, missed by Phase 5's sweep.
+>
+> Quick log writes a session's rows through the same `logSetIn` the session
+> screen uses, so exit criterion 4 holds by construction rather than by two
+> functions currently agreeing.
+>
+> **Not yet verified on hardware.** The Pixel 7a dropped off wireless debugging
+> before the device pass. `tsc`, lint and 79 unit tests are green, and migration
+> 0005 is verified against a scratch database built from 0000 — the column lands
+> with its foreign key, ON DELETE SET NULL clears the link, and the entry
+> survives the slot that made it. **DoD 6, 7 and 8 remain unconfirmed on
+> device**, and the phase does not close until they are.
 
 Update this block when a phase closes. It is the first thing read at the start
 of a session.
@@ -616,4 +653,5 @@ before installing.
 | Aug 2026 | Phase 4 built. Targets snapshotted onto `exercise_entries` at session start, which makes "editing a template never rewrites history" true by construction. `expo-keep-awake` and `expo-haptics` added — both native, so the dev client needed a full rebuild. Two harness lessons: `adb input tap` returns on injection rather than on handling, so the force-quit race cannot be scripted; and screenshot byte size is a useless readiness signal next to `uiautomator dump` matched on app text. |
 | Aug 2026 | Phase 4 follow-ups, from a full smoke test on a physical Pixel 7a. Three lessons worth keeping. **Fixing the keyboard caused a data-loss bug**: `keyboardShouldPersistTaps="handled"` sends a tap on Back to the button without dismissing the keyboard, so a focused field never blurs and six commit-on-blur fields discarded their edits — commit-on-blur was the defect, and all six now write as you type, which is what invariant 1 asks for everywhere else. **The metric editor was rebuilt rather than patched a fourth time**: three fixes had each addressed a symptom of one cause, that the screen asked the user to compose name, type and unit, and `number` covers both a count and a load. **A picker built from `SELECT DISTINCT` can only be as clean as the data it is meant to constrain** — it offered every typo ever made. `FEATURES.md` §4.1 rewritten around four whole metrics, convertible until the first set is logged against them. Harness: `expo-sqlite` lives at `files/SQLite/`, a release APK never contacts Metro, and a migration added mid-session does not apply until a cold start because `useMigrations` runs on mount and Fast Refresh does not remount the root. |
 | Aug 2026 | Phase 5 built, and the rest timer cut before it was. A countdown pushing you back to the bar works against an unhurried two-hour session; that removed `expo-notifications` entirely and settled a problem the phase would otherwise have had to solve, since `exercise_entries` has no `rest_seconds` and an entry could no longer find its slot unambiguously once one exercise was allowed to appear twice in a template. Migration 0003 drops the column. `lib/timers.ts` is pure with `now` as a parameter throughout, which is what makes "returning after ninety seconds shows the correct elapsed time" a unit test rather than a wait. An interval repaints but never accumulates. Recording at zero was chosen knowing it caps a hold at its target — the two cannot both be true, and §7.3's inline edit covers the rest. Harness note: `expo-audio` is absent from React Native's autolinking manifest and ungreppable in `classes.dex`, but so is `expo-haptics`, which works; `expo-modules-autolinking resolve` is what answers that question. |
+| Aug 2026 | Phase 6 built. The phase turned on one thing the data model could not answer: a raised target has to write to a template slot, and an entry never recorded which slot it came from — the exercise cannot say, because one exercise may fill two slots with different targets. `template_slot_id` answers it as provenance only; reading a target through it would undo the snapshot that makes invariant 5 true. Two rules were sharpened by writing them down: a majority is strictly more than half and a tie is not a beat, and **a raise may never be a lowering**, so the write is gated on the slot's own figure rather than on the possibly-overridden target that was trained against. Quick log shares `logSetIn` with the session screen, which is what makes "the same row shapes" a property of the code rather than a claim about it. `FEATURES.md` §2 still listed `rest_seconds` — a phase's docs sweep can update the section it was thinking about and miss the one that merely mentions the thing. |
 | Aug 2026 | Added load removed (`FEATURES.md` §15). A weighted variant is its own exercise, which is how progressions are already modelled, so the metric was there by habit. It was also the last fractional value and the last unit that was not seconds, so `NumericField` lost its `step` and `keyboardType` props. Migration 0004 soft-deletes the metrics, renumbers the survivors so an exercise ordered `[Added load, Hold]` correctly promotes Hold to primary, and clears targets pointing at a load on both `template_slots` and `exercise_entries`. `set_metric_values` untouched. `CLAUDE.md` invariant 9 amended, since it named kg as a unit. |

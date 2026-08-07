@@ -843,3 +843,114 @@ it.
 `CLAUDE.md` invariant 9 amended — it said "units are kg (added load) and
 seconds", which this contradicts. Flagged before the work rather than left to
 disagree with the code.
+
+---
+
+## Phase 6 — Completion flow & quick log
+
+Branch `phase-6-completion`. Closes DoD 6, 7 and 8.
+
+A session could be finished but nothing looked at it. `Finish session` wrote
+`completed_at` and returned, so an exercise that was never trained entered
+history indistinguishable from one that was, and a target beaten on every set
+stayed where it was.
+
+### A raised target had nowhere to land
+
+This is the whole architectural content of the phase, and it was not visible
+from the specification.
+
+§6.6 makes the raise prompt **the only** mechanism by which a target increases.
+A raise therefore has to write to the template slot: the entry is history, and
+invariant 5 forbids rewriting it.
+
+But `exercise_entries` recorded the exercise and a snapshot of the targets, and
+never which slot it came from. §5.2 lets one exercise fill two slots in the same
+template with different targets — `formatSlotTally` exists for exactly that — so
+matching on the exercise is a guess, and matching on `display_order` breaks the
+first time a slot is reordered or removed. Phase 5 met the same gap from the
+other side when the rest timer was cut and an entry could no longer find its
+slot unambiguously.
+
+Migration 0005 adds `template_slot_id`, and the comment on it matters as much as
+the column: **provenance, not a target source.** Nothing reads a target through
+it. Doing so would resolve targets through the template at read time, which is
+precisely what the snapshot exists to prevent, and the failure would be silent —
+history quietly changing when a template was edited.
+
+Null for ad-hoc entries, ad-hoc sessions and quick logs. None of them has a plan
+to raise, so the absence of a link is the right answer rather than a missing
+one.
+
+### Two rules that only appeared when written down
+
+**A majority is strictly more than half.** `beats * 2 > total`, so two of four
+does not qualify. A tie is not a beat either — hitting the target is what the
+target is for, and raising on a tie would mean a target could only ever be
+exceeded or failed, never met. A set where the target's metric went unrecorded
+counts toward the total but never toward the beats: it happened, it just was not
+measured, and dropping it would let two measured sets out of five carry a raise.
+
+**A raise may never be a lowering.** The prompt measures against the entry's
+target, which is what was actually trained against and includes any in-session
+override (§7.4). But the write is gated on the **slot's** current figure.
+Someone who drops a target to 8 for a bad night and hits 10 has genuinely beaten
+what they trained against — and writing 10 over a template that still says 12
+would cut the program on the strength of a good session against an easier bar.
+
+Neither rule is in the original §6.6. Both are now.
+
+### Why `lib/completion.ts` is separate from the query
+
+Same reason `lib/timers.ts` is pure: the runner cannot open `expo-sqlite`
+(`PLAN.md` §4.3 is still open), so a rule living inside a query is a rule nobody
+can test. The majority rule is the part of this phase that can silently corrupt
+a training program, which makes it the part worth pinning to twelve tests.
+
+### Everything is written when it is decided
+
+The completion screen gathers nothing up for the final button. A raise is
+applied on tap, and the note is written as it is typed.
+
+The note is not on blur, and that is not a style preference:
+`keyboardShouldPersistTaps="handled"` means a tap on Finish reaches the button
+without dismissing the keyboard, so the field never blurs and the note would be
+destroyed by the very action meant to save it. That bug shipped once already,
+across six fields, and it was introduced by the fix for a different problem.
+
+Which is why `completeSession` lost its `notes` parameter rather than keeping an
+argument nobody passes. Phase 2 found two correct and unreachable exports; the
+lesson was to delete in the same commit that orphans them.
+
+### Quick log shares the write, not just the shape
+
+Exit criterion 4 says a quick log produces the same row shapes as a session.
+Two functions that happen to agree today satisfy that on the day it is checked
+and not afterwards, so `logSet`'s body is extracted as `logSetIn(tx, ...)` and
+both call it. A quick log needs its session, entry and set in one transaction,
+which is why it could not simply call `logSet` — that would open a second
+transaction inside the first.
+
+`SetLog` is not reused for the fields. It takes an entry id and writes through
+`logSet`; a quick log has no entry until it saves. Reshaping the most important
+screen in the application to serve the least important one is a worse trade than
+the duplication it would save.
+
+### Verification standing
+
+`tsc`, lint and 79 unit tests green. Migration 0005 verified against a scratch
+database built from 0000: the column lands with its foreign key, `ON DELETE SET
+NULL` clears the link, and the entry survives the slot that made it.
+
+**Not verified on hardware.** The Pixel 7a dropped off wireless debugging before
+the device pass, so DoD 6, 7 and 8 are unconfirmed and the phase is not closed.
+
+### Docs
+
+`FEATURES.md` §2 gained the column and a storage rule saying what it is not, and
+**lost `rest_seconds`** — Phase 5 dropped it from the schema and from §5.1 but
+not from the data-model block. A docs sweep updates the section it is thinking
+about and misses the one that merely mentions the thing.
+
+Also noted, not fixed: `FEATURES.md`'s change log stops at Phase 3. Phases 4 and
+5 amended the document without recording that they had.
