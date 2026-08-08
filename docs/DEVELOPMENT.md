@@ -1029,6 +1029,29 @@ template's name waiting for a button.
 
 ### Verification standing
 
-`tsc`, lint and 79 unit tests green. **Not yet verified on hardware** — the
-system-back path is the one that matters and it is exactly the one a compiler
-cannot check.
+`tsc`, lint and 79 unit tests green.
+
+**The slot screen is verified end to end on the Pixel 7a**, including the path a
+compiler cannot check. Typing into a field and pressing the **Android system
+back** raises `Save your changes?`; Cancel keeps the draft on screen; Discard
+returns to the template with the row still reading `No target` and nothing
+written; Save writes and navigates, and the pulled database shows
+`target_sets = 3` with the target still null. Leaving without editing goes
+straight back with no prompt. The add screen ends in `Done` and returns to the
+template.
+
+Note that the **first** system back press is consumed by the keyboard, as it is
+anywhere in Android. The guard sees the second. That is correct and worth
+knowing before testing it — a first press that appears to do nothing is the IME,
+not the hook.
+
+**Not verified on hardware:** the exercise editor's split, the metric rename
+reaching the guard, quick log's back, and the archive confirmation.
+
+Harness note: driving this with `adb shell input tap` on coordinates read from a
+`uiautomator` dump is only safe if the dump is re-read after every scroll. A
+stale dump put a tap on `Delete template` instead of `Add an exercise` — the
+confirmation added in this very phase is what caught it. Also: a dump taken too
+soon after a back press can catch a transient window and read as though the
+screen was left, which produced one entirely false failure before the sequence
+was re-run with a dump between each step.

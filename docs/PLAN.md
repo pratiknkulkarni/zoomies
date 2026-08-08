@@ -506,10 +506,17 @@ sentence, on the one screen whose job is to say which exercises were missed.
 **Exit criteria**
 
 1. Every screen that writes states how it is left, and the answer is the same
-   kind of answer everywhere.
+   kind of answer everywhere. — **met**, `FEATURES.md` §18.
 2. The Android system Back does what the on-screen control does, including any
-   confirmation.
+   confirmation. — **met and verified on device** for the slot screen: system
+   back raises the prompt, Cancel keeps the draft, Discard leaves the row
+   untouched in the database, Save writes and navigates.
 3. No screen both commits immediately and offers a Save that implies otherwise.
+   — **met**; verification of the exercise editor's split is outstanding.
+
+**Outstanding on hardware:** `SMOKE_TEST.md` P, Q, R and S — the exercise
+editor, the confirmations, quick log's back, and that the training notes still
+write as you type.
 
 ---
 

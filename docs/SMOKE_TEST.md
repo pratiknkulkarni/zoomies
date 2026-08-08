@@ -683,3 +683,92 @@ value is entered or `To failure` is on.
 
 **Observed:**
 - Working
+
+---
+
+# Phase 6a device pass — leaving a screen
+
+Sections M to O are closed. These cover what changed in 6a.
+
+**Already verified on device, no need to re-check:** the slot screen end to end
+(system back raises the prompt; Cancel keeps the draft; Discard writes nothing;
+Save writes and navigates; a clean exit does not prompt), and the add screen's
+`Done`.
+
+**Know this before testing:** the **first** system back press is eaten by the
+keyboard, as it is in any Android app. The guard sees the second. A first press
+that seems to do nothing is the keyboard closing, not a bug.
+
+## P. The exercise editor
+
+**P1.** Exercises → an exercise → Edit. Change the name, then press the system
+back.
+
+Expect: `Save your changes?` — Save, Discard, Cancel.
+
+**Observed:**
+
+**P2.** On the same screen, rename a **metric** below and press the system back
+without tapping its `Save name`.
+
+Expect: the same prompt. A rename is work typed and not kept, and the screen's
+guard is meant to know about it.
+
+**Observed:**
+
+**P3.** Add a metric, then press back **without** touching any field.
+
+Expect: **no prompt** — adding already wrote. The metric list ends in `Done`.
+
+**Observed:**
+
+**P4.** Does `Save details` still look like it owns the metric list below it?
+
+**Observed:**
+
+## Q. Confirmations
+
+**Q1.** Exercises → an exercise → Archive.
+
+Expect: a confirmation, matching Delete beside it. Same for Unarchive.
+
+**Observed:**
+
+**Q2.** A template's name — change it and press back.
+
+Expect: the prompt. The name is a draft; Start session, Add and Delete are not.
+
+**Observed:**
+
+## R. Quick log
+
+**R1.** Quick log → choose an exercise → type a value → **system back**.
+
+Expect: the prompt, and Discard returns to the **exercise list**, not Home.
+This is smoke test O3, which was the bug.
+
+**Observed:**
+
+**R2.** Quick log → choose an exercise → type nothing → system back.
+
+Expect: straight back to the exercise list, no prompt.
+
+**Observed:**
+
+## S. Training still writes as you type
+
+The exception in `FEATURES.md` §18. If either of these prompts, the exception
+has been broken.
+
+**S1.** In a session, open an exercise, type a note, force-quit, reopen.
+
+Expect: the note is there. **No prompt on leaving** — it was never a draft.
+
+**Observed:**
+
+**S2.** Finish a session, type a session note, force-quit before tapping Finish,
+reopen and resume.
+
+Expect: the note is there.
+
+**Observed:**
