@@ -589,6 +589,8 @@ never a dialog. `Finish session` sits right below it and works in one tap.
 
 **Observed:**
 
+UX - Not trained does appear but it's literally a list. I need to read through it one by one, it's a comma seaparated list. Perhaps we could display it as an actual list or something which makes it easier to look through? 
+
 **M2.** In the same review, type a session note, then force-quit before tapping
 Finish. Reopen, resume, finish again.
 
@@ -596,10 +598,13 @@ Expect: the note is still there. It is written as you type, not on the button.
 
 **Observed:**
 
+It's there, that's working. 
+
 **M3.** An exercise short of its target — 2 of 3 sets — must **not** be warned
 about. Cutting a set on purpose is normal.
 
 **Observed:**
+It's there, that's working. 
 
 ## N. Raising a target
 
@@ -612,18 +617,21 @@ Then check the **template** reads `3 × 10 reps`, and the **completed session**
 still reads `3 × 8` — history does not move.
 
 **Observed:**
+This is a nice touch and yes, it's working. 
 
 **N2.** Same target of 8, but log 10, 7, 6 — beaten once out of three.
 
 Expect: **no prompt.** A majority means more than half.
 
 **Observed:**
+- Working
 
 **N3.** Log 8, 8, 8 against a target of 8.
 
 Expect: **no prompt.** A tie is not a beat.
 
 **Observed:**
+Worked
 
 **N4 — the raise must never lower.** Template target 12. Start the session, tap
 the target and override it down to 8 for this session. Log 10, 10, 10. Finish.
@@ -632,6 +640,7 @@ Expect: **no prompt.** You beat what you trained against, but the template still
 says 12 and writing 10 would cut the program.
 
 **Observed:**
+Worked
 
 **N5.** Put the same exercise in one template **twice** with different targets —
 say `3 × 8` to open and `2 × 5` to finish. Beat the first and not the second.
@@ -641,6 +650,8 @@ This is the case the whole phase was built around.
 
 **Observed:**
 
+Working
+
 ## O. Quick log
 
 **O1 — DoD 8.** From Home, with no session running, tap `Quick log`, search for
@@ -649,6 +660,7 @@ Pull-Up, enter 5, tap `Log it`.
 Expect: it saves and returns. No session screen ever appears.
 
 **Observed:**
+- Working
 
 **O2.** Start a session, leave it running, and quick-log something else.
 
@@ -656,6 +668,7 @@ Expect: it works, and Home still offers to resume the session. A quick log is
 not a session.
 
 **Observed:**
+- Working
 
 **O3.** Open Quick log, choose an exercise, then tap Back.
 
@@ -663,7 +676,10 @@ Expect: back to the exercise list, not off the screen.
 
 **Observed:**
 
+BUG - Quick log -> choose exercise -> back takes me back to the homescreen, not the exercise list screen.
+
 **O4.** With an exercise chosen and nothing typed, `Log it` is disabled until a
 value is entered or `To failure` is on.
 
 **Observed:**
+- Working
