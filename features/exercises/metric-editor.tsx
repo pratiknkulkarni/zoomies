@@ -1,10 +1,11 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
+import { FormActions } from '@/components/ui/form-actions';
 import { iconWithClassName } from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
 import { SectionLabel } from '@/components/ui/section-label';
@@ -51,9 +52,16 @@ const DeleteIcon = iconWithClassName(Trash2);
 export function MetricEditor({
   exerciseId,
   metrics,
+  onPendingRename,
 }: {
   exerciseId: string;
   metrics: ExerciseMetric[];
+  /**
+   * Passes an unsaved rename up to the screen's exit guard. Adding, reordering
+   * and removing need no such channel — they are already on disk by the time
+   * the hand leaves the button.
+   */
+  onPendingRename: (metricId: string, name: string | null) => void;
 }) {
   const [adding, setAdding] = useState(false);
 
@@ -97,6 +105,7 @@ export function MetricEditor({
             isLogged={logged.has(metric.id)}
             isFirst={index === 0}
             isLast={index === metrics.length - 1}
+            onPendingRename={onPendingRename}
           />
         </View>
       ))}
@@ -158,36 +167,48 @@ function MetricRow({
   isLogged,
   isFirst,
   isLast,
+  onPendingRename,
 }: {
   metric: ExerciseMetric;
   exerciseId: string;
   isLogged: boolean;
   isFirst: boolean;
   isLast: boolean;
+  /** Reports an unsaved rename upward, or `null` once there is none. */
+  onPendingRename: (metricId: string, name: string | null) => void;
 }) {
   const [name, setName] = useState(metric.name);
 
+  const trimmed = name.trim();
+  const dirty = trimmed !== metric.name;
+  // A metric has to be called something, so an empty field never saves.
+  const valid = trimmed.length > 0;
+
   /**
-   * Written as you type, not on blur. Blur never fires when the screen is left
-   * with the field still focused, and `keyboardShouldPersistTaps="handled"`
-   * sends a tap on Back straight to the button without dismissing the keyboard
-   * — so a rename followed by Back wrote nothing.
+   * The name is the one drafted field on an otherwise immediate surface (§18),
+   * so it carries its own Save rather than writing per keystroke.
+   *
+   * It reports upward while unsaved. A rename left pending is small, but it is
+   * still work typed and not kept, and the screen's guard can only ask about it
+   * if it knows — a draft nobody tracks is a draft silently thrown away, which
+   * is the whole complaint this phase came from.
    */
-  const change = (next: string) => {
-    setName(next);
+  useEffect(() => {
+    onPendingRename(metric.id, dirty && valid ? trimmed : null);
+  }, [metric.id, dirty, valid, trimmed, onPendingRename]);
 
-    // A metric has to be called something, so an empty field is held locally
-    // and never written. Blur puts the old name back.
-    const trimmed = next.trim();
-    if (trimmed.length > 0 && trimmed !== metric.name) {
-      void updateMetric(metric.id, { name: trimmed });
-    }
-  };
+  // Cleared on unmount, so a removed row leaves nothing pending behind it.
+  useEffect(
+    () => () => onPendingRename(metric.id, null),
+    [metric.id, onPendingRename],
+  );
 
-  const restoreIfEmptied = () => {
-    if (name.trim().length === 0) {
-      setName(metric.name);
+  const saveName = () => {
+    if (!valid) {
+      return;
     }
+
+    void updateMetric(metric.id, { name: trimmed });
   };
 
   const confirmDelete = () => {
@@ -213,11 +234,21 @@ function MetricRow({
         <SectionLabel>Name</SectionLabel>
         <Input
           value={name}
-          onChangeText={change}
-          onBlur={restoreIfEmptied}
+          onChangeText={setName}
           accessibilityLabel={`Name of ${metric.name}`}
           autoCapitalize="sentences"
         />
+        {dirty ? (
+          <View className="pt-sm">
+            <FormActions
+              dirty={dirty}
+              valid={valid}
+              onDiscard={() => setName(metric.name)}
+              onSave={saveName}
+              saveLabel="Save name"
+            />
+          </View>
+        ) : null}
       </View>
 
       <View className="gap-xs">

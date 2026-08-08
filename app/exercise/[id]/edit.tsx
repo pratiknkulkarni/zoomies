@@ -1,13 +1,13 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
 import { BackButton } from '@/components/ui/back-button';
 import { DoneAction, FormActions } from '@/components/ui/form-actions';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { updateExercise } from '@/db/mutations/exercises';
+import { updateExercise, updateMetric } from '@/db/mutations/exercises';
 import { exerciseById, metricsForExercise } from '@/db/queries/exercises';
 import type { Exercise, ExerciseMetric } from '@/db/queries/exercises';
 import {
@@ -92,15 +92,47 @@ function Draft({
   // An exercise has to be called something, so an empty name never saves.
   const named = values.name.trim().length > 0;
 
-  const save = () =>
-    updateExercise(exercise.id, {
-      name: values.name.trim(),
-      family: toNullable(values.family),
-      notes: toNullable(values.notes),
-    });
+  /**
+   * Renames typed into the metric rows below and not yet saved.
+   *
+   * A ref for the values and a count for the render: the guard needs to know
+   * *whether* anything is pending on every render, and *what* is pending only
+   * when it saves. Keeping the names themselves out of state stops a keystroke
+   * in one row re-rendering every other one.
+   */
+  const renames = useRef(new Map<string, string>());
+  const [pendingRenames, setPendingRenames] = useState(0);
+
+  const trackRename = useCallback((metricId: string, name: string | null) => {
+    if (name === null) {
+      renames.current.delete(metricId);
+    } else {
+      renames.current.set(metricId, name);
+    }
+
+    setPendingRenames(renames.current.size);
+  }, []);
+
+  const save = async () => {
+    if (dirty && named) {
+      await updateExercise(exercise.id, {
+        name: values.name.trim(),
+        family: toNullable(values.family),
+        notes: toNullable(values.notes),
+      });
+    }
+
+    for (const [metricId, name] of renames.current) {
+      await updateMetric(metricId, { name });
+    }
+
+    renames.current.clear();
+    setPendingRenames(0);
+  };
 
   const { requestExit, saveAndLeave } = useDraftExit({
-    dirty: dirty && named,
+    // Anything typed and unsaved, wherever on the screen it was typed.
+    dirty: (dirty && named) || pendingRenames > 0,
     onSave: save,
     onDiscard: () => setValues(stored),
   });
@@ -124,8 +156,13 @@ function Draft({
         />
       </View>
 
-      {/* Everything below commits as you act on it, so it ends in Done. */}
-      <MetricEditor exerciseId={exercise.id} metrics={metrics} />
+      {/* Adding, reordering and removing commit as you act on them; only a
+          rename is drafted, and it reports itself to the guard above. */}
+      <MetricEditor
+        exerciseId={exercise.id}
+        metrics={metrics}
+        onPendingRename={trackRename}
+      />
 
       <View className="px-xl pt-2xl">
         <DoneAction onPress={requestExit} />

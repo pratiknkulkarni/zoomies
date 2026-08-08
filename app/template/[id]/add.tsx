@@ -1,11 +1,12 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Minus } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 
 import { BackButton } from '@/components/ui/back-button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { DoneAction } from '@/components/ui/form-actions';
 import { iconWithClassName } from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
 import { Screen } from '@/components/ui/screen';
@@ -146,6 +147,19 @@ export default function AddExerciseScreen() {
                 body="Your library is empty. Exercises come from the Exercises tab."
               />
             )}
+          </View>
+        }
+        ListFooterComponent={
+          /*
+            An **action screen** (§18): every tap has already written a slot, so
+            this only navigates. There is no Discard, because taking back an
+            addition is the `−` on the row that made it, not a wholesale undo.
+
+            It exists because leaving used to mean pressing Back and trusting
+            that the taps had counted.
+          */
+          <View className="px-xl pb-xl pt-2xl">
+            <DoneAction onPress={() => router.back()} label="Done" />
           </View>
         }
       />

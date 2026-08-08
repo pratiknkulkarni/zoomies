@@ -38,6 +38,35 @@ export default function ExerciseDetailScreen() {
   // before its own query answers.
   const settled = updatedAt !== undefined;
 
+  /**
+   * Archiving asks first, because Delete beside it does and the two used to
+   * disagree — one of them confirmed and the other silently changed the library
+   * with no acknowledgement at all.
+   *
+   * Unarchiving asks too. It is not destructive, but a control that sometimes
+   * confirms and sometimes does not is a control you have to remember.
+   */
+  const confirmArchive = (subject: NonNullable<typeof exercise>) => {
+    const archived = subject.isArchived;
+
+    Alert.alert(
+      archived ? `Unarchive ${subject.name}?` : `Archive ${subject.name}?`,
+      archived
+        ? 'It returns to your library and to the exercise pickers.'
+        : 'It leaves your library and the pickers. Everything logged against it is kept.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: archived ? 'Unarchive' : 'Archive',
+          onPress: () =>
+            void (archived
+              ? unarchiveExercise(subject.id)
+              : archiveExercise(subject.id)),
+        },
+      ],
+    );
+  };
+
   const confirmDelete = () => {
     if (!exercise) {
       return;
@@ -116,11 +145,7 @@ export default function ExerciseDetailScreen() {
               </Button>
               <Button
                 variant="secondary"
-                onPress={() =>
-                  void (exercise.isArchived
-                    ? unarchiveExercise(exercise.id)
-                    : archiveExercise(exercise.id))
-                }
+                onPress={() => confirmArchive(exercise)}
               >
                 <Text>{exercise.isArchived ? 'Unarchive' : 'Archive'}</Text>
               </Button>
