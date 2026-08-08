@@ -34,6 +34,7 @@ export function useDraftExit({
   dirty,
   onSave,
   onDiscard,
+  onLeave,
 }: {
   /** True once the fields differ from what is stored. */
   dirty: boolean;
@@ -42,20 +43,49 @@ export function useDraftExit({
   /** Restores the fields to what is stored. Nothing was written, so this is
    *  local state only — there is no database work to undo. */
   onDiscard?: () => void;
-}): { requestExit: () => void } {
+  /**
+   * Where leaving goes. Defaults to popping the route.
+   *
+   * Quick log needs this: its two steps live on one route, so leaving the
+   * fields means returning to the exercise list rather than off the screen.
+   * Without it here, the system back would keep doing something different from
+   * the button — which is the bug this hook exists to close.
+   */
+  onLeave?: () => void;
+}): { requestExit: () => void; saveAndLeave: () => void } {
   /**
    * The handler is registered once per focus, so it would otherwise close over
    * whichever `dirty` was current at registration and never see another. A ref
    * read at press time keeps the listener stable and the answer fresh.
    */
-  const latest = useRef({ dirty, onSave, onDiscard });
-  latest.current = { dirty, onSave, onDiscard };
+  const latest = useRef({ dirty, onSave, onDiscard, onLeave });
+  latest.current = { dirty, onSave, onDiscard, onLeave };
+
+  const leave = useCallback(() => {
+    const go = latest.current.onLeave;
+
+    if (go) {
+      go();
+    } else {
+      router.back();
+    }
+  }, []);
+
+  /**
+   * What the Save button does: write, then leave. The await is the point — the
+   * row lands before the screen goes, which is the ordering every mutation in
+   * this app is called with, and it means a force-quit between tapping Save and
+   * the screen changing cannot lose the edit.
+   */
+  const saveAndLeave = useCallback(() => {
+    void Promise.resolve(latest.current.onSave()).then(leave);
+  }, [leave]);
 
   const requestExit = useCallback(() => {
-    const { dirty: unsaved, onSave: save, onDiscard: discard } = latest.current;
+    const { dirty: unsaved, onDiscard: discard } = latest.current;
 
     if (!unsaved) {
-      router.back();
+      leave();
       return;
     }
 
@@ -68,19 +98,12 @@ export function useDraftExit({
         style: 'destructive',
         onPress: () => {
           discard?.();
-          router.back();
+          leave();
         },
       },
-      {
-        text: 'Save',
-        onPress: () => {
-          // Awaited before leaving, so the write lands before the screen does —
-          // the same ordering every mutation in this app is called with.
-          void Promise.resolve(save()).then(() => router.back());
-        },
-      },
+      { text: 'Save', onPress: saveAndLeave },
     ]);
-  }, []);
+  }, [leave, saveAndLeave]);
 
   useFocusEffect(
     useCallback(() => {
@@ -104,5 +127,5 @@ export function useDraftExit({
     }, [requestExit]),
   );
 
-  return { requestExit };
+  return { requestExit, saveAndLeave };
 }

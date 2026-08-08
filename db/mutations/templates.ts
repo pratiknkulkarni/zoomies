@@ -17,11 +17,6 @@ import { movedOnePlace, renumber } from './ordering';
  * these mutations are free to be as destructive as the user asks.
  */
 
-export type SlotTargets = Pick<
-  typeof templateSlots.$inferInsert,
-  'targetSets'
->;
-
 // ---------------------------------------------------------------------------
 // Templates
 // ---------------------------------------------------------------------------
@@ -136,21 +131,33 @@ export async function moveSlot(
 }
 
 /**
- * `target_sets`, nullable: null means no set target, and the session counts
- * what you do without anything to reach.
+ * Everything a slot plans, written as one row (§5.1).
  *
- * Passing `null` writes null. Omitting a key leaves it alone. That distinction
- * is the whole point — null is a recorded decision, not an absence.
+ * The slot screen is a draft (§18), so it saves once rather than per keystroke,
+ * and this is the write it makes. Both fields are nullable and each null is a
+ * recorded decision rather than an absence: no `target_sets` means the session
+ * counts what you do with nothing to reach, and no target means no measurement
+ * to beat.
+ *
+ * Sets and target used to be two calls, which meant a moment where the row held
+ * a new set count against an old target. Nothing read it in that moment, but
+ * nothing guaranteed that either.
  */
-export async function updateSlot(
+export async function setSlotPlan(
   slotId: string,
-  edits: Partial<SlotTargets>,
+  plan: {
+    targetSets: number | null;
+    target: { metricId: string; value: number } | null;
+  },
 ): Promise<void> {
-  if (Object.values(edits).every((value) => value === undefined)) {
-    return;
-  }
-
-  await db.update(templateSlots).set(edits).where(eq(templateSlots.id, slotId));
+  await db
+    .update(templateSlots)
+    .set({
+      targetSets: plan.targetSets,
+      targetMetricId: plan.target?.metricId ?? null,
+      targetValue: plan.target?.value ?? null,
+    })
+    .where(eq(templateSlots.id, slotId));
 }
 
 /**
