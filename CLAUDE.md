@@ -161,6 +161,19 @@ docs/                   Source-of-truth documents
   index, timer running state, unsaved draft input.
 - Anything that must survive a force-quit goes to SQLite immediately.
 
+**Leaving a screen** (`FEATURES.md` §18)
+- Every writing screen is either a **draft** (fields in memory, ending in
+  `Discard` / `Save`) or a set of **immediate actions** (ending in `Done`).
+  Never both without saying which is which.
+- A draft screen uses `lib/use-draft-exit.ts`. It owns the on-screen Back *and*
+  the Android system back; guarding one and not the other loses work silently.
+- Never commit a text field on `onBlur`. With
+  `keyboardShouldPersistTaps="handled"` a tap on Back reaches the button without
+  blurring the field, so `onBlur` never fires. This cost six fields once.
+- **Training writes as you type; planning waits for Save.** The per-exercise
+  note and the session note are typed while a session is live and keep writing
+  per keystroke. Everything else is a draft.
+
 **Styling**
 - NativeWind classes only. No `StyleSheet.create`.
 - Every value comes from a token in `docs/DESIGN.md`. Both of these are wrong:

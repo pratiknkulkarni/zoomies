@@ -750,3 +750,66 @@ Without reading documentation.
 | Aug 2026 | Two amendments after reviewing Phase 2. §3.3 now states that archived exercises still count toward owned families — "active" was ambiguous between `is_active` and not-archived, and the narrower reading hid suggestions at the moment archiving made them most relevant. §3.5 names the Archived screen, which the spec had assumed without ever describing, leaving archiving one-way in the build. |
 | Aug 2026 | Phase 3 amendments. §5 now says templates live on Home — the spec defined them fully but never said how they are reached, the same omission §3.5 had for archiving. §5.2 records that templates themselves do not reorder, and that deleting one takes its slots, which is the opposite of the call made for an exercise's metrics and for the opposite reason: nothing points at a slot. |
 | Aug 2026 | Phase 6 amendments. §2 gains `template_slot_id` on `exercise_entries` and a storage rule saying what it is not: provenance for the raise prompt, never a target source, because reading a target through it would undo the snapshot two rows above it. The raise had nowhere to write otherwise — an entry knew its exercise, and §5.2 lets one exercise fill two slots with different targets. §6.6 rewritten around three things implementation forced into the open: a majority is strictly more than half and a tie is not a beat; the write goes to the slot and never to the completed session; and **a raise may never be a lowering**, so it is gated on the slot's own figure rather than on the possibly-overridden target that was trained against. §2 also lost `rest_seconds`, which Phase 5 dropped from the schema and from §5.1 but not from the data-model block. |
+
+---
+
+## 18. Leaving a Screen
+
+Every screen that writes is one of two kinds, and **which kind it is must be
+visible from the screen itself.** The rule exists because the alternative was
+found by using the app: screens that committed silently and could only be left
+by pressing the system Back, with nothing confirming anything had been kept.
+
+### Pattern A — Draft
+
+Fields are held in memory. The section ends in **Discard** and **Save**; Save
+writes and navigates. Leaving with unsaved changes asks: **Save · Discard ·
+Cancel**.
+
+Save is disabled until something has changed, so "is there anything pending" is
+answered by looking rather than by remembering.
+
+### Pattern B — Action
+
+Every tap commits as it is made — adding a slot, reordering a metric, archiving.
+The screen ends in a single **Done** that only navigates.
+
+**No Discard.** Undoing a reorder or a removal is an undo stack, which is a
+different feature; taking back an addition is the control on the row that made
+it. A Discard that only sometimes means what it says is worse than none.
+
+### Mixed screens
+
+A screen may hold one drafted field among actions — a template's name, a
+metric's name. The draft's actions sit **inside the draft's own section**, never
+at the foot of the screen, because a Save at the bottom appears to own
+everything above it. That was true of the exercise editor, where pressing Save
+after adding a metric implied the metric had been pending when it was already
+stored.
+
+A drafted field anywhere on a screen must reach that screen's exit guard, or
+leaving throws it away without asking.
+
+### Both exits, always
+
+The on-screen Back and the Android system Back must do the same thing, including
+any confirmation. An override the hardware ignores is worse than no override,
+because it teaches a rule the device then breaks.
+
+### The exception: training writes as you type
+
+Anything typed **during training** keeps writing per keystroke:
+
+- the per-exercise note (§7.5)
+- the session note at completion (§7.5)
+
+Set logging is unaffected — it already has an explicit Save, and it commits
+before any transition (invariant 1).
+
+These are the only fields typed while a session is live, and a force-quit
+mid-session is the scenario this application is built around. A draft is a
+promise to write later, and during training there is no later worth trusting.
+Planning is different: nothing is lost by a template's name waiting for a
+button.
+
+---

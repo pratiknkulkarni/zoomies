@@ -954,3 +954,81 @@ about and misses the one that merely mentions the thing.
 
 Also noted, not fixed: `FEATURES.md`'s change log stops at Phase 3. Phases 4 and
 5 amended the document without recording that they had.
+
+---
+
+## Phase 6a — Leaving a screen
+
+Branch `phase-6a-leaving`. Raised from use rather than from a test: Back was
+being pressed far more often than the application took anyone anywhere, and
+nothing confirmed that what had been typed was kept.
+
+### The objection to write-on-save was wrong
+
+Worth recording, because it was stated confidently and it was not true.
+
+The Phase 4 defect was write-on-**blur**, not write-on-save. The chain:
+edge-to-edge makes `adjustResize` inert from Android 15, so the keyboard
+covered every form; fixing that needed `keyboardShouldPersistTaps="handled"` so
+buttons took one press instead of two; and that prop delivers the tap while
+leaving the field focused, so `onBlur` never fires.
+
+A Save button never consults blur. It reads state in its own handler, and the
+same prop that broke blur is what lets it be pressed once with the keyboard up.
+Write-on-save is the pattern that defect argues *for*.
+
+### The real constraint was the exit surface, and it was two doors
+
+- `headerShown: false` on the root Stack — no native header back exists.
+- Native-stack has no Android swipe-back; that option is iOS-only.
+- `enableOnBackInvokedCallback="false"` in the manifest — predictive back is
+  off, so the legacy `BackHandler` is authoritative.
+
+So `lib/use-draft-exit.ts` owns both doors, and no screen can implement half of
+the guard. `usePreventRemove` would be React Navigation's answer, but
+expo-router vendors its navigation core without re-exporting it, and reaching
+into `expo-router/build/` is a dependency on build output.
+
+The listener reads `dirty` through a ref. Registered once per focus, it would
+otherwise close over whichever value was current at registration and never see
+another — the sort of bug that only appears on the second edit.
+
+### Two patterns, because the complaint was not really about buttons
+
+It was that a screen had to be learned before you knew how to leave it. So
+`FEATURES.md` §18 allows exactly two endings: a draft ends in Discard/Save, an
+action surface ends in Done.
+
+Discard is deliberately absent from action surfaces. Undoing a reorder or a
+removal is an undo stack — a different feature — and a Discard that only
+sometimes means what it says is worse than none.
+
+**The action row belongs to its section, not to the screen.** That is the fix
+for `exercise/[id]/edit.tsx`, which had one Save under a form *and* a metric
+list that had already written itself; pressing it after adding a metric implied
+the metric was pending. Placement was carrying a false claim.
+
+### A drafted field must reach the guard
+
+The metric rename is one field on an otherwise immediate surface. Left
+untracked, leaving would throw it away without asking — which is the original
+complaint wearing different clothes. The row reports upward and the screen folds
+it into the same prompt.
+
+The pending names live in a ref with a count in state: the guard needs to know
+*whether* anything is pending on every render, and *what* only when it saves.
+Holding the names in state would re-render every row on every keystroke in one
+of them.
+
+### The exception is the point, not an oversight
+
+Notes typed during training keep writing per keystroke. A draft is a promise to
+write later, and during a session there is no later worth trusting — that is
+what invariant 1 is about. Planning is different: nothing is lost by a
+template's name waiting for a button.
+
+### Verification standing
+
+`tsc`, lint and 79 unit tests green. **Not yet verified on hardware** — the
+system-back path is the one that matters and it is exactly the one a compiler
+cannot check.

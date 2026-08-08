@@ -124,11 +124,26 @@ export default function CompleteScreen() {
  */
 function Untrained({ names }: { names: string[] }) {
   return (
-    <View className="gap-xs px-xl pt-2xl">
+    <View className="gap-sm px-xl pt-2xl">
       <SectionLabel>Not trained</SectionLabel>
+
+      {/*
+        A list, not a sentence. These were run together with commas, which meant
+        reading a paragraph to find out which two of five exercises were missed
+        — on the screen whose only job is to say exactly that.
+      */}
+      <View className="gap-xs">
+        {names.map((name) => (
+          <Text key={name} className="text-body text-text-2">
+            {name}
+          </Text>
+        ))}
+      </View>
+
       <Text className="text-bodySm text-text-2">
-        {names.join(', ')} logged nothing. Finishing is fine — they will read as
-        not trained, never as zeros.
+        {names.length === 1
+          ? 'Nothing was logged against it. Finishing is fine — it reads as not trained, never as zeros.'
+          : 'Nothing was logged against these. Finishing is fine — they read as not trained, never as zeros.'}
       </Text>
     </View>
   );
