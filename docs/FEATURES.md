@@ -503,8 +503,17 @@ exercise. Session-level note optional at completion.
 
 ### 7.6 Haptics
 
-On set saved, timer complete, and target reached. Feedback without looking at the
-screen.
+On set saved, timer complete, target reached, and **an exercise added to a
+template**. Feedback without looking at the screen.
+
+The fourth is not a training signal like the others. It is there because the
+result of the tap — the `× 2` tally on the row — cannot appear until the write
+has landed and the query has re-run, and building a template is the other place
+in the application where taps come in quick succession. A haptic is the only
+acknowledgement that can happen in the same frame as the tap, so it is fired in
+the press handler, before the write.
+
+Nowhere else. A haptic on every press is a buzzing phone, not feedback.
 
 ---
 

@@ -377,6 +377,13 @@ here, not a backlog item.
    everything above it, which is how a `Save` came to sit under a list that had
    already written itself.
 
+   **A row whose content scrolls past the screen is pinned.** `Done` on the
+   add-exercise screen sat below every exercise in the library, so finishing
+   meant scrolling the whole list to reach it. Pinned rows go in `Screen`'s
+   `footer`, which places them above the safe area and inside the keyboard
+   avoider, separated from the content by a hairline. A short screen does not
+   pin — the space costs more than the scroll saves.
+
 ---
 
 ## 11. Implementation

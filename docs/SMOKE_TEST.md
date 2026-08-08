@@ -708,6 +708,8 @@ Expect: `Save your changes?` — Save, Discard, Cancel.
 
 **Observed:**
 
+- Working
+
 **P2.** On the same screen, rename a **metric** below and press the system back
 without tapping its `Save name`.
 
@@ -716,15 +718,19 @@ guard is meant to know about it.
 
 **Observed:**
 
+- Working
+
 **P3.** Add a metric, then press back **without** touching any field.
 
 Expect: **no prompt** — adding already wrote. The metric list ends in `Done`.
 
 **Observed:**
 
+- Working
 **P4.** Does `Save details` still look like it owns the metric list below it?
 
 **Observed:**
+No
 
 ## Q. Confirmations
 
@@ -734,12 +740,14 @@ Expect: a confirmation, matching Delete beside it. Same for Unarchive.
 
 **Observed:**
 
+- Working
 **Q2.** A template's name — change it and press back.
 
 Expect: the prompt. The name is a draft; Start session, Add and Delete are not.
 
 **Observed:**
 
+- Working
 ## R. Quick log
 
 **R1.** Quick log → choose an exercise → type a value → **system back**.
@@ -748,12 +756,14 @@ Expect: the prompt, and Discard returns to the **exercise list**, not Home.
 This is smoke test O3, which was the bug.
 
 **Observed:**
+- Working
 
 **R2.** Quick log → choose an exercise → type nothing → system back.
 
 Expect: straight back to the exercise list, no prompt.
 
 **Observed:**
+- Working
 
 ## S. Training still writes as you type
 
@@ -765,6 +775,7 @@ has been broken.
 Expect: the note is there. **No prompt on leaving** — it was never a draft.
 
 **Observed:**
+- Working
 
 **S2.** Finish a session, type a session note, force-quit before tapping Finish,
 reopen and resume.
@@ -772,3 +783,4 @@ reopen and resume.
 Expect: the note is there.
 
 **Observed:**
+- Working

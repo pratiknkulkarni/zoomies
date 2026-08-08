@@ -25,3 +25,18 @@ export function tapTargetReached(): void {
     ignore,
   );
 }
+
+/**
+ * Something was added to a list — an exercise into a template.
+ *
+ * The same weight as `tapSaved`, because it means the same thing: that counted.
+ *
+ * **Fired in the press handler, before the write.** The row it changes only
+ * updates once SQLite has written and the live query has re-run, and while that
+ * gap is small it is the whole gap between tapping and seeing anything happen.
+ * Building a template is the other place in the application where taps come in
+ * quick succession, so it is the other place where that gap is felt.
+ */
+export function tapAdded(): void {
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(ignore);
+}

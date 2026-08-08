@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Minus } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 
 import { BackButton } from '@/components/ui/back-button';
@@ -26,9 +26,18 @@ import {
   formatSlotCount,
   formatSlotTally,
 } from '@/lib/format';
+import { tapAdded } from '@/lib/haptics';
 import { matchesQuery } from '@/lib/search';
 
 const MinusIcon = iconWithClassName(Minus);
+
+/**
+ * One shared empty array per kind, so a row with no slots and no metrics gets
+ * the same reference every render. `?? []` inline defeats `memo` on every row
+ * that has nothing.
+ */
+const NO_SLOTS: TemplateSlot[] = [];
+const NO_METRICS: ExerciseMetric[] = [];
 
 /**
  * Picking exercises to add to a template.
@@ -91,7 +100,22 @@ export default function AddExerciseScreen() {
   const searching = query.trim().length > 0;
 
   return (
-    <Screen bleed>
+    <Screen
+      bleed
+      footer={
+        /*
+          An **action screen** (§18): every tap has already written a slot, so
+          this only navigates. There is no Cancel, because taking back one
+          addition is the `−` on the row that made it — a Cancel here would
+          either undo nothing or silently unpick writes that already happened.
+
+          **Pinned, not at the foot of the list.** It sat below every exercise
+          in the library, so finishing meant scrolling past all of them, which
+          is the problem it was added to solve wearing a different hat.
+        */
+        <DoneAction onPress={() => router.back()} label="Done" />
+      }
+    >
       {/*
         The header sits outside the FlatList, not in `ListHeaderComponent`. A
         TextInput inside a list header is remounted as the list re-renders and
@@ -127,8 +151,8 @@ export default function AddExerciseScreen() {
           <PickerRow
             templateId={id}
             exercise={item}
-            metrics={metricsByExercise.get(item.id) ?? []}
-            chosen={slotsByExercise.get(item.id) ?? []}
+            metrics={metricsByExercise.get(item.id) ?? NO_METRICS}
+            chosen={slotsByExercise.get(item.id) ?? NO_SLOTS}
           />
         )}
         ListEmptyComponent={
@@ -149,19 +173,6 @@ export default function AddExerciseScreen() {
             )}
           </View>
         }
-        ListFooterComponent={
-          /*
-            An **action screen** (§18): every tap has already written a slot, so
-            this only navigates. There is no Discard, because taking back an
-            addition is the `−` on the row that made it, not a wholesale undo.
-
-            It exists because leaving used to mean pressing Back and trusting
-            that the taps had counted.
-          */
-          <View className="px-xl pb-xl pt-2xl">
-            <DoneAction onPress={() => router.back()} label="Done" />
-          </View>
-        }
       />
     </Screen>
   );
@@ -171,8 +182,13 @@ export default function AddExerciseScreen() {
  * Built out rather than reaching for `ListRow`, for the reason `SlotList` gives:
  * a row cannot be wholly pressable when it carries a control of its own. The
  * name adds; the `−` removes.
+ *
+ * Memoised, because adding one slot re-runs the slots query and would otherwise
+ * re-render every visible row. `EMPTY` above is what makes that work: a `?? []`
+ * written inline is a new array on every render, so every row would look changed
+ * whether or not it was.
  */
-function PickerRow({
+const PickerRow = memo(function PickerRow({
   templateId,
   exercise,
   metrics,
@@ -195,7 +211,13 @@ function PickerRow({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Add ${exercise.name}`}
-        onPress={() => void addSlot(templateId, exercise.id)}
+        onPress={() => {
+          // Before the write, not after: this is the only acknowledgement that
+          // can land in the same frame as the tap. The tally follows once
+          // SQLite has written and the live query has re-run.
+          tapAdded();
+          void addSlot(templateId, exercise.id);
+        }}
         className="min-h-row flex-1 justify-center py-md pl-xl active:bg-muted"
       >
         <Text className="font-sans-semibold text-heading text-text">
@@ -226,4 +248,4 @@ function PickerRow({
       )}
     </View>
   );
-}
+});

@@ -1045,8 +1045,11 @@ anywhere in Android. The guard sees the second. That is correct and worth
 knowing before testing it — a first press that appears to do nothing is the IME,
 not the hook.
 
-**Not verified on hardware:** the exercise editor's split, the metric rename
-reaching the guard, quick log's back, and the archive confirmation.
+**Everything else verified too**, in a second pass: `SMOKE_TEST.md` P, Q, R and
+S all pass. The exercise editor's split reads correctly, a metric rename reaches
+the guard, adding a metric raises no prompt, both confirmations appear, quick
+log's back returns to the exercise list rather than Home, and the training notes
+still write as you type.
 
 Harness note: driving this with `adb shell input tap` on coordinates read from a
 `uiautomator` dump is only safe if the dump is re-read after every scroll. A
@@ -1055,3 +1058,44 @@ confirmation added in this very phase is what caught it. Also: a dump taken too
 soon after a back press can catch a transient window and read as though the
 screen was left, which produced one entirely false failure before the sequence
 was re-run with a dump between each step.
+
+### Follow-up: the add screen
+
+Two things surfaced from using the finished phase.
+
+**`Done` was at the bottom of the library.** It went into
+`ListFooterComponent`, which put it below every exercise — so finishing the
+screen meant scrolling past all of them. The screen exists to end "press Back
+and hope", and this had moved that problem rather than removed it.
+
+`Screen` gained a `footer` prop rather than each screen pinning its own row.
+`Screen` already owns the safe area and the keyboard avoider, and those are
+exactly the two things a pinned row gets wrong: it has to sit above the gesture
+bar and rise with the keyboard. Putting it anywhere else means a screen added
+later can pin a row incorrectly.
+
+The inset goes on the outer view and the token padding on an inner one, because
+a `style` `paddingBottom` overrides the class rather than adding to it — and the
+two are different kinds of value. `insets.bottom` is device geometry read at
+runtime, the same exemption `paddingTop` already carried.
+
+**"Adding an exercise is a bit slow" — measured before touching anything.**
+Against the database pulled off the device, the read `addSlot` performs runs 200
+times in 21ms. The library is 22 active exercises. SQLite was never the
+bottleneck, and optimising the query would have been theatre.
+
+What was actually missing is that **nothing acknowledged the tap**. The `× 2`
+tally cannot appear until the write lands and the live query re-runs, and the
+row had `active:bg-muted` while the finger was down and nothing at all after it
+lifted. On a list you tap down quickly, that gap reads as lag.
+
+So a haptic fires in the press handler, *before* the write — the only
+acknowledgement that can happen in the same frame as the tap. That extends
+`FEATURES.md` §7.6, which had scoped haptics to three training signals, so the
+section says why the fourth is different and adds "nowhere else": a haptic on
+every press is a buzzing phone, not feedback.
+
+The row is also memoised, with module-level shared empty arrays. A `?? []`
+written inline is a new array every render, so every row looked changed whether
+or not it was and `memo` would have done nothing. This is a small win and worth
+recording as small — the haptic is the part that will be felt.

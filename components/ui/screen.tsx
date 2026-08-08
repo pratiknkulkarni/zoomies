@@ -6,6 +6,15 @@ type ScreenProps = {
   children: ReactNode;
   /** Drop the default horizontal padding for full-bleed content such as lists. */
   bleed?: boolean;
+  /**
+   * An action row pinned to the bottom, outside whatever scrolls above it.
+   *
+   * For a screen whose content outruns the display. `Done` on the add-exercise
+   * screen sat at the foot of the library, so finishing meant scrolling past
+   * every exercise to reach it — which is the "press Back and hope" problem
+   * moved rather than solved.
+   */
+  footer?: ReactNode;
 };
 
 /**
@@ -24,7 +33,7 @@ type ScreenProps = {
  * Harmless on a screen with no text input: with no keyboard up this measures
  * and lays out exactly as the `View` it replaces.
  */
-export function Screen({ children, bleed = false }: ScreenProps) {
+export function Screen({ children, bleed = false, footer }: ScreenProps) {
   const insets = useSafeAreaInsets();
 
   return (
@@ -34,6 +43,24 @@ export function Screen({ children, bleed = false }: ScreenProps) {
       style={{ paddingTop: insets.top }}
     >
       <View className="flex-1">{children}</View>
+
+      {/*
+        Inside the KeyboardAvoidingView and below the content, so a pinned row
+        rises with the keyboard instead of hiding behind it.
+
+        The inset goes on the outer view and the token padding on the inner: a
+        `style` `paddingBottom` would override the class, and the two are
+        different kinds of value. `insets.bottom` is device geometry read at
+        runtime and carries the same exemption as `paddingTop` above.
+      */}
+      {footer ? (
+        <View
+          className="border-t border-border bg-bg"
+          style={{ paddingBottom: insets.bottom }}
+        >
+          <View className={bleed ? 'px-xl py-md' : 'py-md'}>{footer}</View>
+        </View>
+      ) : null}
     </KeyboardAvoidingView>
   );
 }

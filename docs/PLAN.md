@@ -512,11 +512,27 @@ sentence, on the one screen whose job is to say which exercises were missed.
    back raises the prompt, Cancel keeps the draft, Discard leaves the row
    untouched in the database, Save writes and navigates.
 3. No screen both commits immediately and offers a Save that implies otherwise.
-   — **met**; verification of the exercise editor's split is outstanding.
+   — **met and verified**: `Save details` no longer reads as owning the metric
+   list.
 
-**Outstanding on hardware:** `SMOKE_TEST.md` P, Q, R and S — the exercise
-editor, the confirmations, quick log's back, and that the training notes still
-write as you type.
+**All three criteria verified on the Pixel 7a.** `SMOKE_TEST.md` P, Q, R and S
+pass: the exercise editor's split, a metric rename reaching the guard, adding a
+metric raising no prompt, both confirmations, quick log's back returning to the
+exercise list rather than Home (**O3 closed**), and — S — the training notes
+still writing as you type rather than having quietly become drafts.
+
+**Follow-up, from using it.** `Done` went into the list footer, so finishing the
+add screen meant scrolling past every exercise to reach it — the problem the
+screen was built to solve, moved rather than removed. `Screen` gained a `footer`
+that pins an action row above the safe area and inside the keyboard avoider.
+
+Adding an exercise also read as slightly slow. **Measured against the pulled
+database, it is not the write:** the read `addSlot` performs runs in about
+0.1ms. Nothing acknowledged the tap, and the `× 2` tally cannot appear until the
+write has landed and the query has re-run — so a haptic fires in the press
+handler, which is the only acknowledgement available in the same frame as the
+tap. `FEATURES.md` §7.6 amended for the fourth haptic; the row is memoised so
+one add no longer re-renders every visible row.
 
 ---
 
