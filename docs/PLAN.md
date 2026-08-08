@@ -141,9 +141,54 @@
 > at zero and continuing past zero cannot both be true; §8 records the trade,
 > and §7.3's inline set edit covers it.
 >
-> **Still unanswered from the follow-ups round:** smoke test K2, L2, L4 and L6.
+> **The smoke test is closed.** K2 — the force-quit race repeated at varying
+> speed — passes on a human thumb, which is the only way it could. L2 through L6
+> are answered as fine for now, with interface refinement deferred until the
+> application is functionally complete; they are recorded as deferred rather
+> than audited, because that is what they are.
 >
-> **Next: Phase 6 — Completion Flow & Quick Log.**
+> **Phase 6 — Completion Flow & Quick Log. Built 7 Aug 2026**, branch
+> `phase-6-completion`. The review between the last set and history, the target
+> raise prompt, and quick log.
+>
+> **A raised target had nowhere to land.** §6.6 makes the prompt the only
+> mechanism by which a target increases, so it has to write to the template
+> slot — but an entry recorded the exercise and a snapshot of the targets and
+> never which slot it came from, and §5.2 lets one exercise fill two slots with
+> different targets. Matching on the exercise is a guess; matching on display
+> order breaks the first time a slot is reordered. Phase 5 met the same gap from
+> the other side when the rest timer was cut. Migration 0005 adds
+> `template_slot_id` as **provenance, not a target source** — nothing reads a
+> target through it, which is what keeps invariant 5 intact.
+>
+> `lib/completion.ts` holds the majority rule, pure and tested, for the reason
+> `lib/timers.ts` is pure: a rule that lives inside a query is a rule nobody can
+> test, and a raise firing on one lucky set would rewrite the program on the
+> strength of a fluke.
+>
+> **A raise may never be a lowering.** The prompt measures against what was
+> trained against, override included, but writes only when the best set also
+> beats what the slot currently says. §6.6 amended, along with §2 — which still
+> listed `rest_seconds`, missed by Phase 5's sweep.
+>
+> Quick log writes a session's rows through the same `logSetIn` the session
+> screen uses, so exit criterion 4 holds by construction rather than by two
+> functions currently agreeing.
+>
+> **All exit criteria verified on the Pixel 7a** (`SMOKE_TEST.md` M, N, O).
+> DoD 6, DoD 7 and DoD 8 pass. The two cases that decide whether the raise is
+> trustworthy both hold: a target beaten once out of three offers nothing (N2),
+> a tie offers nothing (N3), a target overridden downward and then beaten does
+> not lower the template (N4), and the same exercise in two slots raises each
+> independently (N5) — the case the phase was built around. Migrations 0004 and
+> 0005 both applied on a cold start; no `kg` metric survives.
+>
+> **Two findings, queued below rather than fixed here.** The untrained warning
+> reads as a comma-separated sentence where a list would scan (M1), and Back
+> from the quick-log fields leaves the screen entirely instead of returning to
+> the exercise list (O3).
+>
+> **Next: Phase 6 follow-ups — leaving a screen.**
 
 Update this block when a phase closes. It is the first thing read at the start
 of a session.
@@ -190,6 +235,7 @@ is wrong and should be corrected.
 | 4 | Active session & logging | 2, 3, 5 |
 | 5 | Timers | 4 |
 | 6 | Completion flow & quick log | 6, 7, 8 |
+| 6a | Follow-ups — leaving a screen | — |
 | 7 | History | — |
 | 8 | Exercise details & records | 10 |
 | 9 | Dashboard | 11 |
@@ -420,6 +466,63 @@ machinery, which was the largest and most failure-prone part of this phase.
 
 ---
 
+### Phase 6 follow-ups — Leaving a screen
+
+**Queued, not designed.** Raised from use, in the same way the Phase 4
+follow-ups were raised from the smoke test. The approach is an open question
+(§4.5) and is answered before this starts.
+
+**The complaint:** you press Back far more often than the application takes you
+anywhere. Adding exercises to a template, then setting a slot's target, both end
+with a manual Back rather than an action that means "done".
+
+**The cause: two navigation models coexist.** Some screens are a form with a
+terminal button that navigates — `template/new.tsx`, `exercise/new.tsx`,
+`exercise/[id]/edit.tsx`'s draft, `quick-log.tsx`, `complete/[id].tsx`. Others
+commit as you type and can only be left by pressing Back. Nothing marks which
+kind a screen is, so every screen has to be learned.
+
+Screens with no way out but Back:
+
+| Screen | What commits invisibly |
+|---|---|
+| `app/slot/[id].tsx` | Sets and target. **No button anywhere on the screen.** |
+| `app/template/[id]/add.tsx` | Each tap adds a slot; it deliberately stays so several can be added, but offers no Done. |
+| `app/template/[id]/index.tsx` | The name, per keystroke. |
+| `features/exercises/metric-editor.tsx` | Every add, rename, reorder and delete. |
+| `app/entry/[id].tsx` | The per-exercise note, per keystroke. |
+| `app/exercise/[id]/index.tsx` | Archive and unarchive, with no confirmation and no acknowledgement. Delete has both. |
+
+`app/exercise/[id]/edit.tsx` runs **both models on one screen**: the draft above
+saves and navigates, the metric editor below commits on the spot. Save therefore
+saves half the screen, and the half it does not save is already saved.
+
+**Blocking bug, and it constrains the whole shape:** nothing in the application
+intercepts Android's system Back. `quick-log.tsx` overrides the on-screen
+chevron, and the system gesture bypasses it (smoke test O3). Any confirmation
+added here is bypassable the same way until the system back is handled —
+`usePreventRemove` is the mechanism.
+
+Also wanted: confirmation that a template was created, and a prompt on leaving
+work in progress.
+
+Carried in with it:
+
+- **M1** — the untrained warning is a comma-separated sentence; a list scans.
+- **O3** — the bug above.
+- `app/slot/[id].tsx`'s docstring still describes `rest_seconds` and a rest
+  timer, both cut in Phase 5.
+
+**Exit criteria**
+
+1. Every screen that writes states how it is left, and the answer is the same
+   kind of answer everywhere.
+2. The Android system Back does what the on-screen control does, including any
+   confirmation.
+3. No screen both commits immediately and offers a Save that implies otherwise.
+
+---
+
 ### Phase 7 — History
 
 - Reverse-chronological timeline of completed sessions: date, name, duration,
@@ -600,6 +703,34 @@ personal-record queries arrive.
 §13 requires every dependency be justifiable in one sentence there. Add them
 before installing.
 
+### 4.5 How a screen is left, and whether Discard is possible — Phase 6 follow-ups
+
+**Open. Blocks the follow-up phase**, because it decides whether that phase adds
+a button or rebuilds how every editing screen holds state.
+
+Commit-as-you-type is not incidental and must not be undone casually. It is the
+fix for the Phase 4 defect: `keyboardShouldPersistTaps="handled"` means a
+focused field never blurs when Back is tapped, so six commit-on-blur fields
+silently discarded their edits. Writing on every keystroke is also what
+invariant 1 asks for everywhere else.
+
+So offering **Save / Discard** means choosing one of:
+
+- **(a) Buffer edits and write on Save.** Reintroduces the defect above unless
+  the screen also blocks the system back. Rejected unless the back handling
+  lands first and is proven.
+- **(b) Keep writing as you type; Discard restores a snapshot** taken when the
+  screen opened. Safe, keeps invariant 1, costs one snapshot per editing screen
+  and a decision about what "the screen opened" means for a live query.
+- **(c) Keep writing as you type; add only a Done that navigates.** Answers the
+  actual complaint — the manual Back — and offers no discard at all.
+
+(c) is the cheapest and (b) is the honest one where a mistake is expensive.
+Whichever is chosen applies to **every** screen in the table above, because the
+point is that a screen no longer has to be learned individually.
+
+`FEATURES.md` gains a section for the decision; this document only sequences it.
+
 ---
 
 ## 5. Change Log
@@ -616,4 +747,5 @@ before installing.
 | Aug 2026 | Phase 4 built. Targets snapshotted onto `exercise_entries` at session start, which makes "editing a template never rewrites history" true by construction. `expo-keep-awake` and `expo-haptics` added — both native, so the dev client needed a full rebuild. Two harness lessons: `adb input tap` returns on injection rather than on handling, so the force-quit race cannot be scripted; and screenshot byte size is a useless readiness signal next to `uiautomator dump` matched on app text. |
 | Aug 2026 | Phase 4 follow-ups, from a full smoke test on a physical Pixel 7a. Three lessons worth keeping. **Fixing the keyboard caused a data-loss bug**: `keyboardShouldPersistTaps="handled"` sends a tap on Back to the button without dismissing the keyboard, so a focused field never blurs and six commit-on-blur fields discarded their edits — commit-on-blur was the defect, and all six now write as you type, which is what invariant 1 asks for everywhere else. **The metric editor was rebuilt rather than patched a fourth time**: three fixes had each addressed a symptom of one cause, that the screen asked the user to compose name, type and unit, and `number` covers both a count and a load. **A picker built from `SELECT DISTINCT` can only be as clean as the data it is meant to constrain** — it offered every typo ever made. `FEATURES.md` §4.1 rewritten around four whole metrics, convertible until the first set is logged against them. Harness: `expo-sqlite` lives at `files/SQLite/`, a release APK never contacts Metro, and a migration added mid-session does not apply until a cold start because `useMigrations` runs on mount and Fast Refresh does not remount the root. |
 | Aug 2026 | Phase 5 built, and the rest timer cut before it was. A countdown pushing you back to the bar works against an unhurried two-hour session; that removed `expo-notifications` entirely and settled a problem the phase would otherwise have had to solve, since `exercise_entries` has no `rest_seconds` and an entry could no longer find its slot unambiguously once one exercise was allowed to appear twice in a template. Migration 0003 drops the column. `lib/timers.ts` is pure with `now` as a parameter throughout, which is what makes "returning after ninety seconds shows the correct elapsed time" a unit test rather than a wait. An interval repaints but never accumulates. Recording at zero was chosen knowing it caps a hold at its target — the two cannot both be true, and §7.3's inline edit covers the rest. Harness note: `expo-audio` is absent from React Native's autolinking manifest and ungreppable in `classes.dex`, but so is `expo-haptics`, which works; `expo-modules-autolinking resolve` is what answers that question. |
+| Aug 2026 | Phase 6 built. The phase turned on one thing the data model could not answer: a raised target has to write to a template slot, and an entry never recorded which slot it came from — the exercise cannot say, because one exercise may fill two slots with different targets. `template_slot_id` answers it as provenance only; reading a target through it would undo the snapshot that makes invariant 5 true. Two rules were sharpened by writing them down: a majority is strictly more than half and a tie is not a beat, and **a raise may never be a lowering**, so the write is gated on the slot's own figure rather than on the possibly-overridden target that was trained against. Quick log shares `logSetIn` with the session screen, which is what makes "the same row shapes" a property of the code rather than a claim about it. `FEATURES.md` §2 still listed `rest_seconds` — a phase's docs sweep can update the section it was thinking about and miss the one that merely mentions the thing. |
 | Aug 2026 | Added load removed (`FEATURES.md` §15). A weighted variant is its own exercise, which is how progressions are already modelled, so the metric was there by habit. It was also the last fractional value and the last unit that was not seconds, so `NumericField` lost its `step` and `keyboardType` props. Migration 0004 soft-deletes the metrics, renumbers the survivors so an exercise ordered `[Added load, Hold]` correctly promotes Hold to primary, and clears targets pointing at a load on both `template_slots` and `exercise_entries`. `set_metric_values` untouched. `CLAUDE.md` invariant 9 amended, since it named kg as a unit. |

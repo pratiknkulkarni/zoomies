@@ -77,11 +77,25 @@ export function formatSetValues(
       const value = valueByMetric.get(metric.id);
       return value === undefined || value === null
         ? null
-        : `${value} ${metric.unit ?? metric.name.toLowerCase()}`;
+        : formatMeasure(value, metric);
     })
     .filter((part): part is string => part !== null);
 
   return parts.length > 0 ? parts.join(SEPARATOR) : 'Recorded';
+}
+
+/**
+ * A number and what it counts: `9 reps`, `30 s`.
+ *
+ * The unit carries the meaning where there is one; where there is not, the
+ * metric's own name is the word — `Reps` stores no unit precisely because
+ * "reps" is already what a count of them is called (`lib/metrics.ts`).
+ *
+ * Shared by logged sets, targets and the raise prompt so the same figure reads
+ * the same way wherever it appears.
+ */
+export function formatMeasure(value: number, metric: MetricLabel): string {
+  return `${value} ${metric.unit ?? metric.name.toLowerCase()}`;
 }
 
 /**
@@ -153,7 +167,7 @@ export function formatTarget(
 ): string {
   const measure =
     target.targetValue !== null && metric
-      ? `${target.targetValue} ${metric.unit ?? metric.name.toLowerCase()}`
+      ? formatMeasure(target.targetValue, metric)
       : null;
 
   if (target.targetSets !== null && measure) {

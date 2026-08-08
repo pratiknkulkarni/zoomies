@@ -2,10 +2,22 @@ import { describe, expect, it } from 'vitest';
 
 import {
   formatClock,
+  formatMeasure,
   formatMetricDetail,
   formatMetricSummary,
   formatSlotTally,
 } from './format';
+
+describe('formatMeasure', () => {
+  it('uses the unit where the metric has one', () => {
+    expect(formatMeasure(30, { name: 'Hold', unit: 's' })).toBe('30 s');
+  });
+
+  // A count stores no unit, because `Reps` is already the word for one.
+  it('falls back to the metric name where there is no unit', () => {
+    expect(formatMeasure(9, { name: 'Reps', unit: null })).toBe('9 reps');
+  });
+});
 
 describe('formatClock', () => {
   it('pads seconds so the figure does not change width as it counts', () => {

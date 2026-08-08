@@ -89,7 +89,7 @@ templates
 
 template_slots
   id, template_id, exercise_id, display_order,
-  target_sets, target_metric_id, target_value, rest_seconds
+  target_sets, target_metric_id, target_value
 
 sessions
   id, template_id (nullable), name,
@@ -101,6 +101,7 @@ exercise_entries
   id, session_id, exercise_id, display_order,
   target_sets, target_metric_id, target_value,
                                       -- snapshotted from slot at start
+  template_slot_id (nullable),        -- §6.6, provenance only
   notes, is_ad_hoc
 
 sets
@@ -125,6 +126,13 @@ set_metric_values
   the target. Resolving it through the template slot at read time would let a
   later template edit change what a completed session says. Editing a template
   never rewrites history.
+- **`template_slot_id` on an entry is provenance, never a target source.** No
+  target is read through it — that would undo the rule above. It answers one
+  question, for the raise prompt of §6.6: which slot should a beaten target be
+  written back to. The exercise cannot answer it, because §5.2 lets one exercise
+  fill two slots with different targets. Null for ad-hoc entries, ad-hoc
+  sessions and quick logs, none of which has a plan to raise, and null again
+  once the slot is gone.
 - **Durations are seconds. A count carries no unit at all** — `Reps` is
   already the word (§4.1.1).
 
@@ -424,6 +432,25 @@ Offered only when the target was beaten on the **majority of sets**, not one
 lucky first set. One tap. Ignoring it changes nothing. This is the only mechanism
 by which targets increase; there is no automatic progression.
 
+A majority is strictly more than half, so two of four does not qualify. A tie is
+not a beat — hitting the target is what the target is for. A set where the
+target's metric went unrecorded counts toward the total but never toward the
+beats: it happened, it just was not measured.
+
+**It writes to the template slot**, found through the entry's `template_slot_id`
+(§2). The completed session is never rewritten — invariant 5 — so the raise
+changes the next session and no past one.
+
+**A raise may never be a lowering.** The prompt compares against what was
+trained against, override included (§7.4), but the write only happens when the
+best set also beats what the **slot** currently says. Dropping a target to 8 for
+a bad night and hitting 10 has genuinely beaten it, and writing 10 over a
+template that still says 12 would quietly cut the program.
+
+Nothing is offered where there is nothing to raise: an ad-hoc exercise, an
+ad-hoc session, a quick log, or a slot removed from the template since the
+session started.
+
 ---
 
 ## 7. Logging
@@ -722,3 +749,4 @@ Without reading documentation.
 | Aug 2026 | Two §2 amendments found while building Phase 1. `suggestion_dismissed_at` added to `exercises` — §3.3 required dismissals to persist but nothing stored them. `target_metric_id` added to `exercise_entries` — the snapshot recorded the target's value but not which metric it belonged to, so rendering it meant reading through the template slot, which would have let a template edit rewrite completed sessions. |
 | Aug 2026 | Two amendments after reviewing Phase 2. §3.3 now states that archived exercises still count toward owned families — "active" was ambiguous between `is_active` and not-archived, and the narrower reading hid suggestions at the moment archiving made them most relevant. §3.5 names the Archived screen, which the spec had assumed without ever describing, leaving archiving one-way in the build. |
 | Aug 2026 | Phase 3 amendments. §5 now says templates live on Home — the spec defined them fully but never said how they are reached, the same omission §3.5 had for archiving. §5.2 records that templates themselves do not reorder, and that deleting one takes its slots, which is the opposite of the call made for an exercise's metrics and for the opposite reason: nothing points at a slot. |
+| Aug 2026 | Phase 6 amendments. §2 gains `template_slot_id` on `exercise_entries` and a storage rule saying what it is not: provenance for the raise prompt, never a target source, because reading a target through it would undo the snapshot two rows above it. The raise had nowhere to write otherwise — an entry knew its exercise, and §5.2 lets one exercise fill two slots with different targets. §6.6 rewritten around three things implementation forced into the open: a majority is strictly more than half and a tie is not a beat; the write goes to the slot and never to the completed session; and **a raise may never be a lowering**, so it is gated on the slot's own figure rather than on the possibly-overridden target that was trained against. §2 also lost `rest_seconds`, which Phase 5 dropped from the schema and from §5.1 but not from the data-model block. |

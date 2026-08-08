@@ -1,10 +1,14 @@
-# Smoke Test — Phases 0 to 4
+# Smoke Test — Phases 0 to 4, and the Phase 6 device pass
 
 **Document Type:** Working record. Delete or archive once its findings are
 resolved.
 
 Everything built so far, walked end to end on a physical device. The point is to
 find what is wrong or annoying *before* Phase 5 adds more surface on top of it.
+
+Sections A to L are that walkthrough and are **closed**. Sections M to O at the
+end are a separate, narrower pass: the three Definition-of-Done items Phase 6
+closes, which cannot be verified any other way.
 
 ## How to use this
 
@@ -563,3 +567,119 @@ Fill this in at the end, once you have been through everything.
 
 **Anything that should block Phase 5:**
 - NOTE - If the UI cosmetic changes are going to be done later on, if you recommend we do that later on, it's fine. Like the resume_session.jpeg image or any of the UI changes, we can defer them to a later stage. I am still not a 100% happy with how the application looks, but I'm keeping an emphasis on application functionality slightly more than UI/UX for now. I am open to suggestions, recommendations from you.
+
+---
+
+# Phase 6 device pass — completion flow & quick log
+
+Not part of the walkthrough above. These are the three Definition-of-Done items
+Phase 6 closes, plus the two edge cases that decide whether the target raise is
+trustworthy. **Phase 6 does not close until these pass.**
+
+Everything below needs a **cold start** first — migration 0005 runs when the
+root mounts, and Fast Refresh does not remount the root.
+
+## M. Finishing a session
+
+**M1 — DoD 6.** Start a session from a template with at least two exercises. Log
+sets against one and **nothing at all** against the other. Tap `Finish session`.
+
+Expect: a `Not trained` line naming the untrained exercise, in grey — never red,
+never a dialog. `Finish session` sits right below it and works in one tap.
+
+**Observed:**
+
+UX - Not trained does appear but it's literally a list. I need to read through it one by one, it's a comma seaparated list. Perhaps we could display it as an actual list or something which makes it easier to look through? 
+
+**M2.** In the same review, type a session note, then force-quit before tapping
+Finish. Reopen, resume, finish again.
+
+Expect: the note is still there. It is written as you type, not on the button.
+
+**Observed:**
+
+It's there, that's working. 
+
+**M3.** An exercise short of its target — 2 of 3 sets — must **not** be warned
+about. Cutting a set on purpose is normal.
+
+**Observed:**
+It's there, that's working. 
+
+## N. Raising a target
+
+**N1 — DoD 7.** Template target `3 × 8 reps`. Log 10, 10, 9. Finish.
+
+Expect: `Pull-Up — you hit 10 reps against a target of 8 reps.` and a
+`Raise to 10 reps` button. One tap and the row says it is raised.
+
+Then check the **template** reads `3 × 10 reps`, and the **completed session**
+still reads `3 × 8` — history does not move.
+
+**Observed:**
+This is a nice touch and yes, it's working. 
+
+**N2.** Same target of 8, but log 10, 7, 6 — beaten once out of three.
+
+Expect: **no prompt.** A majority means more than half.
+
+**Observed:**
+- Working
+
+**N3.** Log 8, 8, 8 against a target of 8.
+
+Expect: **no prompt.** A tie is not a beat.
+
+**Observed:**
+Worked
+
+**N4 — the raise must never lower.** Template target 12. Start the session, tap
+the target and override it down to 8 for this session. Log 10, 10, 10. Finish.
+
+Expect: **no prompt.** You beat what you trained against, but the template still
+says 12 and writing 10 would cut the program.
+
+**Observed:**
+Worked
+
+**N5.** Put the same exercise in one template **twice** with different targets —
+say `3 × 8` to open and `2 × 5` to finish. Beat the first and not the second.
+
+Expect: only the opener is offered, and raising it leaves the finisher at 5.
+This is the case the whole phase was built around.
+
+**Observed:**
+
+Working
+
+## O. Quick log
+
+**O1 — DoD 8.** From Home, with no session running, tap `Quick log`, search for
+Pull-Up, enter 5, tap `Log it`.
+
+Expect: it saves and returns. No session screen ever appears.
+
+**Observed:**
+- Working
+
+**O2.** Start a session, leave it running, and quick-log something else.
+
+Expect: it works, and Home still offers to resume the session. A quick log is
+not a session.
+
+**Observed:**
+- Working
+
+**O3.** Open Quick log, choose an exercise, then tap Back.
+
+Expect: back to the exercise list, not off the screen.
+
+**Observed:**
+
+BUG - Quick log -> choose exercise -> back takes me back to the homescreen, not the exercise list screen.
+
+**O4.** With an exercise chosen and nothing typed, `Log it` is disabled until a
+value is entered or `To failure` is on.
+
+**Observed:**
+- Working

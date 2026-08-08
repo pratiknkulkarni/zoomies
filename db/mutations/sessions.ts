@@ -7,6 +7,7 @@ import {
   templateSlots,
   templates,
 } from '../schema';
+import { logSetIn, type SetValueInput } from './sets';
 
 /**
  * Writes for sessions and their exercise entries (FEATURES.md §6).
@@ -33,6 +34,10 @@ const liveEntry = isNull(exerciseEntries.deletedAt);
  *
  * The template's name is copied onto the session so history still reads as
  * `Rings` after the template is renamed or deleted.
+ *
+ * `template_slot_id` is written alongside the snapshot but is not part of it —
+ * it says where the entry came from, so the raise prompt of §6.6 knows which
+ * slot a beaten target belongs to. Nothing reads a target through it.
  */
 export async function startFromTemplate(templateId: string): Promise<string> {
   return db.transaction(async (tx) => {
@@ -80,9 +85,72 @@ export async function startFromTemplate(templateId: string): Promise<string> {
         targetSets: slot.targetSets,
         targetMetricId: slot.targetMetricId,
         targetValue: slot.targetValue,
+        templateSlotId: slot.id,
         isAdHoc: false,
       });
     }
+
+    return session.id;
+  });
+}
+
+/**
+ * Five pull-ups in the evening (§6.1). One exercise, one set, completed on
+ * save — no session screen is ever shown.
+ *
+ * **It produces the same rows a session does**, which is the whole point: a
+ * session, an entry and a set, written by the same `logSetIn` the session
+ * screen uses. History and analytics downstream get one shape to read rather
+ * than three, and `is_quick_log` is the only thing that distinguishes it —
+ * needed because §11.5 counts a quick log toward sets, records and
+ * days-since-trained but never toward the sessions figure.
+ *
+ * One transaction, so a force-quit mid-save leaves no session with no set in it.
+ *
+ * It does not check for an active session. §6.2's one-at-a-time rule is about
+ * sessions being trained, and a quick log is over before it starts — which is
+ * why `activeSession()` filters them out rather than this asserting against
+ * them.
+ */
+export async function quickLog(
+  exerciseId: string,
+  values: SetValueInput[],
+  toFailure = false,
+): Promise<string> {
+  return db.transaction(async (tx) => {
+    const now = Date.now();
+
+    const [session] = await tx
+      .insert(sessions)
+      .values({
+        // No template and no name — it was not planned and is not a workout
+        // with a title. History shows it as what it is.
+        startedAt: now,
+        completedAt: now,
+        isQuickLog: true,
+      })
+      .returning({ id: sessions.id });
+
+    if (!session) {
+      throw new Error('Failed to create a quick log');
+    }
+
+    const [entry] = await tx
+      .insert(exerciseEntries)
+      .values({
+        sessionId: session.id,
+        exerciseId,
+        displayOrder: 0,
+        // No target to hit and no slot to raise: nothing planned this.
+        isAdHoc: false,
+      })
+      .returning({ id: exerciseEntries.id });
+
+    if (!entry) {
+      throw new Error('Failed to create a quick log entry');
+    }
+
+    await logSetIn(tx, entry.id, values, toFailure);
 
     return session.id;
   });
@@ -214,25 +282,37 @@ export async function resumeSession(id: string): Promise<void> {
 }
 
 /**
- * Completion (§6.2). The warnings and the target-raise prompt are Phase 6; this
- * is the write underneath both, and the one the resume prompt's "Complete it
- * now" calls directly.
+ * The optional session note of §7.5, written from the completion screen.
+ *
+ * Written as you type rather than on blur, for the reason `setEntryNotes` gives:
+ * a focused field never blurs when the screen is left, and six fields lost their
+ * edits that way in Phase 4.
+ */
+export async function setSessionNotes(
+  id: string,
+  notes: string | null,
+): Promise<void> {
+  await db.update(sessions).set({ notes }).where(eq(sessions.id, id));
+}
+
+/**
+ * Completion (§6.2). The warnings and the raise prompt live on the screen that
+ * calls this; by the time it runs, every decision has already been written.
+ *
+ * The note is not a parameter. It belongs to `setSessionNotes` and is on disk
+ * before this is reached — one thing that can be lost by a force-quit is
+ * enough, and a note typed and then thrown away by a crash on the last tap is
+ * the same failure invariant 1 rules out for sets.
  *
  * A session paused at the moment it completes has its final pause folded in
  * first, so the duration does not silently lose it.
  */
-export async function completeSession(
-  id: string,
-  notes?: string | null,
-): Promise<void> {
+export async function completeSession(id: string): Promise<void> {
   await resumeSession(id);
 
   await db
     .update(sessions)
-    .set({
-      completedAt: Date.now(),
-      ...(notes === undefined ? {} : { notes }),
-    })
+    .set({ completedAt: Date.now() })
     .where(eq(sessions.id, id));
 }
 
