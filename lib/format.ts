@@ -71,17 +71,80 @@ export function formatSlotCount(count: number): string {
 export function formatSetValues(
   metrics: (MetricLabel & { id: string })[],
   valueByMetric: Map<string, number | null>,
+  /**
+   * What to print for a metric that went unrecorded. Omitted by default, which
+   * is what the session screen wants.
+   *
+   * **History passes `—`.** During training, dropping an empty metric keeps
+   * rows scannable; in history the point is fidelity, and `10 reps` alone
+   * cannot be told apart from `10 reps` with a note that was never written.
+   * Invariant 2 is the rule either way — the dash is how "not recorded" looks
+   * where it needs to be visible.
+   */
+  options?: { missing?: string },
 ): string {
   const parts = metrics
     .map((metric) => {
       const value = valueByMetric.get(metric.id);
       return value === undefined || value === null
-        ? null
+        ? (options?.missing ?? null)
         : formatMeasure(value, metric);
     })
     .filter((part): part is string => part !== null);
 
   return parts.length > 0 ? parts.join(SEPARATOR) : 'Recorded';
+}
+
+/**
+ * How long a session took: `48m`, `1h 12m`, `2h`.
+ *
+ * Minutes only below an hour, and the minutes dropped when there are none —
+ * `1h 00m` reads like a stopwatch, and this is a fact about a past session
+ * rather than something counting.
+ *
+ * Anything under a minute rounds to `1m`. A session that genuinely took
+ * seconds is a mistake, and `0m` states it less clearly than the smallest real
+ * number does.
+ */
+export function formatDuration(ms: number): string {
+  const minutes = Math.max(1, Math.round(ms / 60_000));
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+
+  if (hours === 0) {
+    return `${minutes}m`;
+  }
+
+  return rest === 0 ? `${hours}h` : `${hours}h ${rest}m`;
+}
+
+/**
+ * The day a session happened: `Sat 8 Aug`, or `Sat 8 Aug 2025` once it is not
+ * this year.
+ *
+ * The year is omitted for the current one and shown otherwise. A timeline read
+ * every week should not repeat it on every row, but a session from last January
+ * must never read as one from this January.
+ *
+ * `now` is a parameter for the same reason it is one throughout `lib/timers.ts`:
+ * a function that reads the clock itself cannot be tested at a year boundary.
+ */
+export function formatSessionDate(epochMs: number, now = Date.now()): string {
+  const date = new Date(epochMs);
+  const sameYear = date.getFullYear() === new Date(now).getFullYear();
+
+  const formatted = date.toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    ...(sameYear ? {} : { year: 'numeric' }),
+  });
+
+  // `en-GB` puts a comma after the weekday only when a year is present, so the
+  // two forms would otherwise punctuate differently for no reason the reader
+  // could see. The locale is pinned, so this is one known quirk and not a
+  // general attempt to reformat arbitrary output.
+  return formatted.replace(',', '');
 }
 
 /**
