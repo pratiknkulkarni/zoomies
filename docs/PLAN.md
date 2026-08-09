@@ -534,6 +534,13 @@ handler, which is the only acknowledgement available in the same frame as the
 tap. `FEATURES.md` §7.6 amended for the fourth haptic; the row is memoised so
 one add no longer re-renders every visible row.
 
+Verified on device: `Done` renders at y2209 of a 2400px screen on arrival, holds
+**identical** bounds after the library is scrolled to its end, and moves to
+y1326 when the search field takes the keyboard. The haptic's call site is
+verified; the sensation is not something a script can confirm.
+
+**Phase 6a is closed. Next: Phase 7 — History.**
+
 ---
 
 ### Phase 7 — History

@@ -1099,3 +1099,13 @@ The row is also memoised, with module-level shared empty arrays. A `?? []`
 written inline is a new array every render, so every row looked changed whether
 or not it was and `memo` would have done nothing. This is a small win and worth
 recording as small — the haptic is the part that will be felt.
+
+**Verified on the Pixel 7a**, measured rather than eyeballed. On a 1080×2400
+screen `Done` renders at y2209–2276 on arrival, with no scrolling. After
+scrolling the library to its end the bounds are **identical**, which is the
+proof it is pinned rather than merely fitting. Focusing the search field moves
+it to y1326 — above the keyboard, not behind it. Adding still works and the
+tally appears; `Done` returns to the template with the new slot present.
+
+The haptic is the one thing here a script cannot confirm: the call site is
+verified, the sensation is not.
