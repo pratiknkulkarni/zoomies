@@ -954,3 +954,158 @@ about and misses the one that merely mentions the thing.
 
 Also noted, not fixed: `FEATURES.md`'s change log stops at Phase 3. Phases 4 and
 5 amended the document without recording that they had.
+
+---
+
+## Phase 6a — Leaving a screen
+
+Branch `phase-6a-leaving`. Raised from use rather than from a test: Back was
+being pressed far more often than the application took anyone anywhere, and
+nothing confirmed that what had been typed was kept.
+
+### The objection to write-on-save was wrong
+
+Worth recording, because it was stated confidently and it was not true.
+
+The Phase 4 defect was write-on-**blur**, not write-on-save. The chain:
+edge-to-edge makes `adjustResize` inert from Android 15, so the keyboard
+covered every form; fixing that needed `keyboardShouldPersistTaps="handled"` so
+buttons took one press instead of two; and that prop delivers the tap while
+leaving the field focused, so `onBlur` never fires.
+
+A Save button never consults blur. It reads state in its own handler, and the
+same prop that broke blur is what lets it be pressed once with the keyboard up.
+Write-on-save is the pattern that defect argues *for*.
+
+### The real constraint was the exit surface, and it was two doors
+
+- `headerShown: false` on the root Stack — no native header back exists.
+- Native-stack has no Android swipe-back; that option is iOS-only.
+- `enableOnBackInvokedCallback="false"` in the manifest — predictive back is
+  off, so the legacy `BackHandler` is authoritative.
+
+So `lib/use-draft-exit.ts` owns both doors, and no screen can implement half of
+the guard. `usePreventRemove` would be React Navigation's answer, but
+expo-router vendors its navigation core without re-exporting it, and reaching
+into `expo-router/build/` is a dependency on build output.
+
+The listener reads `dirty` through a ref. Registered once per focus, it would
+otherwise close over whichever value was current at registration and never see
+another — the sort of bug that only appears on the second edit.
+
+### Two patterns, because the complaint was not really about buttons
+
+It was that a screen had to be learned before you knew how to leave it. So
+`FEATURES.md` §18 allows exactly two endings: a draft ends in Discard/Save, an
+action surface ends in Done.
+
+Discard is deliberately absent from action surfaces. Undoing a reorder or a
+removal is an undo stack — a different feature — and a Discard that only
+sometimes means what it says is worse than none.
+
+**The action row belongs to its section, not to the screen.** That is the fix
+for `exercise/[id]/edit.tsx`, which had one Save under a form *and* a metric
+list that had already written itself; pressing it after adding a metric implied
+the metric was pending. Placement was carrying a false claim.
+
+### A drafted field must reach the guard
+
+The metric rename is one field on an otherwise immediate surface. Left
+untracked, leaving would throw it away without asking — which is the original
+complaint wearing different clothes. The row reports upward and the screen folds
+it into the same prompt.
+
+The pending names live in a ref with a count in state: the guard needs to know
+*whether* anything is pending on every render, and *what* only when it saves.
+Holding the names in state would re-render every row on every keystroke in one
+of them.
+
+### The exception is the point, not an oversight
+
+Notes typed during training keep writing per keystroke. A draft is a promise to
+write later, and during a session there is no later worth trusting — that is
+what invariant 1 is about. Planning is different: nothing is lost by a
+template's name waiting for a button.
+
+### Verification standing
+
+`tsc`, lint and 79 unit tests green.
+
+**The slot screen is verified end to end on the Pixel 7a**, including the path a
+compiler cannot check. Typing into a field and pressing the **Android system
+back** raises `Save your changes?`; Cancel keeps the draft on screen; Discard
+returns to the template with the row still reading `No target` and nothing
+written; Save writes and navigates, and the pulled database shows
+`target_sets = 3` with the target still null. Leaving without editing goes
+straight back with no prompt. The add screen ends in `Done` and returns to the
+template.
+
+Note that the **first** system back press is consumed by the keyboard, as it is
+anywhere in Android. The guard sees the second. That is correct and worth
+knowing before testing it — a first press that appears to do nothing is the IME,
+not the hook.
+
+**Everything else verified too**, in a second pass: `SMOKE_TEST.md` P, Q, R and
+S all pass. The exercise editor's split reads correctly, a metric rename reaches
+the guard, adding a metric raises no prompt, both confirmations appear, quick
+log's back returns to the exercise list rather than Home, and the training notes
+still write as you type.
+
+Harness note: driving this with `adb shell input tap` on coordinates read from a
+`uiautomator` dump is only safe if the dump is re-read after every scroll. A
+stale dump put a tap on `Delete template` instead of `Add an exercise` — the
+confirmation added in this very phase is what caught it. Also: a dump taken too
+soon after a back press can catch a transient window and read as though the
+screen was left, which produced one entirely false failure before the sequence
+was re-run with a dump between each step.
+
+### Follow-up: the add screen
+
+Two things surfaced from using the finished phase.
+
+**`Done` was at the bottom of the library.** It went into
+`ListFooterComponent`, which put it below every exercise — so finishing the
+screen meant scrolling past all of them. The screen exists to end "press Back
+and hope", and this had moved that problem rather than removed it.
+
+`Screen` gained a `footer` prop rather than each screen pinning its own row.
+`Screen` already owns the safe area and the keyboard avoider, and those are
+exactly the two things a pinned row gets wrong: it has to sit above the gesture
+bar and rise with the keyboard. Putting it anywhere else means a screen added
+later can pin a row incorrectly.
+
+The inset goes on the outer view and the token padding on an inner one, because
+a `style` `paddingBottom` overrides the class rather than adding to it — and the
+two are different kinds of value. `insets.bottom` is device geometry read at
+runtime, the same exemption `paddingTop` already carried.
+
+**"Adding an exercise is a bit slow" — measured before touching anything.**
+Against the database pulled off the device, the read `addSlot` performs runs 200
+times in 21ms. The library is 22 active exercises. SQLite was never the
+bottleneck, and optimising the query would have been theatre.
+
+What was actually missing is that **nothing acknowledged the tap**. The `× 2`
+tally cannot appear until the write lands and the live query re-runs, and the
+row had `active:bg-muted` while the finger was down and nothing at all after it
+lifted. On a list you tap down quickly, that gap reads as lag.
+
+So a haptic fires in the press handler, *before* the write — the only
+acknowledgement that can happen in the same frame as the tap. That extends
+`FEATURES.md` §7.6, which had scoped haptics to three training signals, so the
+section says why the fourth is different and adds "nowhere else": a haptic on
+every press is a buzzing phone, not feedback.
+
+The row is also memoised, with module-level shared empty arrays. A `?? []`
+written inline is a new array every render, so every row looked changed whether
+or not it was and `memo` would have done nothing. This is a small win and worth
+recording as small — the haptic is the part that will be felt.
+
+**Verified on the Pixel 7a**, measured rather than eyeballed. On a 1080×2400
+screen `Done` renders at y2209–2276 on arrival, with no scrolling. After
+scrolling the library to its end the bounds are **identical**, which is the
+proof it is pinned rather than merely fitting. Focusing the search field moves
+it to y1326 — above the keyboard, not behind it. Adding still works and the
+tally appears; `Done` returns to the template with the new slot present.
+
+The haptic is the one thing here a script cannot confirm: the call site is
+verified, the sensation is not.

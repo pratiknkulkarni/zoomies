@@ -468,9 +468,10 @@ machinery, which was the largest and most failure-prone part of this phase.
 
 ### Phase 6 follow-ups — Leaving a screen
 
-**Queued, not designed.** Raised from use, in the same way the Phase 4
-follow-ups were raised from the smoke test. The approach is an open question
-(§4.5) and is answered before this starts.
+**Built 8 Aug 2026**, branch `phase-6a-leaving`. Raised from use, in the same
+way the Phase 4 follow-ups were raised from the smoke test. §4.5 settled it:
+**write on save**, with the training loop excepted. `FEATURES.md` §18 is the
+rule; `lib/use-draft-exit.ts` is the enforcement.
 
 **The complaint:** you press Back far more often than the application takes you
 anywhere. Adding exercises to a template, then setting a slot's target, both end
@@ -482,44 +483,63 @@ terminal button that navigates — `template/new.tsx`, `exercise/new.tsx`,
 commit as you type and can only be left by pressing Back. Nothing marks which
 kind a screen is, so every screen has to be learned.
 
-Screens with no way out but Back:
+What each screen became:
 
-| Screen | What commits invisibly |
-|---|---|
-| `app/slot/[id].tsx` | Sets and target. **No button anywhere on the screen.** |
-| `app/template/[id]/add.tsx` | Each tap adds a slot; it deliberately stays so several can be added, but offers no Done. |
-| `app/template/[id]/index.tsx` | The name, per keystroke. |
-| `features/exercises/metric-editor.tsx` | Every add, rename, reorder and delete. |
-| `app/entry/[id].tsx` | The per-exercise note, per keystroke. |
-| `app/exercise/[id]/index.tsx` | Archive and unarchive, with no confirmation and no acknowledgement. Delete has both. |
+| Screen | Was | Now |
+|---|---|---|
+| `app/slot/[id].tsx` | Sets and target per keystroke, **no button anywhere** | Draft. One `setSlotPlan` write instead of two that could disagree. |
+| `app/template/[id]/add.tsx` | Each tap adds a slot, no Done | Action + `Done`. |
+| `app/template/[id]/index.tsx` | Name per keystroke | Name is a draft with its own Save; the acts stay immediate. |
+| `features/exercises/metric-editor.tsx` | Rename per keystroke | Rename is a draft that reports upward to the screen's guard. |
+| `app/exercise/[id]/edit.tsx` | One Save under both halves | Draft actions inside the draft's section; metrics end in `Done`. |
+| `app/exercise/[id]/index.tsx` | Archive silent, Delete confirmed | Both confirm. |
+| `app/quick-log.tsx` | On-screen Back overridden, system back not | Both agree — **O3 fixed**. |
+| `app/entry/[id].tsx`, `app/complete/[id].tsx` notes | Per keystroke | **Unchanged** — the §18 training exception. |
 
-`app/exercise/[id]/edit.tsx` runs **both models on one screen**: the draft above
-saves and navigates, the metric editor below commits on the spot. Save therefore
-saves half the screen, and the half it does not save is already saved.
+`updateSlot` had no callers once the slot screen saved once, and went in the
+same commit that orphaned it.
 
-**Blocking bug, and it constrains the whole shape:** nothing in the application
-intercepts Android's system Back. `quick-log.tsx` overrides the on-screen
-chevron, and the system gesture bypasses it (smoke test O3). Any confirmation
-added here is bypassable the same way until the system back is handled —
-`usePreventRemove` is the mechanism.
-
-Also wanted: confirmation that a template was created, and a prompt on leaving
-work in progress.
-
-Carried in with it:
-
-- **M1** — the untrained warning is a comma-separated sentence; a list scans.
-- **O3** — the bug above.
-- `app/slot/[id].tsx`'s docstring still describes `rest_seconds` and a rest
-  timer, both cut in Phase 5.
+**M1** is fixed: the untrained warning is a list, not a comma-separated
+sentence, on the one screen whose job is to say which exercises were missed.
+`app/slot/[id].tsx`'s docstring no longer describes the cut rest timer.
 
 **Exit criteria**
 
 1. Every screen that writes states how it is left, and the answer is the same
-   kind of answer everywhere.
+   kind of answer everywhere. — **met**, `FEATURES.md` §18.
 2. The Android system Back does what the on-screen control does, including any
-   confirmation.
+   confirmation. — **met and verified on device** for the slot screen: system
+   back raises the prompt, Cancel keeps the draft, Discard leaves the row
+   untouched in the database, Save writes and navigates.
 3. No screen both commits immediately and offers a Save that implies otherwise.
+   — **met and verified**: `Save details` no longer reads as owning the metric
+   list.
+
+**All three criteria verified on the Pixel 7a.** `SMOKE_TEST.md` P, Q, R and S
+pass: the exercise editor's split, a metric rename reaching the guard, adding a
+metric raising no prompt, both confirmations, quick log's back returning to the
+exercise list rather than Home (**O3 closed**), and — S — the training notes
+still writing as you type rather than having quietly become drafts.
+
+**Follow-up, from using it.** `Done` went into the list footer, so finishing the
+add screen meant scrolling past every exercise to reach it — the problem the
+screen was built to solve, moved rather than removed. `Screen` gained a `footer`
+that pins an action row above the safe area and inside the keyboard avoider.
+
+Adding an exercise also read as slightly slow. **Measured against the pulled
+database, it is not the write:** the read `addSlot` performs runs in about
+0.1ms. Nothing acknowledged the tap, and the `× 2` tally cannot appear until the
+write has landed and the query has re-run — so a haptic fires in the press
+handler, which is the only acknowledgement available in the same frame as the
+tap. `FEATURES.md` §7.6 amended for the fourth haptic; the row is memoised so
+one add no longer re-renders every visible row.
+
+Verified on device: `Done` renders at y2209 of a 2400px screen on arrival, holds
+**identical** bounds after the library is scrolled to its end, and moves to
+y1326 when the search field takes the keyboard. The haptic's call site is
+verified; the sensation is not something a script can confirm.
+
+**Phase 6a is closed. Next: Phase 7 — History.**
 
 ---
 
@@ -703,10 +723,31 @@ personal-record queries arrive.
 §13 requires every dependency be justifiable in one sentence there. Add them
 before installing.
 
-### 4.5 How a screen is left, and whether Discard is possible — Phase 6 follow-ups
+### 4.5 How a screen is left, and whether Discard is possible — settled
 
-**Open. Blocks the follow-up phase**, because it decides whether that phase adds
-a button or rebuilds how every editing screen holds state.
+**Settled: write on save, with the training loop excepted.** `FEATURES.md` §18
+now defines the two patterns and the exception; this section records why the
+choice was available at all.
+
+**The blocker was smaller than it first looked, because the objection was
+wrong.** The Phase 4 defect was write-on-**blur**, not write-on-save. With
+`keyboardShouldPersistTaps="handled"` a tap on Back reaches the button without
+dismissing the keyboard, so a focused field never blurs and `onBlur` never
+fires. A Save button never consults blur — it reads state in its own handler,
+and that same prop is what lets it be pressed once rather than twice with the
+keyboard up. Write-on-save is the pattern the defect argues *for*.
+
+What did have to be solved was edits being walked away from, and the exit
+surface turned out to be two doors: our own `BackButton`, and the Android system
+back. No native header back exists (`headerShown: false`), native-stack has no
+Android swipe-back, and `enableOnBackInvokedCallback="false"` keeps the legacy
+`BackHandler` authoritative. `lib/use-draft-exit.ts` owns both.
+
+`usePreventRemove` was not used: expo-router vendors its navigation core and
+does not re-export it, so reaching it means importing from `expo-router/build/`,
+a path a patch release may move.
+
+Kept below as written, since the options were real when they were weighed.
 
 Commit-as-you-type is not incidental and must not be undone casually. It is the
 fix for the Phase 4 defect: `keyboardShouldPersistTaps="handled"` means a

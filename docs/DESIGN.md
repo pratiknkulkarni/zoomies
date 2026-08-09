@@ -364,6 +364,25 @@ here, not a backlog item.
    counters, nothing else.
 5. **Nothing on the dashboard is celebratory.** Records are stated, not
    congratulated.
+6. **A screen says how it is left.** `FEATURES.md` §18 makes every writing
+   screen either a draft or a set of immediate actions; the difference is
+   carried by the action row at the foot of the section it belongs to. A draft
+   ends in `Discard` and `Save`, side by side and equal width, `secondary` then
+   `primary`. An action surface ends in a single full-width `secondary` `Done`.
+   Neither is ever a bare icon.
+
+   **The row belongs to its section, not to the screen.** A screen holding one
+   drafted field among immediate actions puts that field's `Save` directly
+   beneath the field. Placed at the foot of the screen it reads as owning
+   everything above it, which is how a `Save` came to sit under a list that had
+   already written itself.
+
+   **A row whose content scrolls past the screen is pinned.** `Done` on the
+   add-exercise screen sat below every exercise in the library, so finishing
+   meant scrolling the whole list to reach it. Pinned rows go in `Screen`'s
+   `footer`, which places them above the safe area and inside the keyboard
+   avoider, separated from the content by a hairline. A short screen does not
+   pin — the space costs more than the scroll saves.
 
 ---
 

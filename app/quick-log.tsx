@@ -26,6 +26,7 @@ import { tapSaved } from '@/lib/haptics';
 import { formatMetricSummary } from '@/lib/format';
 import { toNullableFloat } from '@/lib/parse';
 import { matchesQuery } from '@/lib/search';
+import { useDraftExit } from '@/lib/use-draft-exit';
 
 /**
  * Quick log (FEATURES.md §6.1) — five pull-ups in the evening.
@@ -48,7 +49,11 @@ export default function QuickLogScreen() {
   const [chosen, setChosen] = useState<Exercise | null>(null);
 
   return chosen ? (
-    <LogForm exercise={chosen} onBack={() => setChosen(null)} />
+    <LogForm
+      key={chosen.id}
+      exercise={chosen}
+      onBack={() => setChosen(null)}
+    />
   ) : (
     <ChooseExercise onChoose={setChosen} />
   );
@@ -166,7 +171,7 @@ function LogForm({
     toFailure ||
     own.some((metric) => (draft[metric.id] ?? '').trim().length > 0);
 
-  const save = () => {
+  const write = async () => {
     if (saving || !recordsSomething) {
       return;
     }
@@ -179,14 +184,30 @@ function LogForm({
         : { metricId: metric.id, num: toNullableFloat(draft[metric.id] ?? '') },
     );
 
-    // The write completes before the screen moves, so a force-quit between the
-    // tap and the navigation loses nothing (invariant 1).
-    void quickLog(exercise.id, values, toFailure)
-      .then(() => {
-        tapSaved();
-        router.back();
-      })
-      .finally(() => setSaving(false));
+    try {
+      // Awaited, so the set is on disk before anything navigates (invariant 1).
+      await quickLog(exercise.id, values, toFailure);
+      tapSaved();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /**
+   * Leaving goes back to the exercise list rather than off the route, and the
+   * system back has to agree — see the comment on the button below.
+   *
+   * A half-typed set counts as unsaved work, so backing out of it asks rather
+   * than dropping it silently.
+   */
+  const { requestExit } = useDraftExit({
+    dirty: recordsSomething,
+    onSave: write,
+    onLeave: onBack,
+  });
+
+  const save = () => {
+    void write().then(() => router.back());
   };
 
   return (
@@ -195,9 +216,16 @@ function LogForm({
         contentContainerClassName="pb-3xl"
         keyboardShouldPersistTaps="handled"
       >
-        {/* Back goes to the exercise list, not off the screen — changing your
-            mind about which exercise is the likelier correction. */}
-        <BackButton onPress={onBack} />
+        {/*
+          Back goes to the exercise list, not off the screen — changing your
+          mind about which exercise is the likelier correction.
+
+          **The system back has to agree.** Overriding only this button left the
+          Android gesture popping the whole route to Home, which is smoke test
+          O3: an on-screen override that the hardware ignores is worse than no
+          override, because it teaches a rule the device then breaks.
+        */}
+        <BackButton onPress={requestExit} />
 
         <Text className="px-xl pt-sm font-sans-semibold text-display text-text">
           {exercise.name}

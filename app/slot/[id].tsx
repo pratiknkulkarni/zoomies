@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
 import { BackButton } from '@/components/ui/back-button';
+import { FormActions } from '@/components/ui/form-actions';
 import { Input } from '@/components/ui/input';
 import { Screen } from '@/components/ui/screen';
 import { SectionLabel } from '@/components/ui/section-label';
 import { Text } from '@/components/ui/text';
-import { setSlotTarget, updateSlot } from '@/db/mutations/templates';
+import { setSlotPlan } from '@/db/mutations/templates';
 import {
   exerciseById,
   metricsForExercise,
@@ -17,20 +18,25 @@ import {
 import { slotById, type TemplateSlot } from '@/db/queries/templates';
 import { describeMeasure } from '@/lib/metrics';
 import { fromNullableNumber, toNullableFloat, toNullableInt } from '@/lib/parse';
+import { useDraftExit } from '@/lib/use-draft-exit';
 import { cn } from '@/lib/utils';
 
 /**
- * What a slot plans: how many sets, of what, with how much rest (§5.1).
+ * What a slot plans: how many sets, and of what (§5.1).
  *
- * Its own screen because the slot row already carries three controls and four
- * more fields would not fit under a thumb. Reached by id alone — slot ids are
- * UUID v7 and globally unique, so the route needs no template to scope it.
+ * Its own screen because the slot row already carries three controls and these
+ * fields would not fit under a thumb beside them. Reached by id alone — slot
+ * ids are UUID v7 and globally unique, so the route needs no template to scope
+ * it.
  *
  * **Every field here is nullable and each null means something.** No target
- * sets shows the completed count with nothing to reach; no rest seconds means
- * no timer, which is what lets handstand practice run uninterrupted. Emptying a
- * field is a decision, not a failure to decide, so it is written as null rather
- * than defaulted back.
+ * sets shows the completed count with nothing to reach; no target metric means
+ * no measurement to beat. Emptying a field is a decision, not a failure to
+ * decide, so it is written as null rather than defaulted back.
+ *
+ * A **draft screen** (§18, Pattern A). It used to write on every keystroke and
+ * carry no button at all, which meant the only way to leave was to press Back
+ * and hope.
  */
 export default function SlotScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -45,14 +51,15 @@ export default function SlotScreen() {
         contentContainerClassName="pb-3xl"
         keyboardShouldPersistTaps="handled"
       >
-        <BackButton />
-
         {!slot ? (
-          settled ? (
-            <Text className="px-xl pt-xl text-body text-text-2">
-              This exercise is no longer in the template.
-            </Text>
-          ) : null
+          <>
+            <BackButton />
+            {settled ? (
+              <Text className="px-xl pt-xl text-body text-text-2">
+                This exercise is no longer in the template.
+              </Text>
+            ) : null}
+          </>
         ) : (
           <Editor key={slot.id} slot={slot} />
         )}
@@ -63,8 +70,7 @@ export default function SlotScreen() {
 
 /**
  * Keyed on the slot so the fields initialise from props once. The query is
- * live, and a field reading straight from props would be reset mid-edit
- * whenever a sibling field committed.
+ * live, and a draft re-filled from props would be overwritten mid-edit.
  */
 function Editor({ slot }: { slot: TemplateSlot }) {
   const { data: exercise } = useLiveQuery(exerciseById(slot.exerciseId), [
@@ -74,61 +80,60 @@ function Editor({ slot }: { slot: TemplateSlot }) {
     slot.exerciseId,
   ]);
 
-  const [sets, setSets] = useState(fromNullableNumber(slot.targetSets));
-  const [value, setValue] = useState(fromNullableNumber(slot.targetValue));
-  const [metricId, setMetricId] = useState(slot.targetMetricId);
-
-  /**
-   * **Written on every keystroke, not on blur.**
-   *
-   * Blur never fires if the screen is left with the field still focused, and
-   * with `keyboardShouldPersistTaps="handled"` on the ScrollView a tap on Back
-   * goes straight to the button without dismissing the keyboard first. So
-   * typing `45` into Rest and tapping Back wrote nothing, and the slot kept the
-   * 60 that `addSlot` had defaulted it to.
-   *
-   * Committing as you type is also what invariant 1 asks for everywhere else:
-   * writes land before any UI transition. These are single integers against
-   * local SQLite, so the cost of a write per keystroke is not worth a debounce
-   * — and a debounce reintroduces the same question about what happens when the
-   * screen goes away mid-wait.
-   */
-  const changeSets = (next: string) => {
-    setSets(next);
-    void updateSlot(slot.id, { targetSets: toNullableInt(next) });
+  const stored = {
+    sets: fromNullableNumber(slot.targetSets),
+    value: fromNullableNumber(slot.targetValue),
+    metricId: slot.targetMetricId,
   };
 
-  const changeValue = (next: string) => {
-    setValue(next);
-    commitTarget(metricId, next);
+  const [sets, setSets] = useState(stored.sets);
+  const [value, setValue] = useState(stored.value);
+  const [metricId, setMetricId] = useState(stored.metricId);
+
+  const dirty =
+    sets !== stored.sets ||
+    value !== stored.value ||
+    metricId !== stored.metricId;
+
+  const discard = () => {
+    setSets(stored.sets);
+    setValue(stored.value);
+    setMetricId(stored.metricId);
   };
 
   /**
-   * Metric and value travel together: a value with no metric does not say what
-   * `8` counts, and a metric with no value states nothing. Either being absent
-   * clears both.
+   * One write for the whole screen, which is what makes the three fields a
+   * plan rather than three independent settings. Metric and value in
+   * particular have always had to travel together — a value with no metric
+   * does not say what `8` counts — and now they cannot even briefly disagree.
    */
-  const commitTarget = (nextMetricId: string | null, nextValue: string) => {
-    const parsed = toNullableFloat(nextValue);
+  const save = () => {
+    const targetValue = toNullableFloat(value);
 
-    void setSlotTarget(
-      slot.id,
-      nextMetricId !== null && parsed !== null
-        ? { metricId: nextMetricId, value: parsed }
-        : null,
-    );
+    return setSlotPlan(slot.id, {
+      targetSets: toNullableInt(sets),
+      target:
+        metricId !== null && targetValue !== null
+          ? { metricId, value: targetValue }
+          : null,
+    });
   };
 
-  const chooseMetric = (metric: ExerciseMetric) => {
+  const { requestExit, saveAndLeave } = useDraftExit({
+    dirty,
+    onSave: save,
+    onDiscard: discard,
+  });
+
+  const chooseMetric = (metric: ExerciseMetric) =>
     // Tapping the chosen one again clears the target rather than leaving no way
     // to undo it.
-    const next = metricId === metric.id ? null : metric.id;
-    setMetricId(next);
-    commitTarget(next, value);
-  };
+    setMetricId((current) => (current === metric.id ? null : metric.id));
 
   return (
     <>
+      <BackButton onPress={requestExit} />
+
       <Text className="px-xl pt-sm font-sans-semibold text-display text-text">
         {exercise.at(0)?.name ?? 'Exercise'}
       </Text>
@@ -138,7 +143,7 @@ function Editor({ slot }: { slot: TemplateSlot }) {
           <SectionLabel>Sets</SectionLabel>
           <Input
             value={sets}
-            onChangeText={changeSets}
+            onChangeText={setSets}
             accessibilityLabel="Target sets"
             keyboardType="number-pad"
             placeholder="No target"
@@ -171,7 +176,7 @@ function Editor({ slot }: { slot: TemplateSlot }) {
 
               <Input
                 value={value}
-                onChangeText={changeValue}
+                onChangeText={setValue}
                 accessibilityLabel="Target value"
                 keyboardType="number-pad"
                 placeholder="No target"
@@ -181,6 +186,11 @@ function Editor({ slot }: { slot: TemplateSlot }) {
           )}
         </View>
 
+        <FormActions
+          dirty={dirty}
+          onDiscard={discard}
+          onSave={saveAndLeave}
+        />
       </View>
     </>
   );

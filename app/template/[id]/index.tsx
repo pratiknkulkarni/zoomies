@@ -5,6 +5,7 @@ import { Alert, ScrollView, View } from 'react-native';
 
 import { BackButton } from '@/components/ui/back-button';
 import { Button } from '@/components/ui/button';
+import { FormActions } from '@/components/ui/form-actions';
 import { Input } from '@/components/ui/input';
 import { Screen } from '@/components/ui/screen';
 import { SectionLabel } from '@/components/ui/section-label';
@@ -17,13 +18,17 @@ import {
   allMetrics,
   indexExercisesById,
   indexMetricsById,
+  type Exercise,
+  type ExerciseMetric,
 } from '@/db/queries/exercises';
 import {
   slotsForTemplate,
   templateById,
   type Template,
+  type TemplateSlot,
 } from '@/db/queries/templates';
 import { SlotList } from '@/features/templates/slot-list';
+import { useDraftExit } from '@/lib/use-draft-exit';
 
 /**
  * One template. There is no separate read view: a template is a plan, and
@@ -85,68 +90,141 @@ export default function TemplateScreen() {
         contentContainerClassName="pb-3xl"
         keyboardShouldPersistTaps="handled"
       >
-        <BackButton />
-
         {!template ? (
-          settled ? (
-            <Text className="px-xl pt-xl text-body text-text-2">
-              This template is no longer here.
-            </Text>
-          ) : null
-        ) : (
           <>
-            <View className="px-xl pt-sm">
-              <Text className="pb-lg font-sans-semibold text-display text-text">
-                {template.name}
+            <BackButton />
+            {settled ? (
+              <Text className="px-xl pt-xl text-body text-text-2">
+                This template is no longer here.
               </Text>
-              <StartButton
-                templateId={template.id}
-                slotCount={slots.length}
-                activeSessionId={active.at(0)?.id ?? null}
-              />
-            </View>
-
-            {/*
-              Keyed on the row so the field initialises from props once. The
-              query is live, so a field reading straight from props would be
-              reset mid-edit whenever anything else on this screen wrote.
-            */}
-            <Name key={template.id} template={template} />
-
-            <SectionLabel className="px-xl pb-sm pt-2xl">
-              Exercises
-            </SectionLabel>
-
-            <SlotList
-              templateId={template.id}
-              slots={slots}
-              exercisesById={exercisesById}
-              metricsById={metricsById}
-            />
-
-            <View className="gap-md px-xl pt-xl">
-              <Button
-                variant="secondary"
-                onPress={() =>
-                  router.push({
-                    pathname: '/template/[id]/add',
-                    params: { id: template.id },
-                  })
-                }
-              >
-                <Text>Add an exercise</Text>
-              </Button>
-            </View>
-
-            <View className="px-xl pt-2xl">
-              <Button variant="danger" onPress={confirmDelete}>
-                <Text>Delete template</Text>
-              </Button>
-            </View>
+            ) : null}
           </>
+        ) : (
+          /*
+            Keyed on the row so the name draft initialises from props once. The
+            query is live, so a field reading straight from props would be reset
+            mid-edit whenever anything else on this screen wrote.
+          */
+          <Loaded
+            key={template.id}
+            template={template}
+            slots={slots}
+            exercisesById={exercisesById}
+            metricsById={metricsById}
+            activeSessionId={active.at(0)?.id ?? null}
+            onDelete={confirmDelete}
+          />
         )}
       </ScrollView>
     </Screen>
+  );
+}
+
+/**
+ * A **mixed screen** (§18): one drafted field, and everything else immediate.
+ *
+ * The name is the only thing here that is typed, so it carries its own Save
+ * beneath it rather than the screen carrying one at the bottom. A single Save
+ * down there would appear to own the slot list above it — which is exactly the
+ * confusion `exercise/[id]/edit.tsx` had, where Save covered half a screen and
+ * the other half was already written.
+ *
+ * Starting a session, adding an exercise and deleting the template are acts and
+ * commit as you do them, so nothing about them is pending when you leave.
+ */
+function Loaded({
+  template,
+  slots,
+  exercisesById,
+  metricsById,
+  activeSessionId,
+  onDelete,
+}: {
+  template: Template;
+  slots: TemplateSlot[];
+  exercisesById: Map<string, Exercise>;
+  metricsById: Map<string, ExerciseMetric>;
+  activeSessionId: string | null;
+  onDelete: () => void;
+}) {
+  const [name, setName] = useState(template.name);
+
+  const trimmed = name.trim();
+  const dirty = trimmed !== template.name;
+  // A template has to be called something, so an empty field never saves.
+  const valid = trimmed.length > 0;
+
+  const { requestExit, saveAndLeave } = useDraftExit({
+    dirty: dirty && valid,
+    onSave: () => renameTemplate(template.id, trimmed),
+    onDiscard: () => setName(template.name),
+  });
+
+  return (
+    <>
+      <BackButton onPress={requestExit} />
+
+      <View className="px-xl pt-sm">
+        <Text className="pb-lg font-sans-semibold text-display text-text">
+          {template.name}
+        </Text>
+        <StartButton
+          templateId={template.id}
+          slotCount={slots.length}
+          activeSessionId={activeSessionId}
+        />
+      </View>
+
+      <View className="gap-xs px-xl pt-sm">
+        <SectionLabel>Name</SectionLabel>
+        <Input
+          value={name}
+          onChangeText={setName}
+          accessibilityLabel="Template name"
+          autoCapitalize="words"
+        />
+        {dirty ? (
+          <View className="pt-sm">
+            <FormActions
+              dirty={dirty}
+              valid={valid}
+              onDiscard={() => setName(template.name)}
+              onSave={saveAndLeave}
+              saveLabel="Save name"
+            />
+          </View>
+        ) : null}
+      </View>
+
+      <SectionLabel className="px-xl pb-sm pt-2xl">Exercises</SectionLabel>
+
+      <SlotList
+        templateId={template.id}
+        slots={slots}
+        exercisesById={exercisesById}
+        metricsById={metricsById}
+      />
+
+      <View className="gap-md px-xl pt-xl">
+        <Button
+          variant="secondary"
+          onPress={() =>
+            router.push({
+              pathname: '/template/[id]/add',
+              params: { id: template.id },
+            })
+          }
+        >
+          <Text>Add an exercise</Text>
+        </Button>
+      </View>
+
+      <View className="px-xl pt-2xl">
+        <Button variant="danger" onPress={onDelete}>
+          <Text>Delete template</Text>
+        </Button>
+      </View>
+    </>
   );
 }
 
@@ -203,45 +281,3 @@ function StartButton({
   );
 }
 
-/**
- * The name writes as you type rather than behind a Save button. Everything else
- * on this screen writes as you act on it, and one field is not a form.
- *
- * **Not on blur.** Blur never fires when the screen is left with the field
- * still focused, and `keyboardShouldPersistTaps="handled"` sends a tap on Back
- * straight to the button without dismissing the keyboard first — so a rename
- * followed by Back wrote nothing.
- */
-function Name({ template }: { template: Template }) {
-  const [name, setName] = useState(template.name);
-
-  const change = (next: string) => {
-    setName(next);
-
-    // A template has to be called something, so an empty field is held locally
-    // and never written. Blur puts the old name back.
-    const trimmed = next.trim();
-    if (trimmed.length > 0 && trimmed !== template.name) {
-      void renameTemplate(template.id, trimmed);
-    }
-  };
-
-  const restoreIfEmptied = () => {
-    if (name.trim().length === 0) {
-      setName(template.name);
-    }
-  };
-
-  return (
-    <View className="gap-xs px-xl pt-sm">
-      <SectionLabel>Name</SectionLabel>
-      <Input
-        value={name}
-        onChangeText={change}
-        onBlur={restoreIfEmptied}
-        accessibilityLabel="Template name"
-        autoCapitalize="words"
-      />
-    </View>
-  );
-}
