@@ -562,6 +562,39 @@ this volume.
 1. A completed session reads back exactly as logged, including nulls as `—`.
 2. Session duration excludes `accumulated_pause_ms`.
 
+**Built 9 Aug 2026**, branch `phase-7-history`.
+
+Everything the application recorded was write-only past the moment a session
+ended. This is the surface that reads it back, and the substrate Phases 8 and 9
+read from — which is why it closes no Definition-of-Done item.
+
+`sessionLengthMs` lives in `lib/history.ts` rather than beside its query, for
+the reason `lib/completion.ts` does: `db/queries/` imports the client, the
+client imports `expo-sqlite`, and the runner cannot open it. Criterion 2 is the
+kind of thing that should not be inlined into a component.
+
+`formatSetValues` gained a `missing` option rather than changing behaviour
+everywhere. History shows `—`; training keeps omitting, which is what makes rows
+scannable mid-set. Same invariant, different priority.
+
+The detail screen is separate from `app/session/[id].tsx` deliberately —
+`DESIGN.md` §10 rule 4 says the active session screen carries the least chrome
+of any screen, and §9 wants dates, durations and notes.
+
+**Verification is partial and the gap is recorded.** Verified by script on the
+Pixel 7a: the timeline renders and groups by day, quick logs are titled with
+their exercise and marked, five sessions' durations match
+`completed_at − started_at − accumulated_pause_ms` **exactly** against the pulled
+database, and the detail screen renders every set with `Not trained` where an
+exercise has none.
+
+**Neither exit criterion is fully closed.** Criterion 1's dash needs a set with
+one metric recorded and another not; criterion 2 needs a session with a nonzero
+pause. No such data exists on the device, and creating it means driving the UI —
+which the Expo dev menu kept intercepting. `sessionLengthMs` has five unit tests
+including the pause case, so the arithmetic is proven and the wiring is proven;
+what is unverified is the two together. `SMOKE_TEST.md` T, U and V carry it.
+
 ---
 
 ### Phase 8 — Exercise Details & Records

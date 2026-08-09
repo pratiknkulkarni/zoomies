@@ -553,12 +553,36 @@ This is a deliberate trade, not an oversight.
 ## 9. History
 
 **Timeline** — reverse-chronological list of completed sessions. Date, name,
-duration, exercise count.
+duration, exercise count. **Grouped by day**, because training clusters — two
+sessions and a quick log on one day, then nothing for three — and a flat list
+hides the gaps, which is the shape of the record most worth seeing.
 
-**Session detail** — everything logged, per set, with notes.
+**Quick logs appear, marked.** §6.1 makes all three kinds the same rows so there
+is one code path for history; hiding one kind would mean training that is
+recorded and invisible. A quick log has no name of its own, so it borrows its
+exercise's, and it says `Quick log` where a session gives a duration — its start
+and end are the same instant, so a length would read as a very short session
+rather than something that was never one. §11.5 keeps quick logs out of the
+sessions *figure* on the dashboard, which is where the distinction earns its
+keep.
 
-**Edit and delete** completed sessions. Deleting removes its entries and sets;
-the exercises remain.
+**Session detail** — everything logged, per set, with notes. **Unrecorded
+values read as `—` here**, unlike on the session screen, which omits them. Mid-
+set the priority is scanning; in history it is fidelity, and a metric silently
+dropped makes `10 reps` indistinguishable from `10 reps` beside a note that was
+never written. Invariant 2 is the rule in both places.
+
+**Edit** covers the session's name and note, as a draft (§18), and any set
+through the exercise screen, where §7.3's inline edit already works "during and
+after a session". A quick log is not offered a name: it never had one, and
+giving it one would make it look like a session that was planned.
+
+**Delete** removes a session from the record. Its entries and sets go with it;
+the exercises remain, along with everything logged in other sessions. The row is
+soft-deleted (invariant 7) — every read filters on it, so the training leaves
+every surface at once while remaining exportable. This is a different act from
+**discarding** an unfinished session (§6.3), which genuinely removes rows and is
+refused once a session has completed.
 
 Calendar, search and filters are deferred. A scrolling list is sufficient at this
 volume.
