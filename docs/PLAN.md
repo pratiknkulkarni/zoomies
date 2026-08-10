@@ -147,7 +147,7 @@
 > application is functionally complete; they are recorded as deferred rather
 > than audited, because that is what they are.
 >
-> **Phase 6 — Completion Flow & Quick Log. Built 7 Aug 2026**, branch
+> **Phase 6 — Completion Flow & Quick Log. Closed 8 Aug 2026**, branch
 > `phase-6-completion`. The review between the last set and history, the target
 > raise prompt, and quick log.
 >
@@ -188,7 +188,42 @@
 > from the quick-log fields leaves the screen entirely instead of returning to
 > the exercise list (O3).
 >
-> **Next: Phase 6 follow-ups — leaving a screen.**
+> **Phase 6 follow-ups — Leaving a screen. Closed 9 Aug 2026**, branch
+> `phase-6a-leaving`, merged to `main`. Every writing screen is now either a
+> draft ending in Discard/Save or a set of immediate actions ending in Done, and
+> §18 says which is which. `lib/use-draft-exit.ts` owns the on-screen Back *and*
+> the Android system back from one place, because guarding one and not the other
+> loses work silently.
+>
+> **The blocker on write-on-save was a misreading.** The Phase 4 data-loss bug
+> was write-on-**blur** — with `keyboardShouldPersistTaps="handled"` a tap on
+> Back reaches the button without blurring the field, so `onBlur` never fires.
+> A Save button never consults blur, so the bug argues *for* write-on-save
+> rather than against it. §4.5 records the correction.
+>
+> **Training writes as you type; planning waits for Save.** The per-exercise and
+> session notes keep writing per keystroke — losing a set is the invariant, and a
+> note typed mid-session is training. Everything else is a draft.
+>
+> A follow-up pinned `Done` to the bottom of the add-exercise screen and
+> acknowledged the tap synchronously. The lag was never SQLite: 200 reads
+> measured 21ms. It was a list of 41 rows with no response to being touched.
+>
+> **Phase 7 — History. Closed 10 Aug 2026**, branch `phase-7-history`. The
+> timeline, the session detail, edit and soft delete. Both exit criteria verified
+> on the Pixel 7a: a set with one metric recorded and one not reads back
+> `10 reps · —`, and a paused session reports a duration excluding the pause.
+> Five sessions' durations match `completed_at − started_at −
+> accumulated_pause_ms` exactly against the pulled database.
+>
+> Quick logs appear in the timeline, titled with their exercise and marked, so
+> that training which is recorded is never invisible. §11.5 keeps them out of the
+> dashboard's sessions *figure*, which is where the distinction matters.
+>
+> `SMOKE_TEST.md` U and V — edit, delete, and the two things history must not do
+> — are unrun. They are regression rather than exit criteria.
+>
+> **Next: Phase 8 — Exercise Details & Records.**
 
 Update this block when a phase closes. It is the first thing read at the start
 of a session.
@@ -468,7 +503,7 @@ machinery, which was the largest and most failure-prone part of this phase.
 
 ### Phase 6 follow-ups — Leaving a screen
 
-**Built 8 Aug 2026**, branch `phase-6a-leaving`. Raised from use, in the same
+**Closed 9 Aug 2026**, branch `phase-6a-leaving`. Raised from use, in the same
 way the Phase 4 follow-ups were raised from the smoke test. §4.5 settled it:
 **write on save**, with the training loop excepted. `FEATURES.md` §18 is the
 rule; `lib/use-draft-exit.ts` is the enforcement.
@@ -562,7 +597,7 @@ this volume.
 1. A completed session reads back exactly as logged, including nulls as `—`.
 2. Session duration excludes `accumulated_pause_ms`.
 
-**Built 9 Aug 2026**, branch `phase-7-history`.
+**Closed 10 Aug 2026**, branch `phase-7-history`.
 
 Everything the application recorded was write-only past the moment a session
 ended. This is the surface that reads it back, and the substrate Phases 8 and 9
@@ -588,12 +623,17 @@ their exercise and marked, five sessions' durations match
 database, and the detail screen renders every set with `Not trained` where an
 exercise has none.
 
-**Neither exit criterion is fully closed.** Criterion 1's dash needs a set with
-one metric recorded and another not; criterion 2 needs a session with a nonzero
-pause. No such data exists on the device, and creating it means driving the UI —
-which the Expo dev menu kept intercepting. `sessionLengthMs` has five unit tests
-including the pause case, so the arithmetic is proven and the wiring is proven;
-what is unverified is the two together. `SMOKE_TEST.md` T, U and V carry it.
+**Both exit criteria closed on device 10 Aug 2026.** The gap recorded above was
+data, not code: criterion 1's dash needs a set with one metric recorded and
+another not, and criterion 2 needs a session with a nonzero pause, neither of
+which existed on the device. Both were created by hand and both read back
+correctly — `SMOKE_TEST.md` T1 and T3.
+
+What remains unrun is regression rather than exit criteria: `SMOKE_TEST.md` U
+and V — edit, delete, and the two things history must not do (offer a logging UI
+for a finished session, hold the screen awake while reading one). Both of those
+corrections are verified by reading `app/entry/[id].tsx`, not by watching a
+display time out.
 
 ---
 
