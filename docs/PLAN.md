@@ -224,7 +224,31 @@
 > — were run on device and pass, reported rather than written into the file.
 > Recorded here so the gap is in one place rather than looking unrun forever.
 >
-> **Next: Phase 8 — Exercise Details & Records.**
+> **Phase 8 — Exercise Details & Records. Built 10 Aug 2026**, branch
+> `phase-8-records`. One movement across its whole life: every set ever logged
+> with its session and date, personal records per metric, and the sessions it
+> appeared in.
+>
+> **§4.3 is settled, and the answer was no driver.** The question assumed the
+> ranking would live inside a query. It does not — the queries fetch rows,
+> `lib/records.ts` folds them, and eighteen tests over three-line fixtures cover
+> the exit criterion's ties and nulls without a native devDependency. What stays
+> untested is the queries' own soft-delete filtering, recorded rather than
+> glossed.
+>
+> **A tie keeps the earlier holder.** Matching your best is not beating it — the
+> rule §6.6 already applies to the raise prompt. Null is never a candidate and
+> zero always is, which is invariant 2 read from both sides.
+>
+> **The best-set trend moved to Phase 9** (`FEATURES.md` §10.2). It was the
+> first thing in the project to want a chart, and installing victory-native and
+> Skia for one sparkline would have settled the dashboard's charting stack as a
+> side effect of an exercise screen.
+>
+> **Not yet verified on hardware.** `SMOKE_TEST.md` W carries the device pass;
+> criterion 1 is DoD 10 and needs a thumb.
+>
+> **Next: verify W, then Phase 9 — Dashboard.**
 
 Update this block when a phase closes. It is the first thing read at the start
 of a session.
@@ -643,8 +667,8 @@ The payoff for making Exercise permanent. Spans **all** templates and includes
 quick logs.
 
 - Every set ever logged, newest first, with its session and date
-- Personal records per exercise **per metric** — most reps, longest hold,
-  heaviest added load. A duration PR and a rep PR are separate.
+- Personal records per exercise **per metric** — most reps, longest hold. A
+  duration PR and a rep PR are separate.
 - Best-set trend over time
 - Which sessions it appeared in
 - Its metric configuration
@@ -659,6 +683,33 @@ nothing is cached or stored.
 1. **DoD 10** — browse history and one exercise's full record.
 2. PR queries pass unit tests, including ties and nulls.
 3. No aggregate value exists in any table.
+
+**Built 10 Aug 2026**, branch `phase-8-records`.
+
+`db/queries/aggregate.ts` was not created and is not missing. The reads it was
+going to hold are three rooted queries in `records.ts`, and the only thing that
+aggregates is a fold in `lib/records.ts`. A second query file would have been a
+name with nothing behind it.
+
+**§4.3 settled without a driver.** The ranking is pure, so the exit criterion's
+"ties and nulls" are eighteen tests over fixtures rather than a native
+devDependency and a migration harness. The cost is that the queries' soft-delete
+filtering stays untested; §4.3 records it.
+
+**The trend moved to Phase 9** (`FEATURES.md` §10.2). It was the first thing in
+the project to want a chart, and installing `victory-native` + Skia for one
+sparkline would have decided the dashboard's charting stack as a side effect of
+an exercise screen.
+
+Three roots rather than one join, for the reason every read layer here gives:
+`sessions` moves on rename and delete, `sets` on logging and deleting, and
+`set_metric_values` on a correction from history. `exercise_entries` needs no
+root of its own — nothing soft-deletes an entry, which was checked rather than
+assumed.
+
+**Verification is unrun on hardware.** 111 unit tests pass, `tsc` and lint are
+clean. `SMOKE_TEST.md` W carries the device pass; criterion 1 is DoD 10 and
+needs a thumb.
 
 ---
 
@@ -776,19 +827,36 @@ Nullable `suggestion_dismissed_at` on `exercises`, in the first migration.
 `target_metric_id` is snapshotted onto `exercise_entries` alongside
 `target_value`, in the first migration. `FEATURES.md` §2 and §2.1 amended.
 
-### 4.3 Database-under-test — Phase 8
+### 4.3 Database-under-test — settled
 
 **Runner settled: Vitest**, recorded in `TECH_STACK.md` §8.
 
-Still open: testing `db/queries/` in Node needs a SQLite driver, because
-`expo-sqlite` does not run there. Likely `better-sqlite3` as a devDependency
-running against the same Drizzle schema. Not needed until the aggregation and
-personal-record queries arrive.
+**Settled in Phase 8: no driver.** The question assumed the ranking would live
+inside a query, and it does not. `db/queries/records.ts` fetches rows;
+`lib/records.ts` folds them; the fold is where every rule that could be wrong
+lives, and it takes fixtures three lines long. `better-sqlite3` would have
+bought a native devDependency, a migration-apply harness and a way to swap the
+module-level `db` singleton under test — to test SQL that decides nothing.
+
+This is the same split `lib/completion.ts` and `lib/history.ts` already use, for
+the same reason: `db/` imports the client, the client imports `expo-sqlite`, and
+the runner cannot open it.
+
+**What it leaves untested is the `isNull(deleted_at)` filtering in the queries
+themselves.** A forgotten soft-delete predicate would show a deleted set as a
+record and no unit test would catch it. Recorded in `lib/records.ts` rather than
+glossed over, and cheap to revisit if it ever bites — the fold does not change
+if a driver arrives later.
 
 ### 4.4 Dependencies not yet justified in `TECH_STACK.md` — Phases 9 and 10
 
 - `victory-native` v41+ requires `@shopify/react-native-skia`, plus reanimated
   and gesture-handler. §6.3 lists the latter two; Skia is unlisted.
+  **Phase 8 declined to pre-empt this.** §10's best-set trend was the first
+  thing to want a chart; rather than install a charting stack for one sparkline,
+  or draw one by hand in `react-native-svg` and set a precedent for the
+  dashboard, the trend moved to Phase 9 where one decision covers both.
+  `FEATURES.md` §10.2 records it.
 - The appearance override needs persistent local storage —
   `@react-native-async-storage/async-storage` per §5, which names AsyncStorage
   but does not list the package.

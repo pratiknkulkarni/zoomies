@@ -875,3 +875,68 @@ Expect: nothing. `—` for a missing value, `Not trained` for an exercise with n
 sets. Never `0`.
 
 **Observed:**
+
+## W. One exercise, across everything
+
+**W1 — exit criterion 1, DoD 10.** Exercises → an exercise you have actually
+trained, say Pull-Up.
+
+Expect: `Records`, then `Metrics`, then `History` — every set ever logged,
+newest session first, each session headed by its date and name. Sets within a
+session read in the order you did them.
+
+**Observed:**
+
+**W2 — the record marker.** Find the best set in the History list.
+
+Expect: it says `Record`, in the accent colour, and the same figure appears in
+the `Records` section above with that session's date. One record per metric —
+a Reps record and a Hold record are separate and may sit in different sessions.
+
+**Observed:**
+
+**W3 — ties.** Log a set equalling your best for that exercise, then reopen the
+screen.
+
+Expect: the record's **date does not move**. Matching your best is not beating
+it, and the marker stays on the older set.
+
+**Observed:**
+
+**W4 — nulls.** An exercise with two metrics where you filled only one.
+
+Expect: `10 reps · —` in the History list, and no record at all for the metric
+you left empty. Never a record of `0`.
+
+**Observed:**
+
+**W5 — quick logs count.** Quick-log an exercise, then open it from Exercises.
+
+Expect: the quick log appears in History headed `Quick log`, and it can hold a
+record. §11.5 keeps quick logs out of the *sessions* figure on the dashboard,
+not out of the record.
+
+**Observed:**
+
+**W6 — a correction reaches the record.** From the exercise's History, tap a
+session header, open the exercise inside it, and edit the set holding the
+record downward. Go back twice.
+
+Expect: the record has moved to whatever is now the best set. Nothing is stored,
+so nothing can be stale.
+
+**Observed:**
+
+**W7 — an exercise never trained.** Open one from the Suggested list.
+
+Expect: `Nothing logged yet`, no `Records` section at all, and the metric
+configuration still shown. No zeros anywhere.
+
+**Observed:**
+
+**W8 — the list is long.** Scroll an exercise with a lot of history.
+
+Expect: smooth. The list is virtualized; the name, records and metrics scroll
+away with it rather than sitting fixed.
+
+**Observed:**

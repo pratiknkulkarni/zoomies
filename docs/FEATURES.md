@@ -597,12 +597,48 @@ screen. This is the payoff for making Exercise permanent.
 **v1:**
 - Every set ever logged, newest first, with its session and date
 - Personal records per metric — most reps, longest hold
-- Best-set trend over time
+- Best-set trend over time — **deferred to Phase 9**, see §10.2
 - Which sessions it appeared in
 - Its metric configuration
 
 Unlike the session screen, this view spans **all** templates and includes quick
 logs.
+
+### 10.1 What Holds a Record
+
+Four rules, each of which is a way of getting a record wrong. All four are unit
+tested in `lib/records.test.ts`, and none of them lives inside a query.
+
+- **Only rankable metrics.** `number` and `duration` rank; `notes` does not.
+  Text has no ordering, so the longest note is not an achievement.
+- **Null is never a candidate** (invariant 2). A set where Reps went unrecorded
+  did not score zero reps. Zero *is* a candidate, because someone entered it.
+- **A tie keeps the earlier holder.** Matching your best is not beating it — the
+  same rule §6.6 already applies to the raise prompt. A record that moved to the
+  newest set every time it was equalled would report a date that means nothing.
+- **Only completed sessions rank.** A record claimed mid-session would vanish if
+  that session were then discarded, and §9 already draws this line for history.
+  The moment a target is beaten during training belongs to the completion review.
+
+Records rank against the exercise's **current** metrics. A metric that is later
+removed keeps every value it recorded — that is what `set_metric_values` is for
+— but stops holding a record, because the exercise no longer claims to measure
+that thing.
+
+Nothing is stored. A record is a fold over sets every time it is read
+(invariant 3). There is no `personal_best` column and there must not be one: it
+would be a second source of truth that a corrected set could not reach.
+
+### 10.2 Why the Trend Is Not Here Yet
+
+`victory-native` v41+ requires `@shopify/react-native-skia`, which no document
+justifies yet (`PLAN.md` §4.4). Rather than install a charting stack for one
+sparkline, the trend waits for Phase 9, where the dashboard needs charts anyway
+and one decision covers both.
+
+§11.7 makes the same argument from the data's side: a trend says nothing before
+roughly twelve weeks of it exist. The set list, newest first, already shows
+where a movement is going for anyone reading down it.
 
 ---
 

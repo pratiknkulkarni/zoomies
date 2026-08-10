@@ -1193,3 +1193,111 @@ with `Not trained` where an exercise has none.
 code. Criterion 1's dash needs a set with one metric recorded and one not;
 criterion 2 needs a nonzero pause. Neither exists on the device, and creating
 them means driving the UI through the dev menu described above.
+
+Both criteria closed on 10 Aug 2026 once the two missing rows were created by
+hand: a set with one metric recorded and one not reads back `10 reps · —`, and
+a paused session reports a duration excluding the pause. `SMOKE_TEST.md` U and
+V were run at the same time and pass, reported rather than written into the
+file.
+
+---
+
+## Phase 8 — Exercise Details & Records
+
+Branch `phase-8-records`. Closes **DoD 10**. The payoff for making Exercise
+permanent rather than a line in a template: one movement across every session
+it ever appeared in, quick logs included.
+
+### The database-under-test question dissolved
+
+`PLAN.md` §4.3 had been open since Phase 1 and expected the answer to be
+`better-sqlite3` — a native devDependency, a migration-apply harness, and a way
+to swap the module-level `db` singleton under test.
+
+It was the wrong shape of answer, because it assumed the ranking would live
+inside a query. **Nothing that decides anything belongs in a query.** The
+queries fetch rows; `lib/records.ts` folds them; every rule that could be wrong
+is in the fold, where a fixture is three lines and no native module is
+installed. The exit criterion asked for ties and nulls under test and got
+eighteen tests.
+
+This is the third time the same split has been reached for the same reason —
+`lib/timers.ts`, `lib/completion.ts`, `lib/history.ts`, now `lib/records.ts` —
+so it is a rule rather than a coincidence: **`db/` is where rows come from, and
+`lib/` is where they are turned into answers.**
+
+The honest cost: the queries' own `isNull(deleted_at)` predicates are untested.
+A forgotten one would surface a deleted set as a personal record and nothing
+would catch it. Recorded in the module, not buried.
+
+### Four ways to get a record wrong
+
+Written as rules before the code, each with a test:
+
+1. **A `notes` metric has no record.** The longest note is not an achievement.
+2. **Null is never a candidate; zero always is.** Invariant 2 from both sides —
+   a set where Reps went unrecorded did not score zero, and a set where someone
+   entered `0` did.
+3. **A tie keeps the earlier holder.** §6.6 already decided this for the raise
+   prompt. A record that jumped to the newest set every time it was equalled
+   would report a date that means nothing.
+4. **Only completed sessions rank.** A record claimed mid-session would vanish
+   if that session were then discarded.
+
+The fold is order-independent, and ties on both value and timestamp fall back to
+the id — which for UUID v7 is the same "older wins" rule one line up. That
+exists so no caller has to know what its rows were sorted by.
+
+### Records rank against current metrics
+
+A metric removed from an exercise keeps every value it ever recorded — that is
+precisely what `set_metric_values` is for — but stops holding a record. The
+exercise no longer claims to measure that thing, so it no longer has a best at
+it. History still reads correctly; only the ranking narrows.
+
+### Three roots, and one that was checked rather than assumed
+
+`sessions` moves on rename, delete and completion; `sets` on logging and
+deleting; `set_metric_values` on a correction from history. A single joined
+query would answer all three questions and react to none of them, because
+`useLiveQuery` subscribes to the root alone.
+
+`exercise_entries` gets no root, and that needed checking rather than assuming:
+`grep` over every `deletedAt:` write in `db/mutations/` shows nothing
+soft-deletes an entry. `deleteSession` marks only the session. If that ever
+changes, this screen needs a fourth query.
+
+### The accent, spent once
+
+`DESIGN.md` §3.3 allows the accent in exactly three places and one of them is
+the new-record marker. The `Records` section does **not** use it — records are
+stated, not congratulated (§10.5), and a heading, a figure and a date are a
+statement. The accent goes on the word `Record` beside the set in the list,
+which is the thing you are actually scanning for.
+
+A word rather than a fill or a glyph: §3.3 permits one accent-*filled* element
+on screen, and a lifetime list can hold several marks, one per metric.
+
+### The trend was the first thing to want a chart
+
+§10 lists best-set trend in v1. `victory-native` needs Skia, which no document
+justifies. Drawing a sparkline by hand in `react-native-svg` — already present
+transitively — was available and was declined: it would have set the project's
+charting precedent inside an exercise screen, three weeks before the dashboard
+has to decide the same thing properly.
+
+Moved to Phase 9, recorded in `FEATURES.md` §10.2. §11.7 agrees from the data's
+side: a trend says nothing before twelve weeks of it exist.
+
+### `db/queries/aggregate.ts` was not created
+
+`PLAN.md` listed it. The reads it was going to hold are three rooted queries in
+`records.ts`, and the only thing that aggregates is a fold in `lib/`. A second
+file would have been a name with nothing behind it.
+
+### Verification standing
+
+`tsc`, lint, 111 unit tests — 18 of them new and all over the ranking rules.
+**Unrun on hardware.** `SMOKE_TEST.md` W carries the device pass, and W3 (a tie
+does not move the record's date) and W6 (a correction reaches the record) are
+the two that would expose a wrong fold.
