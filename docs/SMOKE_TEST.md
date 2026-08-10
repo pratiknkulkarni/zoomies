@@ -784,3 +784,94 @@ Expect: the note is there.
 
 **Observed:**
 - Working
+
+---
+
+# Phase 7 device pass — History
+
+**Already verified by script, no need to re-check:** the timeline renders and
+groups by day; quick logs are titled with their exercise and marked `Quick log`;
+the five most recent sessions' durations match
+`completed_at − started_at − accumulated_pause_ms` exactly against the pulled
+database; the detail screen shows date, duration, name, every set per exercise,
+`Not trained` for an exercise with none, and the note field.
+
+**Know this before testing:** the Expo dev menu opens on a hardware MENU press
+and sits over the app, swallowing the next tap. If a tap seems to do nothing,
+press Back once and try again. It is the dev client, not the app.
+
+## T. Reading a session back
+
+**T1 — exit criterion 1.** Quick-log an exercise with **two** metrics — Push-Up
+records Reps and Hold — filling only one of them. Open it from History.
+
+Expect: the set reads `10 reps · —`, not `10 reps`. The dash is the difference
+between a value you left out and one you never had.
+
+**Observed:**
+
+**T2.** Compare a session in History against what you remember logging. Sets in
+order, correct values, `to failure` where you marked it, per-exercise notes
+present.
+
+**Observed:**
+
+**T3 — exit criterion 2.** Start a session, log a set, **pause it for a minute
+or two**, resume, log another set, finish. Open it from History.
+
+Expect: the duration excludes the pause. A session you spent 5 minutes in with 2
+of those paused reads about `3m`, not `5m`.
+
+**Observed:**
+
+## U. Editing and deleting
+
+**U1.** Open a session from History, change its name, press the system back.
+
+Expect: the §18 prompt — Save, Discard, Cancel.
+
+**Observed:**
+
+**U2.** Tap an exercise inside a completed session.
+
+Expect: its sets, editable and deletable — **and no logging UI at all.** No
+`Save set`, no timer. §7.3 grants correcting a set after a session, not adding
+to one.
+
+**Observed:**
+
+**U3.** Correct a set from there, go back.
+
+Expect: the session detail shows the corrected value.
+
+**Observed:**
+
+**U4.** Delete a session from its detail screen.
+
+Expect: a confirmation, then it is gone from the timeline. Check the Exercises
+tab still lists everything it used, and that another session containing the same
+exercise is untouched.
+
+**Observed:**
+
+**U5.** A quick log opened from History.
+
+Expect: no Name field — it never had one — but the note and delete still work.
+
+**Observed:**
+
+## V. What history must not do
+
+**V1.** Open an exercise from a session finished days ago and leave the screen
+sitting for a couple of minutes without touching it.
+
+Expect: the display times out normally. Keep-awake is for training, not reading.
+
+**Observed:**
+
+**V2.** Anything in History that reads as zero where nothing was recorded?
+
+Expect: nothing. `—` for a missing value, `Not trained` for an exercise with no
+sets. Never `0`.
+
+**Observed:**

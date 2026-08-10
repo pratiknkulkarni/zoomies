@@ -317,6 +317,37 @@ export async function completeSession(id: string): Promise<void> {
 }
 
 /**
+ * Renaming a session from history (§9).
+ *
+ * The name was copied off the template at start, so changing it here cannot
+ * reach the template — which is the same one-way relationship the target
+ * snapshot has, for the same reason.
+ */
+export async function renameSession(id: string, name: string): Promise<void> {
+  await db.update(sessions).set({ name }).where(eq(sessions.id, id));
+}
+
+/**
+ * Removing a session from history (§9) — **soft**.
+ *
+ * §9 says deleting "removes its entries and sets", and invariant 7 permits only
+ * soft delete for user-owned data. Marking the session satisfies both: every
+ * read filters on it, including `lastTimeFor`, so the session and everything
+ * logged in it leave every surface at once while the rows survive for export.
+ *
+ * Deliberately **not** `discardSession`, which hard-deletes and refuses a
+ * session that finished. Throwing away a session you decided not to keep and
+ * removing one from the record are different acts on different data, and one of
+ * them is history.
+ */
+export async function deleteSession(id: string): Promise<void> {
+  await db
+    .update(sessions)
+    .set({ deletedAt: Date.now() })
+    .where(eq(sessions.id, id));
+}
+
+/**
  * Throwing away an unfinished session (§6.3) — the one place in the app where
  * data is genuinely deleted rather than soft-deleted.
  *

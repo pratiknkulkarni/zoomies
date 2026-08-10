@@ -1,5 +1,8 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
-import { useKeepAwake } from 'expo-keep-awake';
+import {
+  activateKeepAwakeAsync,
+  deactivateKeepAwake,
+} from 'expo-keep-awake';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -24,6 +27,9 @@ import { SetLog } from '@/features/session/set-log';
 import { SetRow } from '@/features/session/set-row';
 import { formatLastTime, formatSetCount } from '@/lib/format';
 
+/** Named so the activate and deactivate calls cannot drift apart. */
+const KEEP_AWAKE_TAG = 'zoomies-session';
+
 /**
  * Logging one exercise (FEATURES.md §7.2).
  *
@@ -39,10 +45,6 @@ import { formatLastTime, formatSetCount } from '@/lib/format';
  */
 export default function EntryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-
-  // §8.1 — the screen stays on while training. This is where hands are busy
-  // and a screen timeout costs a set.
-  useKeepAwake();
 
   const { data: found, updatedAt } = useLiveQuery(entryById(id), [id]);
   const entry = found.at(0);
@@ -93,6 +95,29 @@ function Logging({ entryId }: { entryId: string }) {
 
   const primary = metrics.at(0);
   const session = sessionRows.at(0);
+
+  /** Reached from History rather than from training — see below and §9. */
+  const finished = session?.completedAt !== null && session !== undefined;
+
+  /**
+   * §8.1 — the screen stays on **while training**, where hands are busy and a
+   * timeout costs a set.
+   *
+   * Conditional, and therefore not `useKeepAwake`, which takes no enabled flag.
+   * This screen is reachable from History too, and holding the display on to
+   * read a session from three weeks ago is a battery cost with nothing bought.
+   */
+  useEffect(() => {
+    if (finished) {
+      return;
+    }
+
+    void activateKeepAwakeAsync(KEEP_AWAKE_TAG).catch(() => {});
+
+    return () => {
+      void deactivateKeepAwake(KEEP_AWAKE_TAG).catch(() => {});
+    };
+  }, [finished]);
 
   const [lastTime, setLastTime] = useState<LastTime | null>(null);
 
@@ -173,8 +198,18 @@ function Logging({ entryId }: { entryId: string }) {
         />
       </View>
 
+      {/*
+        **No logging UI once the session is over.**
+
+        This screen is reachable from History as well as from training (§9), and
+        arriving from a session three weeks old to be offered `Log a set` — with
+        a live countdown, for a duration exercise — states something false about
+        what you are looking at. §7.3 grants editing and deleting a set after a
+        session, not adding to one; the set rows below stay editable, which is
+        what correcting a mislog actually needs.
+      */}
       <View className="px-xl pt-2xl">
-        {metrics.length === 0 ? (
+        {finished ? null : metrics.length === 0 ? (
           <Text className="text-bodySm text-text-2">
             This exercise records nothing yet. Add a metric to it first.
           </Text>

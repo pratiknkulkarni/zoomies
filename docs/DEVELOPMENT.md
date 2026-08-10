@@ -1109,3 +1109,87 @@ tally appears; `Done` returns to the template with the new slot present.
 
 The haptic is the one thing here a script cannot confirm: the call site is
 verified, the sensation is not.
+
+---
+
+## Phase 7 — History
+
+Branch `phase-7-history`. Closes no Definition-of-Done item: it is the surface
+Phases 8 and 9 read from, and the first one that reads anything back at all.
+Until now everything the application recorded was write-only past the moment a
+session ended.
+
+### Where the derived figure lives
+
+`sessionLengthMs` is the phase's second exit criterion, so it went to
+`lib/history.ts` rather than beside its query. `db/queries/` imports the client,
+the client imports `expo-sqlite`, and the runner cannot open it — so anything
+living there is untestable by construction. Same split as `lib/completion.ts`,
+and the rule is worth stating plainly: **a figure a criterion depends on does
+not live next to a database import.**
+
+Pausing is an explicit statement that training stopped, so time spent paused is
+not training time. A duration that counted it would be a lie told by arithmetic,
+and the longer the break the bigger the lie.
+
+### One formatter, two priorities
+
+`formatSetValues` gained a `missing` option rather than changing behaviour
+everywhere.
+
+Exit criterion 1 asks a session to read back **exactly** as logged. With an
+empty metric simply dropped, `10 reps` and `10 reps beside a note that was never
+written` are the same line. But during training, dropping it is right — the
+priority mid-set is scanning, not fidelity. Invariant 2 governs both; the two
+screens weigh it differently, and the option is where that disagreement is
+recorded rather than argued.
+
+### Why History is not the session screen
+
+`app/session/[id].tsx` is a working surface: `2 / 4` counters, and you open an
+exercise to see anything. `DESIGN.md` §10 rule 4 says it carries the least
+chrome of any screen. §9 wants the opposite — every set at once, plus a date, a
+duration and notes — so branching one screen on `completed_at` would have
+violated the single rule written about it.
+
+Correcting a set is a tap through to the entry screen, where §7.3's inline edit
+already worked "during and after a session". The phase adds no editing
+machinery.
+
+### Two things only history could expose
+
+The entry screen held the display awake unconditionally and offered `Log a set`
+regardless of whether the session was over. Neither was wrong until this phase
+made the screen reachable from a session finished weeks ago.
+
+Keep-awake became conditional, and therefore stopped being `useKeepAwake` —
+which takes a tag and options but no enabled flag. `activateKeepAwakeAsync` and
+`deactivateKeepAwake` in an effect, sharing a named tag so the two calls cannot
+drift apart.
+
+### Harness
+
+Two lessons, both costly.
+
+**The Expo dev menu opens on a hardware MENU press and sits over the app**,
+swallowing the next tap. It reads in a `uiautomator` dump as `Zoomies / Runtime
+version / Reload / Go home / TOOLS`. This is also what the mysterious `Tools`
+dump during Phase 6a was — a false failure chased at the time.
+
+**`am start` on an already-foreground activity does nothing**, reporting
+"intent has been delivered to currently running top-most instance". After
+restarting Metro the dev client drops to its launcher and needs the deep link,
+not a relaunch.
+
+### Verification standing
+
+`tsc`, lint, 93 unit tests. On the Pixel 7a, by script: the timeline renders and
+groups by day, quick logs are titled with their exercise and marked, five
+sessions' durations match `completed_at − started_at − accumulated_pause_ms`
+exactly against the pulled database, and the detail screen renders every set,
+with `Not trained` where an exercise has none.
+
+**Neither exit criterion is fully closed**, and the reason is data rather than
+code. Criterion 1's dash needs a set with one metric recorded and one not;
+criterion 2 needs a nonzero pause. Neither exists on the device, and creating
+them means driving the UI through the dev menu described above.
