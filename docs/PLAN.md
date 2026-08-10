@@ -221,7 +221,8 @@
 > dashboard's sessions *figure*, which is where the distinction matters.
 >
 > `SMOKE_TEST.md` U and V — edit, delete, and the two things history must not do
-> — are unrun. They are regression rather than exit criteria.
+> — were run on device and pass, reported rather than written into the file.
+> Recorded here so the gap is in one place rather than looking unrun forever.
 >
 > **Next: Phase 8 — Exercise Details & Records.**
 
@@ -629,11 +630,10 @@ another not, and criterion 2 needs a session with a nonzero pause, neither of
 which existed on the device. Both were created by hand and both read back
 correctly — `SMOKE_TEST.md` T1 and T3.
 
-What remains unrun is regression rather than exit criteria: `SMOKE_TEST.md` U
-and V — edit, delete, and the two things history must not do (offer a logging UI
-for a finished session, hold the screen awake while reading one). Both of those
-corrections are verified by reading `app/entry/[id].tsx`, not by watching a
-display time out.
+`SMOKE_TEST.md` U and V — edit, delete, and the two things history must not do
+(offer a logging UI for a finished session, hold the screen awake while reading
+one) — were run on device and pass. Reported rather than written into the file,
+which is why its `Observed:` lines are empty.
 
 ---
 
