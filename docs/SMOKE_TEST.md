@@ -809,12 +809,14 @@ Expect: the set reads `10 reps · —`, not `10 reps`. The dash is the differenc
 between a value you left out and one you never had.
 
 **Observed:**
+UX - I don't see a dash like you mentioned, see the screenshot from project root under temp folder, t1.jpeg for reference.
 
 **T2.** Compare a session in History against what you remember logging. Sets in
 order, correct values, `to failure` where you marked it, per-exercise notes
 present.
 
 **Observed:**
+- This is fine, working
 
 **T3 — exit criterion 2.** Start a session, log a set, **pause it for a minute
 or two**, resume, log another set, finish. Open it from History.
@@ -823,6 +825,7 @@ Expect: the duration excludes the pause. A session you spent 5 minutes in with 2
 of those paused reads about `3m`, not `5m`.
 
 **Observed:**
+This is fine as well
 
 ## U. Editing and deleting
 
@@ -831,6 +834,7 @@ of those paused reads about `3m`, not `5m`.
 Expect: the §18 prompt — Save, Discard, Cancel.
 
 **Observed:**
+This is fine as well
 
 **U2.** Tap an exercise inside a completed session.
 
@@ -839,12 +843,14 @@ Expect: its sets, editable and deletable — **and no logging UI at all.** No
 to one.
 
 **Observed:**
+This is fine as well
 
 **U3.** Correct a set from there, go back.
 
 Expect: the session detail shows the corrected value.
 
 **Observed:**
+This is fine as well
 
 **U4.** Delete a session from its detail screen.
 
@@ -853,12 +859,14 @@ tab still lists everything it used, and that another session containing the same
 exercise is untouched.
 
 **Observed:**
+This is fine as well
 
 **U5.** A quick log opened from History.
 
 Expect: no Name field — it never had one — but the note and delete still work.
 
 **Observed:**
+This is fine as well
 
 ## V. What history must not do
 
@@ -868,6 +876,8 @@ sitting for a couple of minutes without touching it.
 Expect: the display times out normally. Keep-awake is for training, not reading.
 
 **Observed:**
+This is fine as well
+
 
 **V2.** Anything in History that reads as zero where nothing was recorded?
 
@@ -875,6 +885,7 @@ Expect: nothing. `—` for a missing value, `Not trained` for an exercise with n
 sets. Never `0`.
 
 **Observed:**
+This is fine as well
 
 ## W. One exercise, across everything
 
@@ -886,6 +897,7 @@ newest session first, each session headed by its date and name. Sets within a
 session read in the order you did them.
 
 **Observed:**
+- This is fine; however the dots and dashes are a bit confusing. See the image w1.jpeg in temp folder in project root, I am not truly sure what 21 20 . - mean in this context since all I did was open quick log, log 21 sets and complete it. Is this a bug or am I missing something?
 
 **W2 — the record marker.** Find the best set in the History list.
 
@@ -894,6 +906,7 @@ the `Records` section above with that session's date. One record per metric —
 a Reps record and a Hold record are separate and may sit in different sessions.
 
 **Observed:**
+- This is fine
 
 **W3 — ties.** Log a set equalling your best for that exercise, then reopen the
 screen.
@@ -902,6 +915,7 @@ Expect: the record's **date does not move**. Matching your best is not beating
 it, and the marker stays on the older set.
 
 **Observed:**
+- This is fine
 
 **W4 — nulls.** An exercise with two metrics where you filled only one.
 
@@ -909,6 +923,7 @@ Expect: `10 reps · —` in the History list, and no record at all for the metri
 you left empty. Never a record of `0`.
 
 **Observed:**
+- This is a bit confusing, check response to w1.
 
 **W5 — quick logs count.** Quick-log an exercise, then open it from Exercises.
 
@@ -917,6 +932,7 @@ record. §11.5 keeps quick logs out of the *sessions* figure on the dashboard,
 not out of the record.
 
 **Observed:**
+- This is fine.
 
 **W6 — a correction reaches the record.** From the exercise's History, tap a
 session header, open the exercise inside it, and edit the set holding the
@@ -926,6 +942,7 @@ Expect: the record has moved to whatever is now the best set. Nothing is stored,
 so nothing can be stale.
 
 **Observed:**
+Fine
 
 **W7 — an exercise never trained.** Open one from the Suggested list.
 
@@ -933,6 +950,7 @@ Expect: `Nothing logged yet`, no `Records` section at all, and the metric
 configuration still shown. No zeros anywhere.
 
 **Observed:**
+Fine
 
 **W8 — the list is long.** Scroll an exercise with a lot of history.
 
@@ -940,3 +958,4 @@ Expect: smooth. The list is virtualized; the name, records and metrics scroll
 away with it rather than sitting fixed.
 
 **Observed:**
+Fine

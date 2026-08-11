@@ -7,6 +7,7 @@ import {
   formatMetricDetail,
   formatMetricSummary,
   formatSessionDate,
+  formatSetNote,
   formatSetValues,
   formatSlotTally,
 } from './format';
@@ -59,6 +60,27 @@ describe('formatMeasure', () => {
   // A count stores no unit, because `Reps` is already the word for one.
   it('falls back to the metric name where there is no unit', () => {
     expect(formatMeasure(9, { name: 'Reps', unit: null })).toBe('9 reps');
+  });
+
+  /**
+   * The records row already carries the name in its own column, so the fallback
+   * printed it twice — `Reps · 12 reps`. Nothing stops a metric being named
+   * `20`, and there it read `20 · 21 20`, which is where this was noticed.
+   */
+  it('drops the name fallback when the caller has already named the metric', () => {
+    expect(formatMeasure(21, { name: '20', unit: null }, { bare: true })).toBe(
+      '21',
+    );
+    expect(formatMeasure(9, { name: 'Reps', unit: null }, { bare: true })).toBe(
+      '9',
+    );
+  });
+
+  // The unit is not a repeat of the label — `42` alone does not say seconds.
+  it('keeps the unit when bare, because the label does not carry it', () => {
+    expect(formatMeasure(42, { name: 'Hold', unit: 's' }, { bare: true })).toBe(
+      '42 s',
+    );
   });
 });
 
@@ -134,11 +156,12 @@ describe('formatMetricSummary', () => {
 });
 
 describe('formatSetValues', () => {
-  const reps = { id: 'm1', name: 'Reps', unit: null };
-  const notes = { id: 'm2', name: 'Cues', unit: null };
+  const reps = { id: 'm1', name: 'Reps', unit: null, type: 'number' } as const;
+  const hold = { id: 'm2', name: 'Hold', unit: 's', type: 'duration' } as const;
+  const notes = { id: 'm3', name: 'Cues', unit: null, type: 'notes' } as const;
 
   it('omits an unrecorded metric by default, as the session screen wants', () => {
-    expect(formatSetValues([reps, notes], new Map([['m1', 10]]))).toBe(
+    expect(formatSetValues([reps, hold], new Map([['m1', 10]]))).toBe(
       '10 reps',
     );
   });
@@ -150,12 +173,92 @@ describe('formatSetValues', () => {
    */
   it('shows the dash when history asks for it', () => {
     expect(
-      formatSetValues([reps, notes], new Map([['m1', 10]]), { missing: '—' }),
+      formatSetValues([reps, hold], new Map([['m1', 10]]), {
+        missing: 'dash',
+      }),
     ).toBe('10 reps · —');
+  });
+
+  /**
+   * The dash says something is missing without saying what. On a screen listing
+   * every set an exercise ever recorded, that means counting positions against
+   * the metric list above — so the reading surfaces name it instead.
+   */
+  it('names the metric that went unrecorded', () => {
+    expect(
+      formatSetValues([reps, hold], new Map([['m1', 10]]), {
+        missing: 'name',
+      }),
+    ).toBe('10 reps · hold not recorded');
   });
 
   it('still says a set happened when nothing at all was recorded', () => {
     expect(formatSetValues([reps], new Map())).toBe('Recorded');
+  });
+
+  /**
+   * The observed bug: with a dash for every metric, a set that measured nothing
+   * read `— · —` rather than saying an effort happened. `Recorded` was already
+   * the right answer and was unreachable the moment a caller asked for the
+   * dash.
+   */
+  it('says a set happened rather than a row of dashes', () => {
+    expect(
+      formatSetValues([reps, hold], new Map(), { missing: 'dash' }),
+    ).toBe('Recorded');
+
+    expect(
+      formatSetValues([reps, hold], new Map(), { missing: 'name' }),
+    ).toBe('Recorded');
+  });
+
+  /**
+   * The bug the naming mode would otherwise have introduced. A note lives in
+   * `value_text`, which this function never reads, so every note looked
+   * unrecorded — harmless while the mode dropped it, a false statement the
+   * moment the mode started naming it.
+   */
+  it('never speaks for a note, written or not', () => {
+    expect(
+      formatSetValues([reps, notes], new Map([['m1', 10]]), {
+        missing: 'name',
+      }),
+    ).toBe('10 reps');
+
+    expect(
+      formatSetValues([notes], new Map(), { missing: 'name' }),
+    ).toBe('Recorded');
+  });
+
+  /** A null is a recorded row holding no value, and reads the same as absent. */
+  it('treats an explicit null as unrecorded', () => {
+    expect(
+      formatSetValues([reps, hold], new Map([['m1', null]]), {
+        missing: 'dash',
+      }),
+    ).toBe('Recorded');
+  });
+});
+
+describe('formatSetNote', () => {
+  const reps = { id: 'm1', name: 'Reps', unit: null, type: 'number' } as const;
+  const notes = { id: 'm2', name: 'Cues', unit: null, type: 'notes' } as const;
+
+  it('reads the note back', () => {
+    expect(
+      formatSetNote([reps, notes], new Map([['m2', 'grip went first']])),
+    ).toBe('grip went first');
+  });
+
+  // Null, not `—`: the value line above already accounts for what was measured.
+  it('is null when nothing was written', () => {
+    expect(formatSetNote([reps, notes], new Map())).toBeNull();
+    expect(formatSetNote([reps, notes], new Map([['m2', null]]))).toBeNull();
+    expect(formatSetNote([reps, notes], new Map([['m2', '  ']]))).toBeNull();
+  });
+
+  it('ignores text stored against a metric that is not a note', () => {
+    expect(formatSetNote([reps], new Map([['m1', 'stray']]))).toBeNull();
   });
 });
 

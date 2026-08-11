@@ -31,7 +31,12 @@ import {
   type Session,
   type SetMetricValue,
 } from '@/db/queries/sessions';
-import { formatDuration, formatSessionDate, formatSetValues } from '@/lib/format';
+import {
+  formatDuration,
+  formatSessionDate,
+  formatSetNote,
+  formatSetValues,
+} from '@/lib/format';
 import { sessionLengthMs } from '@/lib/history';
 import { useDraftExit } from '@/lib/use-draft-exit';
 
@@ -285,21 +290,40 @@ function EntrySummary({
       {performed.length === 0 ? (
         <Text className="text-bodySm text-text-3">Not trained</Text>
       ) : (
-        performed.map((set) => (
-          <Text key={set.id} className="text-bodySm text-text-2">
-            {formatSetValues(
-              metrics,
-              new Map(
-                (valuesBySet.get(set.id) ?? []).map((value) => [
-                  value.exerciseMetricId,
-                  value.valueNum,
-                ]),
-              ),
-              { missing: '—' },
-            )}
-            {set.toFailure ? '  to failure' : ''}
-          </Text>
-        ))
+        performed.map((set) => {
+          const values = valuesBySet.get(set.id) ?? [];
+
+          /* Two maps over the same rows: the figures live in `value_num` and a
+             note in `value_text`, and a note joined onto the value line reads
+             as one more measurement rather than as prose. */
+          const note = formatSetNote(
+            metrics,
+            new Map(
+              values.map((value) => [value.exerciseMetricId, value.valueText]),
+            ),
+          );
+
+          return (
+            <View key={set.id} className="gap-xs">
+              <Text className="text-bodySm text-text-2">
+                {formatSetValues(
+                  metrics,
+                  new Map(
+                    values.map((value) => [
+                      value.exerciseMetricId,
+                      value.valueNum,
+                    ]),
+                  ),
+                  { missing: 'name' },
+                )}
+                {set.toFailure ? '  to failure' : ''}
+              </Text>
+              {note ? (
+                <Text className="text-caption text-text-3">{note}</Text>
+              ) : null}
+            </View>
+          );
+        })
       )}
 
       {entry.notes ? (

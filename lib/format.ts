@@ -5,6 +5,7 @@ import type { exerciseMetrics } from '@/db/schema';
 import { describeMeasure } from './metrics';
 
 type ExerciseMetricRow = typeof exerciseMetrics.$inferSelect;
+type MetricType = ExerciseMetricRow['type'];
 
 /**
  * Display formatting. Nothing here decides anything — it turns stored values
@@ -62,37 +63,100 @@ export function formatSlotCount(count: number): string {
 }
 
 /**
+ * How a set says a metric went unrecorded.
+ *
+ * `omit` drops it. During training that keeps rows scannable, and it is what
+ * the session screen wants.
+ *
+ * `name` says which one: `31s · reps not recorded`. History's job is fidelity,
+ * and `10 reps` alone cannot be told apart from `10 reps` with a note that was
+ * never written. A bare dash makes the two distinguishable but not readable —
+ * `21 · —` means counting positions against the metric list to work out what is
+ * missing, which is exactly what a tired reader will not do.
+ *
+ * Invariant 2 is the rule under all three: never `0` for a value nobody
+ * entered.
+ */
+export type MissingValues = 'omit' | 'dash' | 'name';
+
+/**
  * One logged set as a line: `9 reps · 10 kg`.
  *
  * A metric with no row for this set went unrecorded and is simply absent —
- * writing `0` would claim something the user never said (invariant 2). A set
- * where nothing at all was recorded still happened, so it says so.
+ * writing `0` would claim something the user never said (invariant 2).
+ *
+ * **A set where nothing at all was recorded still happened, so it says so** —
+ * in every mode, not just `omit`. `— · —` and `reps not recorded · hold not
+ * recorded` both describe the same set at more length and less clearly than
+ * `Recorded` does.
  */
 export function formatSetValues(
-  metrics: (MetricLabel & { id: string })[],
+  metrics: MeasuredMetric[],
   valueByMetric: Map<string, number | null>,
-  /**
-   * What to print for a metric that went unrecorded. Omitted by default, which
-   * is what the session screen wants.
-   *
-   * **History passes `—`.** During training, dropping an empty metric keeps
-   * rows scannable; in history the point is fidelity, and `10 reps` alone
-   * cannot be told apart from `10 reps` with a note that was never written.
-   * Invariant 2 is the rule either way — the dash is how "not recorded" looks
-   * where it needs to be visible.
-   */
-  options?: { missing?: string },
+  options?: { missing?: MissingValues },
 ): string {
-  const parts = metrics
+  const missing = options?.missing ?? 'omit';
+
+  const parts = measured(metrics)
     .map((metric) => {
       const value = valueByMetric.get(metric.id);
-      return value === undefined || value === null
-        ? (options?.missing ?? null)
-        : formatMeasure(value, metric);
+
+      if (value !== undefined && value !== null) {
+        return formatMeasure(value, metric);
+      }
+
+      return missing === 'omit'
+        ? null
+        : missing === 'dash'
+          ? '—'
+          : `${metric.name.toLowerCase()} not recorded`;
     })
     .filter((part): part is string => part !== null);
 
-  return parts.length > 0 ? parts.join(SEPARATOR) : 'Recorded';
+  const recorded = measured(metrics).some((metric) => {
+    const value = valueByMetric.get(metric.id);
+    return value !== undefined && value !== null;
+  });
+
+  return recorded && parts.length > 0 ? parts.join(SEPARATOR) : 'Recorded';
+}
+
+type MeasuredMetric = MetricLabel & { id: string; type: MetricType };
+
+/**
+ * The metrics a value line can speak for.
+ *
+ * **A note is not a measurement and is never missing from one.** Its text lives
+ * in `value_text` while this function reads `value_num`, so a written note was
+ * indistinguishable here from one that was never written — invisible while the
+ * mode was `omit`, and an outright false statement the moment the mode became
+ * `name`. Notes are rendered on their own line by `formatSetNote`.
+ */
+function measured(metrics: MeasuredMetric[]): MeasuredMetric[] {
+  return metrics.filter((metric) => metric.type !== 'notes');
+}
+
+/**
+ * What a set was annotated with: `grip went first`.
+ *
+ * Its own line rather than another item on the value line, because a note is
+ * prose and the values are figures — `31 s · 12 reps · grip went first` reads
+ * as three measurements, one of which is a sentence.
+ *
+ * Null when nothing was written, so the caller renders no line at all. An
+ * unwritten note says nothing and is not worth a `—`: the value line above it
+ * already accounts for everything that was measured.
+ */
+export function formatSetNote(
+  metrics: MeasuredMetric[],
+  textByMetric: Map<string, string | null>,
+): string | null {
+  const written = metrics
+    .filter((metric) => metric.type === 'notes')
+    .map((metric) => textByMetric.get(metric.id)?.trim())
+    .filter((text): text is string => !!text);
+
+  return written.length > 0 ? written.join(SEPARATOR) : null;
 }
 
 /**
@@ -156,8 +220,22 @@ export function formatSessionDate(epochMs: number, now = Date.now()): string {
  *
  * Shared by logged sets, targets and the raise prompt so the same figure reads
  * the same way wherever it appears.
+ *
+ * **`bare` is for callers that have already named the metric**, such as the
+ * records row, where the name sits in its own label column. The unit survives
+ * because it carries meaning the label does not — `42` alone does not say
+ * seconds — but the name-as-word fallback is dropped, since repeating it gives
+ * `Reps · 12 reps`, and gives `20 · 21 20` for a metric someone named `20`.
  */
-export function formatMeasure(value: number, metric: MetricLabel): string {
+export function formatMeasure(
+  value: number,
+  metric: MetricLabel,
+  options?: { bare?: boolean },
+): string {
+  if (options?.bare) {
+    return metric.unit ? `${value} ${metric.unit}` : String(value);
+  }
+
   return `${value} ${metric.unit ?? metric.name.toLowerCase()}`;
 }
 

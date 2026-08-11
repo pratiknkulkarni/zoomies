@@ -31,6 +31,7 @@ import {
   formatMeasure,
   formatMetricDetail,
   formatSessionDate,
+  formatSetNote,
   formatSetValues,
 } from '@/lib/format';
 import {
@@ -110,6 +111,30 @@ export default function ExerciseDetailScreen() {
         bySet.set(
           value.setId,
           new Map([[value.exerciseMetricId, value.valueNum]]),
+        );
+      }
+    }
+
+    return bySet;
+  }, [valueRows]);
+
+  /**
+   * Notes, kept apart from the figures because they are stored apart —
+   * `value_text` against `value_num`. Folded here rather than inside `SetLine`
+   * so both maps are built in one pass over the rows.
+   */
+  const notesBySet = useMemo(() => {
+    const bySet = new Map<string, Map<string, string | null>>();
+
+    for (const value of valueRows) {
+      const existing = bySet.get(value.setId);
+
+      if (existing) {
+        existing.set(value.exerciseMetricId, value.valueText);
+      } else {
+        bySet.set(
+          value.setId,
+          new Map([[value.exerciseMetricId, value.valueText]]),
         );
       }
     }
@@ -246,6 +271,7 @@ export default function ExerciseDetailScreen() {
             set={item}
             metrics={metrics}
             values={valuesBySet.get(item.id)}
+            notes={notesBySet.get(item.id)}
             isRecord={marked.has(item.id)}
           />
         )}
@@ -326,8 +352,9 @@ function Records({
             <Text className="w-label text-caption text-text-3">
               {metric.name}
             </Text>
+            {/* Bare: the column to the left is already the metric's name. */}
             <Text className="flex-1 font-mono text-metricSm text-text">
-              {formatMeasure(record.value, metric)}
+              {formatMeasure(record.value, metric, { bare: true })}
             </Text>
             <Text className="text-caption text-text-3">
               {formatSessionDate(record.performedAt)}
@@ -389,21 +416,33 @@ function SetLine({
   set,
   metrics,
   values,
+  notes,
   isRecord,
 }: {
   set: LoggedSet;
   metrics: ExerciseMetric[];
   values: Map<string, number | null> | undefined;
+  notes: Map<string, string | null> | undefined;
   isRecord: boolean;
 }) {
+  const note = formatSetNote(metrics, notes ?? new Map());
+
   return (
-    <View className="flex-row items-baseline gap-md px-xl py-xs">
-      <Text className="flex-1 text-bodySm text-text-2">
-        {formatSetValues(metrics, values ?? new Map(), { missing: '—' })}
-        {set.toFailure ? '  to failure' : ''}
-      </Text>
-      {isRecord ? (
-        <Text className="text-caption text-accent">Record</Text>
+    <View className="gap-xs px-xl py-xs">
+      <View className="flex-row items-baseline gap-md">
+        <Text className="flex-1 text-bodySm text-text-2">
+          {formatSetValues(metrics, values ?? new Map(), { missing: 'name' })}
+          {set.toFailure ? '  to failure' : ''}
+        </Text>
+        {isRecord ? (
+          <Text className="text-caption text-accent">Record</Text>
+        ) : null}
+      </View>
+
+      {/* Its own line: a note is prose, and joined onto the figures it reads as
+          one more measurement. */}
+      {note ? (
+        <Text className="text-caption text-text-3">{note}</Text>
       ) : null}
     </View>
   );

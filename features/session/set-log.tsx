@@ -34,12 +34,19 @@ import { toNullableFloat } from '@/lib/parse';
 export function SetLog({
   entryId,
   metrics,
+  nextSetNumber,
   setsUntilTarget,
   durationTargetMs,
   onLogged,
 }: {
   entryId: string;
   metrics: ExerciseMetric[];
+  /**
+   * Which set this press will be — sets already performed, plus one. Passed in
+   * rather than counted here: the caller already reads them live, and a second
+   * query for a number it holds would be a second source of truth for it.
+   */
+  nextSetNumber: number;
   /**
    * How many more sets reach the target, or null when there is none. Computed
    * by the caller before the write, because reacting to the count afterwards
@@ -198,7 +205,15 @@ export function SetLog({
           disabled={saving || !recordsSomething}
           onPress={save}
         >
-          <Text>Save set</Text>
+          {/*
+            The button names the set it is about to write. `Save set` said what
+            the control does; `Save set 4` says which effort this was, which is
+            the question FEATURES.md opens with — four exercises deep and
+            tired, you cannot remember whether that was your second or third.
+            The counter above answers it too, but this answers it at the
+            instant of pressing, without moving your eyes.
+          */}
+          <Text>Save set {nextSetNumber}</Text>
         </Button>
       )}
     </View>

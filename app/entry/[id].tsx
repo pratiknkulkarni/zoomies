@@ -217,6 +217,7 @@ function Logging({ entryId }: { entryId: string }) {
           <SetLog
             entryId={entry.id}
             metrics={metrics}
+            nextSetNumber={performed.length + 1}
             setsUntilTarget={
               entry.targetSets === null
                 ? null
