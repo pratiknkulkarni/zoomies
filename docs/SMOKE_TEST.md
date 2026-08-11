@@ -809,7 +809,14 @@ Expect: the set reads `10 reps · —`, not `10 reps`. The dash is the differenc
 between a value you left out and one you never had.
 
 **Observed:**
-UX - I don't see a dash like you mentioned, see the screenshot from project root under temp folder, t1.jpeg for reference.
+Reported as failing, but observed on the History **timeline** rather than on a
+session opened from it — the timeline row says `Quick log · 1 exercise` by
+design and never shows a set. The dash was working: `w1.jpeg` shows `21 20 · —`
+on the exercise screen, and both renderers passed `missing: '—'`.
+
+**Superseded by Phase 8a.** The dash said something was missing without saying
+what, so both reading surfaces now name it — `10 reps · hold not recorded`.
+Re-run against that wording, on a session opened from the timeline.
 
 **T2.** Compare a session in History against what you remember logging. Sets in
 order, correct values, `to failure` where you marked it, per-exercise notes
@@ -897,7 +904,21 @@ newest session first, each session headed by its date and name. Sets within a
 session read in the order you did them.
 
 **Observed:**
-- This is fine; however the dots and dashes are a bit confusing. See the image w1.jpeg in temp folder in project root, I am not truly sure what 21 20 . - mean in this context since all I did was open quick log, log 21 sets and complete it. Is this a bug or am I missing something?
+Pass — but the line was unreadable, and three defects were behind it.
+
+`21 20 · —` was a value of **21** against a metric **named `20`**, then Reps
+unrecorded. `formatMeasure` appended `unit ?? name`, so a numeric metric name
+came out as a second numeral. Fixed in Phase 8a:
+
+1. The records row printed the metric name twice — once as its label, once
+   inside the figure. It takes a bare value now.
+2. The dash never said which metric it stood for. Both reading surfaces name it.
+3. A set that measured nothing read `— · —` rather than saying an effort
+   happened; the `Recorded` fallback had become unreachable.
+
+A fourth, older one surfaced while fixing the third: a note lives in
+`value_text` and every caller built its map from `value_num`, so a written note
+always looked unrecorded here. Notes now render on their own line.
 
 **W2 — the record marker.** Find the best set in the History list.
 
@@ -923,7 +944,9 @@ Expect: `10 reps · —` in the History list, and no record at all for the metri
 you left empty. Never a record of `0`.
 
 **Observed:**
-- This is a bit confusing, check response to w1.
+Pass, once decoded — Reps held no values and so held no record, which is exactly
+what this checks. No record of `0` anywhere. The confusion was the presentation,
+recorded under W1 and fixed in Phase 8a.
 
 **W5 — quick logs count.** Quick-log an exercise, then open it from Exercises.
 
@@ -959,3 +982,65 @@ away with it rather than sitting fixed.
 
 **Observed:**
 Fine
+
+## X. Reading a set back, after Phase 8a
+
+Everything here is presentation. W already proved the ranking is right; this
+proves you can tell what it is saying.
+
+**X1 — the name, once.** Open the exercise whose metric is named `20`.
+
+Expect: `Records` reads `20 · 21 · Tue 11 Aug`. The name appears in the label
+column and nowhere else. An exercise recording seconds reads `Hold · 42 s`,
+keeping the unit — the label does not carry it.
+
+**Observed:**
+
+**X2 — the missing metric is named.** An exercise with two measured metrics
+where you filled only one, in both the exercise screen's History and a session
+opened from the timeline.
+
+Expect: `21 · reps not recorded`, in both places, worded identically. Never a
+bare dash, never `0`.
+
+**Observed:**
+
+**X3 — a set that measured nothing.** Find the set that read `— · —` under
+`Pull Day`, or mark one to failure with every field empty.
+
+Expect: `Recorded`. It happened; nothing was measured; that is the whole
+statement.
+
+**Observed:**
+
+**X4 — a note is not a missing measurement.** Log a set with a note against an
+exercise that records one, then read it back from both surfaces.
+
+Expect: the figures on one line, the note beneath in smaller grey type. **Never
+`notes not recorded` on a set that has one** — that was the trap in naming the
+missing metric, since notes are stored in a different column from every figure.
+
+**Observed:**
+
+**X5 — a note that was never written.** The same exercise, a set with no note.
+
+Expect: no second line at all. Not a dash — the value line above already
+accounts for everything measured.
+
+**Observed:**
+
+**X6 — the button names the set.** Start a session, open an exercise with three
+sets logged.
+
+Expect: `Save set 4`. Log it and it reads `Save set 5`. Delete a set from the
+list and it counts back down. It must never name a set number that already
+exists.
+
+**Observed:**
+
+**X7 — the button under a timer.** An exercise measured in seconds.
+
+Expect: the hold timer is still the only action, with no second button beside
+it. §7 gives the timer the write.
+
+**Observed:**

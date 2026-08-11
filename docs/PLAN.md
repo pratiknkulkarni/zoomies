@@ -245,10 +245,36 @@
 > Skia for one sparkline would have settled the dashboard's charting stack as a
 > side effect of an exercise screen.
 >
-> **Not yet verified on hardware.** `SMOKE_TEST.md` W carries the device pass;
-> criterion 1 is DoD 10 and needs a thumb.
+> **Verified on the Pixel 7a 11 Aug 2026.** `SMOKE_TEST.md` T, U, V and W all
+> pass, including the two checks that would expose a wrong fold — W3, a tie
+> leaves the record's date where it was, and W6, a correction reaches the
+> record. DoD 10 is closed.
 >
-> **Next: verify W, then Phase 9 — Dashboard.**
+> **Phase 8a — reading a set back. Built 11 Aug 2026**, same branch. W passed
+> and still found that the exercise screen could render a line nobody could
+> read: `21 20 · —`, being a value of 21 against a metric someone had named
+> `20`, then Reps unrecorded.
+>
+> Three faults behind one line. The records row printed the metric name twice,
+> once as its label and once inside the figure. The dash never said *which*
+> metric was missing, so reading it meant counting positions against a list
+> further up the screen. And a set that measured nothing read `— · —`, because
+> the `Recorded` fallback became unreachable the moment any caller asked for a
+> dash.
+>
+> **Fixing the third exposed an older one.** A note is stored in `value_text`
+> and every caller builds its map from `value_num`, so a written note has always
+> looked unrecorded on these screens — invisible while the mode dropped it, and
+> a plain falsehood the moment the mode began naming it. `formatSetValues` no
+> longer speaks for a note; `formatSetNote` gives it its own line.
+>
+> The log button now names the set it is about to write — `Save set 4`. The
+> counter above answers "was that my second or third"; this answers it at the
+> instant of pressing.
+>
+> `SMOKE_TEST.md` X carries the re-check. 120 unit tests.
+>
+> **Next: run X, then Phase 9 — Dashboard.**
 
 Update this block when a phase closes. It is the first thing read at the start
 of a session.
@@ -707,6 +733,33 @@ Three roots rather than one join, for the reason every read layer here gives:
 root of its own — nothing soft-deletes an entry, which was checked rather than
 assumed.
 
+**Closed 11 Aug 2026.** All three exit criteria verified on the Pixel 7a;
+`SMOKE_TEST.md` T, U, V and W pass.
+
+#### Phase 8a — reading a set back
+
+W passed and still found the screen unreadable, which is the useful kind of
+failure: the ranking was right and the sentence describing it was not.
+
+The whole of it is presentation, in `lib/format.ts` and its two callers.
+`formatMeasure` gained a bare form for callers that already name the metric.
+`missing` became a mode — `omit`, `dash`, `name` — and the reading surfaces
+took `name`, so a set says `21 · reps not recorded` rather than `21 · —`. The
+`Recorded` fallback, which had become unreachable, now covers a set that
+measured nothing in every mode.
+
+**The fix found an older bug underneath it.** A note lives in `value_text` and
+every caller builds its map from `value_num`, so a written note had always read
+as unrecorded here. Harmless while the mode dropped it; a false statement the
+moment the mode named it. `formatSetValues` no longer speaks for a note at all.
+
+`formatMetricDetail` was examined and left alone. `Logged first · a count` reads
+oddly above a metric named `20`, but the name is what is odd; the wording was
+chosen over `Primary · Duration · s` deliberately and the docstring says why.
+
+Also here, from the design experiment: the log button names the set it is about
+to write. `SMOKE_TEST.md` X carries the re-check.
+
 **Verification is unrun on hardware.** 111 unit tests pass, `tsc` and lint are
 clean. `SMOKE_TEST.md` W carries the device pass; criterion 1 is DoD 10 and
 needs a thumb.
@@ -738,6 +791,30 @@ Counting rules: quick logs count toward sets, records and days-since-trained but
 2. A quick log does not increment the sessions figure.
 3. Blocks 1, 2 and 4 render correctly with a single week of data.
 4. Nothing on the screen is celebratory and nothing animates.
+
+**Carried in from the design experiment** (`docs/zoomies_screen.pdf`), to be
+weighed when this is planned rather than adopted here:
+
+- **One grid instead of two blocks.** Seven weekday rows by thirteen week
+  columns, filled where trained, running from the first session rather than from
+  a fixed twelve weeks of blank past. It answers both §11.3's *Last 7 days* and
+  its *Sessions per week*, and it is a grid of `View`s.
+
+  **The thing to settle first:** a filled-square calendar is the most
+  streak-coded object in software. This one attaches no number, marks no current
+  run and penalises no gap, which is exactly what §11.3 asks of the seven dots —
+  but thirteen weeks of it is a different proposition from seven, and §11.6 is
+  unambiguous. Decide it deliberately.
+- **Sessions and quick logs as two counts side by side**, rather than quick logs
+  being silently excluded. Honours §11.5 while keeping the training visible.
+- **Days-since sorted by longest gap, with the date beside it** — `Nordic Curl ·
+  6 May · 101 days` — so a movement deliberately stopped reads as a fact rather
+  than a debt.
+- **The best-set trend as dots, not a line**, so a gap reads as a gap rather
+  than a line implying training in between, with a control naming which
+  measurement is plotted because seconds and reps do not share a scale.
+- The design has **no recent-records block**; §11.3 does. Worth deciding whether
+  the exercise screen carrying records is enough.
 
 ---
 
@@ -857,6 +934,14 @@ if a driver arrives later.
   or draw one by hand in `react-native-svg` and set a precedent for the
   dashboard, the trend moved to Phase 9 where one decision covers both.
   `FEATURES.md` §10.2 records it.
+
+  **Likely to dissolve, like §4.3 did.** Both figures the application needs are
+  simpler than a chart library: a grid of filled and unfilled squares for days
+  trained, and a scatter of dots for the best set per session. Neither has axes,
+  gridlines, tooltips, gestures or animation — DESIGN.md §3.5 and §7 forbid all
+  of them — and neither needs anything `react-native-svg` cannot draw, which is
+  already a dependency as a peer of the icons. Decide it in Phase 9 against the
+  screens, not in the abstract.
 - The appearance override needs persistent local storage —
   `@react-native-async-storage/async-storage` per §5, which names AsyncStorage
   but does not list the package.
