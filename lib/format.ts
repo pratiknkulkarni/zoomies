@@ -374,19 +374,32 @@ export function formatSetSeries(
 export function formatRecordsWhat(
   metrics: Pick<ExerciseMetricRow, 'name' | 'type'>[],
 ): string | undefined {
+  const what = formatMeasures(metrics);
+  return what && `records ${what}`;
+}
+
+/**
+ * The same list without the verb: `seconds, reps`.
+ *
+ * The library puts this on every row, where `records` on twenty rows is a word
+ * the reader stops seeing. The exercise's own screen writes the sentence.
+ */
+export function formatMeasures(
+  metrics: Pick<ExerciseMetricRow, 'name' | 'type'>[],
+): string | undefined {
   if (metrics.length === 0) {
     return undefined;
   }
 
-  const words = metrics.map((metric) =>
-    metric.type === 'duration'
-      ? 'seconds'
-      : metric.type === 'notes'
-        ? 'notes'
-        : metric.name.toLowerCase(),
-  );
-
-  return `records ${words.join(', ')}`;
+  return metrics
+    .map((metric) =>
+      metric.type === 'duration'
+        ? 'seconds'
+        : metric.type === 'notes'
+          ? 'notes'
+          : metric.name.toLowerCase(),
+    )
+    .join(', ');
 }
 
 /**
