@@ -10,6 +10,7 @@ import {
   formatSetNote,
   formatSetValues,
   formatSlotTally,
+  formatTimeRange,
 } from './format';
 
 describe('formatDuration', () => {
@@ -49,6 +50,30 @@ describe('formatSessionDate', () => {
   it('shows the year once it is not this one', () => {
     const now = new Date('2027-01-02T09:00:00Z').getTime();
     expect(formatSessionDate(aug8, now)).toBe('Sat 8 Aug 2026');
+  });
+});
+
+describe('formatTimeRange', () => {
+  const started = new Date('2026-08-14T18:42:00').getTime();
+  const finished = new Date('2026-08-14T19:30:00').getTime();
+
+  it('reads as a range on one line', () => {
+    expect(formatTimeRange(started, finished)).toBe('18:42–19:30');
+  });
+
+  // The width has to be constant down a column of sessions, so an early
+  // morning pads rather than dropping its leading zero.
+  it('pads the hour, so every row is the same width', () => {
+    const dawn = new Date('2026-08-14T06:05:00').getTime();
+    expect(formatTimeRange(dawn, finished)).toBe('06:05–19:30');
+  });
+
+  /**
+   * A range with one end missing would have to invent the other, and the
+   * caller shows the duration line as `Unfinished` instead.
+   */
+  it('is null while a session is unfinished', () => {
+    expect(formatTimeRange(started, null)).toBeNull();
   });
 });
 

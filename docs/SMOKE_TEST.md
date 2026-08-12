@@ -1051,3 +1051,95 @@ it. §7 gives the timer the write.
 
 **Observed:**
 Fine
+
+## Y. One session, read back — after the Phase 8b refit
+
+The first screen rebuilt to the design document (`zoomies_screen.pdf`, screen
+8). Everything here is presentation over data Phase 8a already proved correct,
+so a failure is a layout or a wording defect, not a fold.
+
+Run every item **in both themes**. The document's claim is that light and dark
+are the same design at two levels of ground — nothing moves and nothing is
+recoloured — so anything that shifts between them is a defect.
+
+**Y1 — the identity line.** History → a completed session with a name.
+
+Expect: the **name** is the screen title, with `14 Aug · 18:42–19:30 · 48 min`
+beneath it in mono. The date is no longer the title. A session that ran past
+midnight still reads its two clock times correctly.
+
+**Observed:**
+
+**Y2 — a quick log.** Open one from the timeline.
+
+Expect: the exercise's name as the title, a `ONE-OFF` tag beside it, and the
+date alone on the metadata line — no time range and no duration. No Name field
+anywhere on the screen.
+
+**Observed:**
+
+**Y3 — the target that day.** An exercise logged against a target.
+
+Expect: `target that day · 4 × 9 reps`, right-aligned on the exercise's row.
+Now **edit that template's target** and reopen the session: the line must not
+move. This is invariant 5, and the wording is what makes it visible.
+
+**Observed:**
+
+**Y4 — an exercise that was planned and skipped.** A session where one exercise
+logged nothing.
+
+Expect: the name in lighter ink, and `Not trained · planned 3 × 12` beside it.
+Never `0`, never an empty row.
+
+**Observed:**
+
+**Y5 — the set line.** A set carrying two values and a note.
+
+Expect: `1` in a fixed column, then `31s · 12 reps` in mono, then the note
+beneath it in prose. The indices count `1 2 3` — they are stored from zero, so
+a set reading `0` is a defect. A set with ten or more still aligns.
+
+**Observed:**
+
+**Y6 — the two things a set can be missing.** A set with one metric unfilled,
+and a set with nothing measured at all.
+
+Expect: `42s · reps not recorded`, and `Recorded` for the second. Never a bare
+dash, never a note reading as unrecorded.
+
+**Observed:**
+
+**Y7 — to failure.** A set marked to failure.
+
+Expect: a bordered `TO FAILURE` tag after the figures, not the words trailing
+the line as prose. It sits inline and wraps with the figures rather than pushing
+them off the row.
+
+**Observed:**
+
+**Y8 — the foot.** Scroll to the bottom.
+
+Expect: `Tap any set to correct it` on the left and a **bordered** `Delete` with
+a red label on the right — no pink fill. Delete still confirms, still removes
+the session from the timeline, and the exercise screen's record still updates.
+
+**Observed:**
+
+**Y9 — still a draft.** Type in the name, then press the Android system back.
+
+Expect: the same Save · Discard · Cancel prompt as before, with Save disabled
+until something changes. The refit did not touch §18; if this behaves
+differently, the layout work reached something it should not have.
+
+**Observed:**
+
+**Y10 — the primary button, everywhere.** Any screen with one — Home, a
+template, the completion review.
+
+Expect: a solid black block with paper-coloured text in light, and a paper
+block with dark text in dark. No moss anywhere in the application. The gutter
+is the same 24 on every screen, and section gaps are visibly tighter than
+before.
+
+**Observed:**

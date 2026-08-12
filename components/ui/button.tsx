@@ -33,7 +33,13 @@ const buttonVariants = cva(
         primary: 'h-primary w-full rounded-card bg-text',
         secondary: 'h-control self-start border border-border bg-surface',
         ghost: 'h-control self-start',
-        danger: 'h-control self-start bg-danger-bg',
+        /*
+         * A red word inside a border, not a red fill. Nothing else in the
+         * system is filled but the primary, and a tinted block reads as a
+         * state rather than as an act — which is the wrong thing to say about
+         * a button that has not been pressed yet.
+         */
+        danger: 'h-control self-start border border-danger',
       },
     },
     defaultVariants: { variant: 'secondary' },

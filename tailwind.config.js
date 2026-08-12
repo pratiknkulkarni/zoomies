@@ -48,10 +48,7 @@ module.exports = {
         4: withAlpha('--color-text-4'),
         5: withAlpha('--color-text-5'),
       },
-      danger: {
-        DEFAULT: withAlpha('--color-danger'),
-        bg: withAlpha('--color-danger-bg'),
-      },
+      danger: withAlpha('--color-danger'),
     },
 
     // §4 — seven steps and no others. 24 is the screen gutter and is never

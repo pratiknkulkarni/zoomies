@@ -9,13 +9,14 @@ import { FormActions } from '@/components/ui/form-actions';
 import { Input } from '@/components/ui/input';
 import { Screen } from '@/components/ui/screen';
 import { SectionLabel } from '@/components/ui/section-label';
-import { Separator } from '@/components/ui/separator';
+import { Tag } from '@/components/ui/tag';
 import { Text } from '@/components/ui/text';
 import { deleteSession, renameSession, setSessionNotes } from '@/db/mutations/sessions';
 import {
   allLiveExercises,
   allMetrics,
   indexExercisesById,
+  indexMetricsById,
   indexMetricsByExercise,
   type ExerciseMetric,
 } from '@/db/queries/exercises';
@@ -36,6 +37,8 @@ import {
   formatSessionDate,
   formatSetNote,
   formatSetValues,
+  formatTarget,
+  formatTimeRange,
 } from '@/lib/format';
 import { sessionLengthMs } from '@/lib/history';
 import { useDraftExit } from '@/lib/use-draft-exit';
@@ -51,7 +54,7 @@ import { useDraftExit } from '@/lib/use-draft-exit';
  * break the one rule written about it.
  *
  * Correcting a set is a tap through to `app/entry/[id].tsx`, where §7.3's
- * inline edit and delete already work "during and after a session". This phase
+ * inline edit and delete already work "during and after a session". This screen
  * adds no editing machinery of its own.
  */
 export default function HistorySessionScreen() {
@@ -110,6 +113,11 @@ function Detail({ session }: { session: Session }) {
     () => indexMetricsByExercise(metrics),
     [metrics],
   );
+  // The target names a metric by id, which may be one the exercise has since
+  // dropped — so it is looked up across every metric rather than within the
+  // exercise's current ones. A snapshot that cannot be rendered would silently
+  // become `No target`, which is a different claim about the day.
+  const metricsById = useMemo(() => indexMetricsById(metrics), [metrics]);
 
   const [name, setName] = useState(session.name ?? '');
   const [note, setNote] = useState(session.notes ?? '');
@@ -160,25 +168,28 @@ function Detail({ session }: { session: Session }) {
     );
   };
 
-  const length = sessionLengthMs(session);
+  const firstExercise = exercisesById.get(entries.at(0)?.exerciseId ?? '')?.name;
 
   return (
     <>
       <BackButton onPress={requestExit} />
 
-      <Text className="px-2xl pt-sm font-sans-semibold text-display text-text">
-        {formatSessionDate(session.completedAt ?? session.startedAt)}
-      </Text>
-      <Text className="px-2xl pt-xs text-bodySm text-text-2">
-        {session.isQuickLog
-          ? 'Quick log'
-          : length === null
-            ? 'Unfinished'
-            : formatDuration(length)}
+      {/* The name is the identity of the session; the date moved down into the
+          metadata line beside it. A quick log has no name of its own (§6.1), so
+          it borrows its exercise's — the only thing it was ever about. */}
+      <View className="flex-row items-baseline gap-md px-2xl pt-sm">
+        <Text className="flex-1 font-sans-semibold text-display text-text">
+          {session.name ?? firstExercise ?? 'Session'}
+        </Text>
+        {session.isQuickLog ? <Tag quiet>One-off</Tag> : null}
+      </View>
+
+      <Text className="px-2xl pt-xs font-mono text-metricXs text-text-3">
+        {metaLine(session)}
       </Text>
 
-      {/* A quick log has no name of its own (§6.1), so it is not offered one —
-          naming it would make it look like a session that was planned. */}
+      {/* Not offered to a quick log: naming one would make it look like a
+          session that was planned. */}
       {session.isQuickLog ? null : (
         <View className="gap-xs px-2xl pt-xl">
           <SectionLabel>Name</SectionLabel>
@@ -191,29 +202,32 @@ function Detail({ session }: { session: Session }) {
         </View>
       )}
 
-      <SectionLabel className="px-2xl pb-sm pt-xl">Logged</SectionLabel>
-
-      {entries.length === 0 ? (
-        <Text className="px-2xl text-bodySm text-text-2">
-          Nothing was logged in this session.
-        </Text>
-      ) : (
-        entries.map((entry, index) => (
-          <View key={entry.id}>
-            {index > 0 ? <Separator /> : null}
+      <View className="pt-xl">
+        {entries.length === 0 ? (
+          <Text className="px-2xl text-bodySm text-text-2">
+            Nothing was logged in this session.
+          </Text>
+        ) : (
+          entries.map((entry) => (
             <EntrySummary
+              key={entry.id}
               entry={entry}
               name={exercisesById.get(entry.exerciseId)?.name ?? 'Exercise'}
               metrics={metricsByExercise.get(entry.exerciseId) ?? []}
+              targetMetric={
+                entry.targetMetricId
+                  ? metricsById.get(entry.targetMetricId)
+                  : undefined
+              }
               performed={setsByEntry.get(entry.id) ?? []}
               valuesBySet={valuesBySet}
             />
-          </View>
-        ))
-      )}
+          ))
+        )}
+      </View>
 
       <View className="gap-xs px-2xl pt-xl">
-        <SectionLabel>Note</SectionLabel>
+        <SectionLabel>How it went</SectionLabel>
         <Input
           value={note}
           onChangeText={setNote}
@@ -226,17 +240,21 @@ function Detail({ session }: { session: Session }) {
 
       {dirty ? (
         <View className="px-2xl pt-lg">
-          <FormActions
-            dirty={dirty}
-            onDiscard={discard}
-            onSave={saveAndLeave}
-          />
+          <FormActions dirty={dirty} onDiscard={discard} onSave={saveAndLeave} />
         </View>
       ) : null}
 
-      <View className="px-2xl pt-xl">
+      {/*
+        The hint sits beside Delete rather than above the list, because the
+        instruction is only worth reading once and the foot of the screen is
+        where you arrive having already scrolled the sets.
+      */}
+      <View className="flex-row items-center justify-between gap-md px-2xl pt-2xl">
+        <Text className="flex-1 text-caption text-text-4">
+          Tap any set to correct it
+        </Text>
         <Button variant="danger" onPress={confirmDelete}>
-          <Text>Delete session</Text>
+          <Text>Delete</Text>
         </Button>
       </View>
     </>
@@ -244,30 +262,61 @@ function Detail({ session }: { session: Session }) {
 }
 
 /**
+ * `14 Aug · 18:42–19:30 · 48 min` — three facts about when, in one line.
+ *
+ * The range is what distinguishes two sessions on the same day, which neither
+ * the date nor the duration does. A quick log gets neither: its start and end
+ * are the same instant, so a length would read as a very short session rather
+ * than as something that was never one (§9).
+ */
+function metaLine(session: Session): string {
+  const date = formatSessionDate(session.completedAt ?? session.startedAt);
+
+  if (session.isQuickLog) {
+    return date;
+  }
+
+  const range = formatTimeRange(session.startedAt, session.completedAt);
+  const length = sessionLengthMs(session);
+
+  return [date, range, length === null ? 'Unfinished' : formatDuration(length)]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+/**
  * One exercise and everything logged against it, every set on show.
  *
- * **Unrecorded values read as `—`, not as nothing.** That is exit criterion 1:
- * a session has to read back exactly as logged, and a metric silently dropped
- * makes `10 reps` indistinguishable from `10 reps` beside a note that was never
- * written. The session screen omits them instead, because mid-set the priority
- * is scanning rather than fidelity.
+ * **Unrecorded values name the metric that went unrecorded**, rather than
+ * dropping it or printing a bare dash. That is exit criterion 1: a session has
+ * to read back exactly as logged, and a metric silently omitted makes `10 reps`
+ * indistinguishable from `10 reps` beside a hold nobody recorded. The session
+ * screen omits them instead, because mid-set the priority is scanning.
  *
- * The whole row is a tap through to the entry screen, where a mislogged set can
- * be corrected (§7.3).
+ * **`target that day`, not `target`.** The figure comes from the snapshot on
+ * the entry, not from the template slot, so editing a plan can never rewrite
+ * what a finished session says it was aiming at (invariant 5). Wording it this
+ * way is what makes that visible rather than merely true.
  */
 function EntrySummary({
   entry,
   name,
   metrics,
+  targetMetric,
   performed,
   valuesBySet,
 }: {
   entry: ExerciseEntry;
   name: string;
   metrics: ExerciseMetric[];
+  targetMetric: ExerciseMetric | undefined;
   performed: LoggedSet[];
   valuesBySet: Map<string, SetMetricValue[]>;
 }) {
+  const trained = performed.length > 0;
+  const target = formatTarget(entry, targetMetric);
+  const hasTarget = entry.targetSets !== null || entry.targetValue !== null;
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -275,60 +324,98 @@ function EntrySummary({
       onPress={() =>
         router.push({ pathname: '/entry/[id]', params: { id: entry.id } })
       }
-      className="gap-xs px-2xl py-md active:bg-muted"
+      className="px-2xl pb-lg pt-md active:bg-muted"
     >
-      <View className="flex-row items-center gap-md">
-        <Text className="flex-1 font-sans-semibold text-heading text-text">
+      <View className="flex-row items-baseline gap-md pb-sm">
+        {/* An untrained exercise recedes rather than disappearing — it is part
+            of what the day was, and §6.5 says it reads as not trained and never
+            as zeros. */}
+        <Text
+          className={
+            trained
+              ? 'flex-1 font-sans-semibold text-heading text-text'
+              : 'flex-1 font-sans-semibold text-heading text-text-4'
+          }
+        >
           {name}
         </Text>
-        <Text className="font-mono text-metricSm text-text-2">
-          {performed.length === 1 ? '1 set' : `${performed.length} sets`}
-        </Text>
+        {trained && !hasTarget ? null : (
+          <Text className="text-bodySm text-text-3">
+            {trained
+              ? `target that day · ${target}`
+              : hasTarget
+                ? `Not trained · planned ${target}`
+                : 'Not trained'}
+          </Text>
+        )}
       </View>
 
-      {/* §6.5 — an exercise with no sets reads as not trained, never as zeros. */}
-      {performed.length === 0 ? (
-        <Text className="text-bodySm text-text-3">Not trained</Text>
-      ) : (
-        performed.map((set) => {
-          const values = valuesBySet.get(set.id) ?? [];
-
-          /* Two maps over the same rows: the figures live in `value_num` and a
-             note in `value_text`, and a note joined onto the value line reads
-             as one more measurement rather than as prose. */
-          const note = formatSetNote(
-            metrics,
-            new Map(
-              values.map((value) => [value.exerciseMetricId, value.valueText]),
-            ),
-          );
-
-          return (
-            <View key={set.id} className="gap-xs">
-              <Text className="text-bodySm text-text-2">
-                {formatSetValues(
-                  metrics,
-                  new Map(
-                    values.map((value) => [
-                      value.exerciseMetricId,
-                      value.valueNum,
-                    ]),
-                  ),
-                  { missing: 'name' },
-                )}
-                {set.toFailure ? '  to failure' : ''}
-              </Text>
-              {note ? (
-                <Text className="text-caption text-text-3">{note}</Text>
-              ) : null}
-            </View>
-          );
-        })
-      )}
+      {performed.map((set) => (
+        <SetLine
+          key={set.id}
+          set={set}
+          index={set.setIndex + 1}
+          metrics={metrics}
+          values={valuesBySet.get(set.id) ?? []}
+        />
+      ))}
 
       {entry.notes ? (
-        <Text className="pt-xs text-caption text-text-3">{entry.notes}</Text>
+        <Text className="pt-sm text-bodySm text-text-2">{entry.notes}</Text>
       ) : null}
     </Pressable>
+  );
+}
+
+/**
+ * One set: its number, what it measured, and anything written about it.
+ *
+ * The index sits in a fixed column so the figures beside it align down a common
+ * edge however many digits the numbers carry — the same reason DESIGN.md §6.7
+ * fixes the width of a label column.
+ *
+ * Two maps over the same rows: figures live in `value_num` and a note in
+ * `value_text`. A note joined onto the value line reads as one more
+ * measurement rather than as prose, which is the bug Phase 8a found.
+ */
+function SetLine({
+  set,
+  index,
+  metrics,
+  values,
+}: {
+  set: LoggedSet;
+  index: number;
+  metrics: ExerciseMetric[];
+  values: SetMetricValue[];
+}) {
+  const note = formatSetNote(
+    metrics,
+    new Map(values.map((value) => [value.exerciseMetricId, value.valueText])),
+  );
+
+  return (
+    <View className="flex-row gap-md border-b border-rule-2 py-sm">
+      <Text className="w-2xl font-mono text-metricXs text-text-5">{index}</Text>
+
+      <View className="flex-1 gap-xs">
+        <View className="flex-row flex-wrap items-center gap-sm">
+          <Text className="font-mono text-metricSm text-text">
+            {formatSetValues(
+              metrics,
+              new Map(
+                values.map((value) => [value.exerciseMetricId, value.valueNum]),
+              ),
+              { missing: 'name' },
+            )}
+          </Text>
+          {set.toFailure ? <Tag>To failure</Tag> : null}
+        </View>
+
+        {note ? (
+          <Text className="text-bodySm text-text-2">{note}</Text>
+        ) : null}
+      </View>
+    </View>
   );
 }

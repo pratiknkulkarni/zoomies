@@ -169,11 +169,15 @@ weight reads as a grid.
 | Token | Light | Dark |
 |---|---|---|
 | `danger` | `#B4443A` | `#D97A6E` |
-| `danger-bg` | `#F7EBE9` | `#2E1F1D` |
 
 Delete confirmations and discard actions only. Never for warnings, and never for
 the untrained-exercise prompt at session completion — that is informational, and
 uses `text-2`.
+
+**A red word inside a border, never a red fill.** The primary button is the one
+filled block on any screen, and a tinted panel reads as a state rather than as
+an act — the wrong thing to say about a button nobody has pressed yet. The
+`danger-bg` tint is deleted for that reason.
 
 **There is no accent colour**, and adding one is the change most likely to break
 this design. Moss was defined and spent in three places — the primary button,
@@ -317,6 +321,33 @@ also puts a third dash-shaped glyph between two stepper buttons.
 A placeholder must set on one line at 360dp. A multiline `TextInput` is sized by
 its content and not by its placeholder, so a second line is clipped rather than
 grown into.
+
+### 6.9 Tag
+
+A qualifier on the thing beside it — `TO FAILURE` on a set, `ONE-OFF` on a quick
+log in the timeline. 11px uppercase mono inside a 1px box.
+
+Boxed rather than coloured, because there is no colour; boxed rather than merely
+uppercased, because these sit inline against figures that are also mono, and the
+rule is what separates a qualifier from a value.
+
+**Never a headline.** A tag qualifies what it sits next to and is read second,
+so it never begins a line and takes no space when absent. `quiet` drops it a
+step of ink, for a tag that classifies rather than reports: `TO FAILURE` is
+something you did, `ONE-OFF` is only what kind of row this is.
+
+### 6.10 The Set Line
+
+`1  31s · 12 reps  [TO FAILURE]`, with anything written about the set beneath it
+in prose.
+
+The index sits in a fixed column so the figures align down a common edge
+whatever the digit count, for the reason §6.7 fixes a label column. It is
+`text-5`, the quietest ink in the system — it is a position, not a measurement.
+
+Values are mono. **The document specifies 17px here and this uses the existing
+16px `metricSm`**: a second token one pixel away from an existing one is how a
+type scale stops being a scale, and §2.3 already refuses two competing ones.
 
 ---
 

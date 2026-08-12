@@ -44,7 +44,6 @@
 
   /* Destructive — DESIGN.md §3.2. Delete and discard only. */
   --color-danger: 180 68 58; /* #B4443A */
-  --color-danger-bg: 247 235 233; /* #F7EBE9 */
 }
 
 .dark:root {
@@ -68,5 +67,4 @@
   --color-rule-2: 35 34 32; /* #232220 */
 
   --color-danger: 217 122 110; /* #D97A6E */
-  --color-danger-bg: 46 31 29; /* #2E1F1D */
 }

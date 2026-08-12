@@ -212,6 +212,38 @@ export function formatSessionDate(epochMs: number, now = Date.now()): string {
 }
 
 /**
+ * When a session ran: `18:42–19:30`.
+ *
+ * Beside the date and the duration this answers a question neither of them
+ * does — whether that was a morning session or an evening one, which is most of
+ * what distinguishes two sessions on the same day.
+ *
+ * Null while a session is unfinished. A range with one end missing would have
+ * to invent the other, and `18:42–now` is not a fact about the past.
+ *
+ * 24-hour, from the pinned `en-GB` locale rather than the device's, so the
+ * figure is the same width in every row (`DESIGN.md` §2.1 wants columns of
+ * numbers that do not jitter).
+ */
+export function formatTimeRange(
+  startedAt: number,
+  completedAt: number | null,
+): string | null {
+  if (completedAt === null) {
+    return null;
+  }
+
+  return `${clockTime(startedAt)}–${clockTime(completedAt)}`;
+}
+
+function clockTime(epochMs: number): string {
+  return new Date(epochMs).toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+/**
  * A number and what it counts: `9 reps`, `30 s`.
  *
  * The unit carries the meaning where there is one; where there is not, the

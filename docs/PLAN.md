@@ -278,7 +278,35 @@
 > an unwritten one taking no line at all, and the button counting up on log and
 > back down on delete. 120 unit tests.
 >
-> **Next: Phase 9 — Dashboard.**
+> **Phase 8b — the design refit. In progress, 12 Aug 2026**, branch
+> `phase-8-records`. The second design run (`docs/zoomies_screen.pdf`) is
+> adopted as the direction: seventeen screens, one per commit, no feature work.
+>
+> **Pass 1 landed the whole appendix in two files.** `global.css` and
+> `tailwind.config.js` are the only places a value exists and the config deletes
+> Tailwind's own scales, so the palette, spacing, radii and type scale went in
+> without touching a component.
+>
+> **The accent is gone.** All three of its sanctioned uses read better as ink —
+> the primary button as a solid block that inverts between themes, the record
+> marker as weight, the day dots as filled versus outline. It turned out to be
+> **one live class in the entire application**. `danger` survives as the only
+> hue and is now a red word inside a border rather than a tinted fill.
+>
+> The neutral ramp went from seven steps to eleven, because a section label, a
+> set index and a list rule were each borrowing a token meant for something
+> else. Spacing moved to `4 · 6 · 10 · 14 · 18 · 24 · 34`, which put the screen
+> gutter on `2xl` and section separation on `xl` — an exact swap of two names,
+> so the sweep across 24 files was mechanical.
+>
+> **Pass 2 rebuilt the first screen**: `app/history/[id].tsx`, the session read
+> back. Chosen because it carries the most of the document's vocabulary in one
+> place and sits outside the training loop, so nothing it touches can lose a
+> set. It creates `Tag` and the set line, which the next two screens inherit.
+>
+> `SMOKE_TEST.md` Y carries the check, in both themes. 123 unit tests.
+>
+> **Next: run Y, then the rest of the queue in §1 Phase 8b.**
 
 Update this block when a phase closes. It is the first thing read at the start
 of a session.
@@ -768,6 +796,69 @@ to write. `SMOKE_TEST.md` X carries the re-check.
 including the two the fix could plausibly have got wrong: X4, a note must never
 read as unrecorded, and X6, the button must never name a set number that already
 exists. 120 unit tests, `tsc` and lint clean.
+
+---
+
+### Phase 8b — The Design Refit
+
+Presentation only. No feature is added, no schema is touched, and every screen
+keeps the data it already reads. The direction is `docs/zoomies_screen.pdf`.
+
+**Two things the document specifies are not built**, because it did not know
+they were cut: the **rest timer** (screens 14, 16, 17 — `FEATURES.md` §15,
+migration 0003 dropped the column) and **added weight** (screens 11, 12, E4 —
+§15, migration 0004). Those fields are simply absent from the layouts.
+
+**Four deliberate deviations**, each recorded where it applies:
+
+- **The name and note stay drafted fields** on the session screen. The document
+  puts `Rename` in the header and the note behind "Tap to edit"; ours is §18
+  Pattern A, settled and verified across six screens. Changing how a screen is
+  left is a decision about all of §18, not one a single refit should take.
+- **The Suggested section stays** on the Exercises tab (§3.3).
+- **The unfinished-session prompt keeps three options.** The document offers
+  *Close it* / *Carry on*; §6.3 requires Discard, with its second confirmation.
+- **Metrics stay an ordered list.** The document models them as three fixed
+  checkboxes, which would erase the `Logged first` primary that drives the
+  logging UI (§4.1, §7.2).
+
+Geist and Geist Mono are kept over the document's Libre Franklin and IBM Plex
+Mono: both are grotesques, the difference at these sizes is small, and the type
+*scale* is adopted either way.
+
+**The queue.** One screen per commit, lowest risk first, each inheriting what
+the last one built.
+
+| # | Document | Screen | State |
+|---|---|---|---|
+| 1 | 8 · session read back | `app/history/[id].tsx` | **Built** — creates `Tag`, the set line, `formatTimeRange` |
+| 2 | 7 · history timeline | `app/(tabs)/history.tsx` | gap rules, `ONE-OFF`, a set count per session |
+| 3 | 9 · one exercise, all time | `app/exercise/[id]/index.tsx` | stat pair, sets collapsed per session; chart is Phase 9 |
+| 4 | 10 · exercises | `app/(tabs)/exercises.tsx` | grouped, `reps · 14 Aug` |
+| 5 | 13 · archived | `app/exercise/archived.tsx` | exercises only — archiving plans is a feature |
+| 6 | 5 · home | `app/(tabs)/index.tsx` | `Start` on the row |
+| 7 | 3 · quick log, 4 · review | `app/quick-log.tsx`, `app/complete/[id].tsx` | |
+| 8 | 14, 16, 17, 11, 12 | plans and exercises | minus rest and added weight |
+| 9 | 1, 2, 2B | `app/session/[id].tsx`, `app/entry/[id].tsx`, `features/session/` | **last**, with its own smoke-test section |
+
+Group 9 goes last on purpose: invariant 1 lives in those files, and the set
+mark, the pinned record bar and the 92px clock all arrive together.
+
+**Not in this phase.** The dashboard and the dot chart are Phase 9. The
+bottom-sheet picker (15, E4) and the two decision sheets (E3, E5) need a sheet
+primitive that does not exist — its own pass, once the queue reaches a screen
+that wants it. Drawing option C lands with the empty surfaces it belongs to.
+
+**Exit criteria**
+
+1. Every screen in the queue matches its page in the document, allowing for the
+   deviations above.
+2. No literal colour, spacing, radius or type size appears outside `global.css`
+   and `tailwind.config.js`.
+3. `SMOKE_TEST.md` Y and Z pass on device **in both themes** — the document's
+   claim is that light and dark are one design at two grounds, so anything that
+   moves between them is a defect.
+4. No feature behaves differently than it did before the phase.
 
 ---
 
