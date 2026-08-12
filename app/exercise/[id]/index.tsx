@@ -1,15 +1,14 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo } from 'react';
-import { Alert, Pressable, SectionList, View } from 'react-native';
+import { Alert, FlatList, Pressable, View } from 'react-native';
 
 import { BackButton } from '@/components/ui/back-button';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { ListRow } from '@/components/ui/list-row';
 import { Screen } from '@/components/ui/screen';
 import { SectionLabel } from '@/components/ui/section-label';
-import { Separator } from '@/components/ui/separator';
+import { Tag } from '@/components/ui/tag';
 import { Text } from '@/components/ui/text';
 import {
   archiveExercise,
@@ -29,15 +28,15 @@ import {
 import type { Session } from '@/db/queries/sessions';
 import {
   formatMeasure,
-  formatMetricDetail,
+  formatRecordsWhat,
   formatSessionDate,
   formatSetNote,
-  formatSetValues,
+  formatSetSeries,
+  formatVolume,
 } from '@/lib/format';
 import {
   groupSetsBySession,
   personalRecords,
-  recordSetIds,
   type PersonalRecord,
 } from '@/lib/records';
 
@@ -49,9 +48,10 @@ type LoggedSet = {
   performedAt: number;
 };
 
-type SessionSection = {
+/** One session's worth of this exercise, collapsed to the lines it renders. */
+type SessionRun = {
   session: Session | undefined;
-  data: LoggedSet[];
+  sets: LoggedSet[];
 };
 
 /**
@@ -62,9 +62,14 @@ type SessionSection = {
  * logs, which is the payoff for making Exercise permanent rather than a line in
  * a template.
  *
- * A `SectionList` rather than the `ScrollView` this screen used to be: the set
- * list is unbounded — an exercise trained twice a week for a year is several
- * hundred rows — and everything above it rides along as the list header.
+ * **A session is one row, not one row per set.** Sixty-three sets over eighteen
+ * sessions is a screen you scroll for a while and learn nothing from; the same
+ * data as `10 · 9 · 9 · 7` per session is where the movement is going, visible
+ * at once. Tapping a row opens the session, where every set is separate and
+ * correctable (§7.3).
+ *
+ * The best-set chart §10 asks for is Phase 9 — the first thing in the project
+ * to want one, and not worth settling the charting stack from here (§10.2).
  */
 export default function ExerciseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -97,8 +102,6 @@ export default function ExerciseDetailScreen() {
     [setRows, valueRows, metrics],
   );
 
-  const marked = useMemo(() => recordSetIds(records), [records]);
-
   const valuesBySet = useMemo(() => {
     const bySet = new Map<string, Map<string, number | null>>();
 
@@ -120,8 +123,8 @@ export default function ExerciseDetailScreen() {
 
   /**
    * Notes, kept apart from the figures because they are stored apart —
-   * `value_text` against `value_num`. Folded here rather than inside `SetLine`
-   * so both maps are built in one pass over the rows.
+   * `value_text` against `value_num`. Folded here rather than inside the row so
+   * both maps are built in one pass.
    */
   const notesBySet = useMemo(() => {
     const bySet = new Map<string, Map<string, string | null>>();
@@ -142,16 +145,19 @@ export default function ExerciseDetailScreen() {
     return bySet;
   }, [valueRows]);
 
-  const sections: SessionSection[] = useMemo(() => {
-    const sessionsById = new Map(
-      sessionRows.map((row) => [row.session.id, row.session]),
-    );
+  const sessionsById = useMemo(
+    () => new Map(sessionRows.map((row) => [row.session.id, row.session])),
+    [sessionRows],
+  );
 
-    return groupSetsBySession(setRows).map((group) => ({
-      session: sessionsById.get(group.sessionId),
-      data: group.sets,
-    }));
-  }, [sessionRows, setRows]);
+  const runs: SessionRun[] = useMemo(
+    () =>
+      groupSetsBySession(setRows).map((group) => ({
+        session: sessionsById.get(group.sessionId),
+        sets: group.sets,
+      })),
+    [sessionsById, setRows],
+  );
 
   /**
    * Archiving asks first, because Delete beside it does and the two used to
@@ -216,70 +222,72 @@ export default function ExerciseDetailScreen() {
     );
   }
 
+  const subtitle = [
+    exercise.family,
+    formatRecordsWhat(metrics),
+    formatVolume(setRows.length, runs.length),
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
     <Screen bleed>
-      <SectionList
-        sections={sections}
-        keyExtractor={(set) => set.id}
-        stickySectionHeadersEnabled={false}
+      <FlatList
+        data={runs}
+        keyExtractor={(run) => run.sets[0]?.id ?? 'empty'}
         ListHeaderComponent={
           <>
             <BackButton />
 
-            <Text className="px-2xl pt-sm font-sans-semibold text-display text-text">
-              {exercise.name}
-            </Text>
-
-            <View className="gap-lg px-2xl pt-2xl">
-              <Field label="Family" value={exercise.family} />
-              <Field label="Notes" value={exercise.notes} />
-              {exercise.isArchived ? (
-                <Field label="Status" value="Archived" />
-              ) : null}
+            <View className="flex-row items-baseline gap-md px-2xl pt-sm">
+              <Text className="flex-1 font-sans-semibold text-display text-text">
+                {exercise.name}
+              </Text>
+              {exercise.isArchived ? <Tag quiet>Archived</Tag> : null}
             </View>
 
-            <Records records={records} metrics={metrics} />
-
-            <SectionLabel className="px-2xl pb-sm pt-xl">Metrics</SectionLabel>
-
-            {metrics.length === 0 ? (
-              <Text className="px-2xl text-bodySm text-text-2">
-                Nothing is recorded for this exercise yet.
+            {/* What it is and how much of it there is, in one line — the
+                document folds the metric list in here, and metric order is
+                still meaningful: the first named is the one logged first. */}
+            {subtitle ? (
+              <Text className="px-2xl pt-xs text-bodySm text-text-3">
+                {subtitle}
               </Text>
-            ) : (
-              metrics.map((metric, index) => (
-                <View key={metric.id}>
-                  {index > 0 ? <Separator /> : null}
-                  <ListRow
-                    title={metric.name}
-                    subtitle={formatMetricDetail(metric, index === 0)}
-                  />
-                </View>
-              ))
-            )}
+            ) : null}
 
-            {sections.length > 0 ? (
-              <SectionLabel className="px-2xl pb-sm pt-xl">History</SectionLabel>
+            {exercise.notes ? (
+              <Text className="px-2xl pt-md text-bodySm text-text-2">
+                {exercise.notes}
+              </Text>
+            ) : null}
+
+            <Bests
+              records={records}
+              metrics={metrics}
+              runs={runs}
+              trained={setRows.length > 0}
+            />
+
+            {runs.length > 0 ? (
+              <SectionLabel className="px-2xl pb-sm pt-xl">
+                Every set
+              </SectionLabel>
             ) : null}
           </>
         }
-        renderSectionHeader={({ section }) => (
-          <SessionHeader session={section.session} />
-        )}
         renderItem={({ item }) => (
-          <SetLine
-            set={item}
+          <SessionRunRow
+            run={item}
             metrics={metrics}
-            values={valuesBySet.get(item.id)}
-            notes={notesBySet.get(item.id)}
-            isRecord={marked.has(item.id)}
+            valuesBySet={valuesBySet}
+            notesBySet={notesBySet}
           />
         )}
         ListEmptyComponent={
           <View className="px-2xl pt-xl">
             <EmptyState
               title="Nothing logged yet"
-              body="Sets appear here once you train this, in a session or a quick log."
+              body="Your sets appear here as you do them, in a session or a quick log."
             />
           </View>
         }
@@ -299,7 +307,7 @@ export default function ExerciseDetailScreen() {
                 })
               }
             >
-              <Text>Edit</Text>
+              <Text>Edit exercise</Text>
             </Button>
             <Button variant="secondary" onPress={() => confirmArchive(exercise)}>
               <Text>{exercise.isArchived ? 'Unarchive' : 'Archive'}</Text>
@@ -315,152 +323,182 @@ export default function ExerciseDetailScreen() {
 }
 
 /**
- * Personal records, one line per metric (§11.5 — a duration record and a rep
- * record are separate things and never combine).
+ * The two figures worth reading first: the best of each thing this measures,
+ * and — where only one thing ranks — when it was last trained.
  *
- * **Stated, not congratulated.** No exclamation and no change arrow: this is a
- * fact about the exercise sitting between what it is and what it has done.
- * DESIGN.md §10.5 cuts celebration, and there is no accent anywhere in the
- * system to spend on it (§3.2).
+ * **Stated, not congratulated.** No exclamation, no change arrow, no colour.
+ * DESIGN.md §10.5 cuts celebration, and §3.2 leaves nothing to spend on it.
  *
- * Absent entirely until something ranks. A `Records` heading over `—` says
- * nothing that the empty history two sections down does not already say.
+ * Present even before anything is logged, reading `—` with the reason beneath.
+ * Hiding them until data exists would leave a new exercise saying nothing about
+ * what it is going to measure; a dash says what this screen is for and admits
+ * it cannot fill it yet (invariant 2).
  */
-function Records({
+function Bests({
   records,
   metrics,
+  runs,
+  trained,
 }: {
   records: Map<string, PersonalRecord>;
   metrics: ExerciseMetric[];
+  runs: SessionRun[];
+  trained: boolean;
 }) {
   const held = metrics.flatMap((metric) => {
     const record = records.get(metric.id);
     return record ? [{ metric, record }] : [];
   });
 
-  if (held.length === 0) {
-    return null;
+  const last = runs.at(0)?.session;
+
+  const stats = held.map(({ metric, record }) => ({
+    key: metric.id,
+    label: `Best ${metric.name.toLowerCase()}`,
+    value: formatMeasure(record.value, metric, { bare: true }),
+    detail: [
+      formatSessionDate(record.performedAt),
+      sessionName(runs, record.sessionId),
+    ]
+      .filter(Boolean)
+      .join(' · '),
+  }));
+
+  // With one thing ranked there is room for the other question this screen is
+  // asked — when did I last do this. With two records there is not, and the
+  // top row of `Every set` answers it anyway.
+  if (stats.length < 2) {
+    stats.push({
+      key: 'last',
+      label: 'Last trained',
+      value: last
+        ? formatSessionDate(last.completedAt ?? last.startedAt)
+        : '—',
+      detail: last
+        ? (last.isQuickLog ? 'One-off' : (last.name ?? 'No plan'))
+        : 'never',
+    });
+  }
+
+  // Nothing ranked. Either nothing is logged, or everything this exercise
+  // measures is text — §10.1 gives `notes` no ordering, so the longest note is
+  // not an achievement.
+  if (stats.length === 1) {
+    stats.unshift({
+      key: 'none',
+      label: 'Best',
+      value: '—',
+      detail: trained ? 'nothing here ranks' : 'no sets recorded',
+    });
   }
 
   return (
-    <>
-      <SectionLabel className="px-2xl pb-sm pt-xl">Records</SectionLabel>
-
-      <View className="gap-md px-2xl">
-        {held.map(({ metric, record }) => (
-          <View key={metric.id} className="flex-row items-baseline gap-md">
-            <Text className="w-label text-caption text-text-3">
-              {metric.name}
-            </Text>
-            {/* Bare: the column to the left is already the metric's name. */}
-            <Text className="flex-1 font-mono text-metricSm text-text">
-              {formatMeasure(record.value, metric, { bare: true })}
-            </Text>
-            <Text className="text-caption text-text-3">
-              {formatSessionDate(record.performedAt)}
-            </Text>
-          </View>
-        ))}
-      </View>
-    </>
+    <View className="flex-row gap-xl px-2xl pt-xl">
+      {stats.slice(0, 2).map((stat) => (
+        <View key={stat.key} className="flex-1 gap-xs">
+          <SectionLabel>{stat.label}</SectionLabel>
+          <Text
+            className={
+              stat.value === '—'
+                ? 'font-mono text-metric text-text-5'
+                : 'font-mono-semibold text-metric text-text'
+            }
+          >
+            {stat.value}
+          </Text>
+          <Text className="text-caption text-text-3">{stat.detail}</Text>
+        </View>
+      ))}
+    </View>
   );
 }
 
-/**
- * The session a run of sets belongs to, and a way into it.
- *
- * Tapping through goes to the session rather than straight to the set, because
- * §7.3's correction lives on the entry screen one step further in — and landing
- * in the session first is what tells you which session you are about to change.
- *
- * A quick log says so where a session gives its name: it was never planned
- * (§6.1), and a row reading `Pull-Up` under a list of pull-ups would be saying
- * nothing.
- */
-function SessionHeader({ session }: { session: Session | undefined }) {
+function sessionName(runs: SessionRun[], sessionId: string): string {
+  const session = runs.find((run) => run.session?.id === sessionId)?.session;
+
   if (!session) {
-    return null;
+    return '';
   }
 
-  const when = formatSessionDate(session.completedAt ?? session.startedAt);
-  const what = session.isQuickLog ? 'Quick log' : session.name;
+  return session.isQuickLog ? 'one-off' : (session.name ?? 'no plan');
+}
+
+/**
+ * One session's worth of this exercise, on one line where it can be.
+ *
+ * The primary metric leads, because it is the one the exercise is logged by
+ * (§4.1) and the one a reader is scanning down. Anything else it measures gets
+ * its own line beneath, named — three unlabelled series stacked would need
+ * decoding against the header every time.
+ *
+ * Tapping opens the session rather than the set, because §7.3's correction is
+ * one step further in and landing in the session first is what tells you which
+ * session you are about to change.
+ */
+function SessionRunRow({
+  run,
+  metrics,
+  valuesBySet,
+  notesBySet,
+}: {
+  run: SessionRun;
+  metrics: ExerciseMetric[];
+  valuesBySet: Map<string, Map<string, number | null>>;
+  notesBySet: Map<string, Map<string, string | null>>;
+}) {
+  const { session, sets } = run;
+
+  const measured = metrics.filter((metric) => metric.type !== 'notes');
+  const primary = measured.at(0);
+  const series = (metric: ExerciseMetric) =>
+    formatSetSeries(
+      sets.map((set) => valuesBySet.get(set.id)?.get(metric.id) ?? null),
+      metric,
+    );
+
+  const notes = sets
+    .map((set) => formatSetNote(metrics, notesBySet.get(set.id) ?? new Map()))
+    .filter((note): note is string => note !== null);
+
+  const when = session
+    ? formatSessionDate(session.completedAt ?? session.startedAt)
+    : '';
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${what ?? 'Session'}, ${when}`}
+      accessibilityLabel={`${when}, ${sets.length} sets`}
+      disabled={!session}
       onPress={() =>
+        session &&
         router.push({ pathname: '/history/[id]', params: { id: session.id } })
       }
-      className="flex-row items-baseline gap-md px-2xl pb-xs pt-lg active:bg-muted"
+      className="min-h-touch justify-center gap-xs border-b border-rule-2 px-2xl py-md active:bg-muted"
     >
-      <SectionLabel>{when}</SectionLabel>
-      {what ? <Text className="text-caption text-text-3">{what}</Text> : null}
-    </Pressable>
-  );
-}
-
-/**
- * One set as it was logged.
- *
- * `—` for a metric that went unrecorded, the same as the history detail screen:
- * dropping it would make `10 reps` indistinguishable from `10 reps` beside a
- * note nobody wrote (invariant 2).
- *
- * The record marker is a word carried by weight, not colour — there is no
- * accent in the system (DESIGN.md §3.2), and this list can hold several marks
- * at once, one per metric. Its final treatment arrives with this screen's
- * refit; the tag component that will carry it does not exist yet.
- */
-function SetLine({
-  set,
-  metrics,
-  values,
-  notes,
-  isRecord,
-}: {
-  set: LoggedSet;
-  metrics: ExerciseMetric[];
-  values: Map<string, number | null> | undefined;
-  notes: Map<string, string | null> | undefined;
-  isRecord: boolean;
-}) {
-  const note = formatSetNote(metrics, notes ?? new Map());
-
-  return (
-    <View className="gap-xs px-2xl py-xs">
-      <View className="flex-row items-baseline gap-md">
-        <Text className="flex-1 text-bodySm text-text-2">
-          {formatSetValues(metrics, values ?? new Map(), { missing: 'name' })}
-          {set.toFailure ? '  to failure' : ''}
+      <View className="flex-row items-baseline gap-lg">
+        <Text className="flex-1 font-mono text-metricXs text-text">
+          {primary ? series(primary) : 'Recorded'}
         </Text>
-        {isRecord ? (
-          <Text className="font-sans-semibold text-caption text-text">
-            Record
+
+        <View className="flex-row items-center gap-sm">
+          {session?.isQuickLog ? <Tag quiet>One-off</Tag> : null}
+          <Text className="font-mono text-metricXs text-text-3">
+            {session?.isQuickLog || !session?.name
+              ? when
+              : `${when} · ${session.name}`}
           </Text>
-        ) : null}
+        </View>
       </View>
 
-      {/* Its own line: a note is prose, and joined onto the figures it reads as
-          one more measurement. */}
-      {note ? (
-        <Text className="text-caption text-text-3">{note}</Text>
-      ) : null}
-    </View>
-  );
-}
+      {measured.slice(1).map((metric) => (
+        <Text key={metric.id} className="font-mono text-metricXs text-text-3">
+          {metric.name.toLowerCase()} {series(metric)}
+        </Text>
+      ))}
 
-/**
- * A labelled value in the §2.4 pairing. Null reads as `—`: not recorded is not
- * the same as empty, and the dash is how the difference shows.
- */
-function Field({ label, value }: { label: string; value: string | null }) {
-  return (
-    <View className="gap-xs">
-      <SectionLabel>{label}</SectionLabel>
-      <Text className={value ? 'text-body text-text' : 'text-body text-text-3'}>
-        {value ?? '—'}
-      </Text>
-    </View>
+      {notes.length > 0 ? (
+        <Text className="text-bodySm text-text-2">{notes.join(' · ')}</Text>
+      ) : null}
+    </Pressable>
   );
 }

@@ -7,11 +7,14 @@ import {
   formatMeasure,
   formatMetricDetail,
   formatMetricSummary,
+  formatRecordsWhat,
   formatSessionDate,
   formatSetNote,
+  formatSetSeries,
   formatSetValues,
   formatSlotTally,
   formatTimeRange,
+  formatVolume,
 } from './format';
 
 describe('formatDuration', () => {
@@ -338,5 +341,64 @@ describe('formatDayRange', () => {
     expect(formatDayRange(day(11, 28), new Date(2027, 0, 3).getTime())).toBe(
       '28 Dec – 3 Jan',
     );
+  });
+});
+
+describe('formatSetSeries', () => {
+  const reps = { name: 'Reps', unit: null };
+  const hold = { name: 'Hold', unit: 's' };
+
+  it('reads a session as one line', () => {
+    expect(formatSetSeries([10, 9, 9, 7], reps)).toBe('10 · 9 · 9 · 7');
+  });
+
+  // The column is mono, so repeating the unit costs alignment nothing, and
+  // `31 · 42 · 38 s` reads as three numbers with a stray letter.
+  it('carries the unit on every figure', () => {
+    expect(formatSetSeries([31, 42, 38], hold)).toBe('31 s · 42 s · 38 s');
+  });
+
+  /** A set where this metric went unmeasured did not score zero. */
+  it('shows an unrecorded set as a dash', () => {
+    expect(formatSetSeries([12, null, 9], reps)).toBe('12 · — · 9');
+  });
+});
+
+describe('formatRecordsWhat', () => {
+  const reps = { name: 'Reps', type: 'number' } as const;
+  const hold = { name: 'Hold', type: 'duration' } as const;
+  const notes = { name: 'Cues', type: 'notes' } as const;
+
+  // In metric order, so the first named is the one logged first.
+  it('names what an exercise measures, in order', () => {
+    expect(formatRecordsWhat([hold, reps])).toBe('records seconds, reps');
+  });
+
+  /** A unit symbol inside prose reads as an abbreviation of the wrong word. */
+  it('says seconds rather than s', () => {
+    expect(formatRecordsWhat([hold])).toBe('records seconds');
+  });
+
+  it('names a note as notes, whatever the metric is called', () => {
+    expect(formatRecordsWhat([reps, notes])).toBe('records reps, notes');
+  });
+
+  it('is undefined when an exercise records nothing', () => {
+    expect(formatRecordsWhat([])).toBeUndefined();
+  });
+});
+
+describe('formatVolume', () => {
+  it('counts both, and neither is stored', () => {
+    expect(formatVolume(63, 18)).toBe('63 sets over 18 sessions');
+  });
+
+  it('is singular where it should be', () => {
+    expect(formatVolume(1, 1)).toBe('1 set over 1 session');
+  });
+
+  // `0 sets over 0 sessions` is a sentence about nothing.
+  it('is undefined before anything is logged', () => {
+    expect(formatVolume(0, 0)).toBeUndefined();
   });
 });

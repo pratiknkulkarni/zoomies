@@ -339,6 +339,78 @@ export function formatLastTime(values: (number | null)[]): string {
 }
 
 /**
+ * One metric across a session's sets: `10 · 9 · 9 · 7`, `31 s · 42 s · 38 s`.
+ *
+ * `formatLastTime` with the unit attached. Unrecorded stays `—` for the same
+ * reason: a set where this metric went unmeasured did not score zero.
+ *
+ * The unit repeats on every figure rather than sitting once at the end. `31 ·
+ * 42 · 38 s` reads as three numbers with a stray letter, and the column is
+ * mono, so the repetition costs alignment nothing.
+ */
+export function formatSetSeries(
+  values: (number | null)[],
+  metric: MetricLabel,
+): string {
+  return values
+    .map((value) =>
+      value === null ? '—' : formatMeasure(value, metric, { bare: true }),
+    )
+    .join(SEPARATOR);
+}
+
+/**
+ * What an exercise measures, in the words it was chosen with: `records
+ * seconds, reps`.
+ *
+ * In metric order, so the first named is the one logged first — the ordering
+ * §4.1 gives meaning to. Undefined where an exercise records nothing, so the
+ * caller omits the phrase rather than printing `records`.
+ *
+ * A duration says `seconds` rather than `s`: this is a sentence about the
+ * exercise, and a unit symbol inside prose reads as an abbreviation of the
+ * wrong word.
+ */
+export function formatRecordsWhat(
+  metrics: Pick<ExerciseMetricRow, 'name' | 'type'>[],
+): string | undefined {
+  if (metrics.length === 0) {
+    return undefined;
+  }
+
+  const words = metrics.map((metric) =>
+    metric.type === 'duration'
+      ? 'seconds'
+      : metric.type === 'notes'
+        ? 'notes'
+        : metric.name.toLowerCase(),
+  );
+
+  return `records ${words.join(', ')}`;
+}
+
+/**
+ * How much of an exercise there is: `63 sets over 18 sessions`.
+ *
+ * Both figures are counts of rows read at the moment they are shown; neither is
+ * stored (invariant 3). Undefined at zero — `0 sets over 0 sessions` is a
+ * sentence about nothing, and the screen says `never trained` instead.
+ */
+export function formatVolume(
+  sets: number,
+  sessions: number,
+): string | undefined {
+  if (sets === 0) {
+    return undefined;
+  }
+
+  const setPart = sets === 1 ? '1 set' : `${sets} sets`;
+  const sessionPart = sessions === 1 ? '1 session' : `${sessions} sessions`;
+
+  return `${setPart} over ${sessionPart}`;
+}
+
+/**
  * How many slots in a template already use one exercise: `× 2`.
  *
  * The same exercise may appear more than once — pull-ups to open and again as a
