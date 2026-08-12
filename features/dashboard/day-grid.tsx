@@ -62,7 +62,13 @@ export function DayGrid({ grid }: { grid: DaysGrid }) {
       */}
       <View className="flex-row gap-sm">
         <View className="w-lg" />
-        <View className="flex-1 flex-row gap-xs">
+        {/*
+          No gap between spans, unlike the rows above. A span is a run of
+          columns rather than a column, so gapping them would distribute the
+          same total width differently from the grid and walk each label off
+          the month it names. Contiguous, the two agree to within a pixel.
+        */}
+        <View className="flex-1 flex-row">
           {grid.months.map((month) => (
             <View
               key={month.monthMs}
