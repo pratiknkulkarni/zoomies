@@ -326,7 +326,7 @@ function EntrySummary({
       }
       className="px-2xl pb-lg pt-md active:bg-muted"
     >
-      <View className="flex-row items-baseline gap-md pb-sm">
+      <View className="flex-row items-baseline gap-lg pb-sm">
         {/* An untrained exercise recedes rather than disappearing — it is part
             of what the day was, and §6.5 says it reads as not trained and never
             as zeros. */}
@@ -400,7 +400,7 @@ function SetLine({
 
       <View className="flex-1 gap-xs">
         <View className="flex-row flex-wrap items-center gap-sm">
-          <Text className="font-mono text-metricSm text-text">
+          <Text className="font-mono text-metricXs text-text">
             {formatSetValues(
               metrics,
               new Map(

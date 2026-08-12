@@ -38,3 +38,68 @@ export function sessionLengthMs(session: SessionTiming): number | null {
     session.completedAt - session.startedAt - session.accumulatedPauseMs,
   );
 }
+
+/** A stretch of days between two sessions on which nothing was trained. */
+export type TrainingGap = { fromMs: number; toMs: number };
+
+/**
+ * The untrained stretches inside a timeline, keyed by the row they follow.
+ *
+ * The timeline is newest first, so the gap between rows `i` and `i + 1` belongs
+ * after `i`. A map rather than an interleaved list, so the caller keeps a flat
+ * array of sessions for its list and asks about gaps while rendering — mixing
+ * two kinds of thing into one array makes every `keyExtractor` and every
+ * `renderItem` test for which it has.
+ *
+ * **Days, not durations.** Two sessions eighteen hours apart may be on the same
+ * day or on consecutive ones, and neither is a gap. Boundaries move with
+ * `setDate` and `setHours` rather than by dividing milliseconds, so a clock
+ * change does not invent or swallow a day.
+ *
+ * **A single rest day is not a gap.** Training every other day would otherwise
+ * draw a rule between every pair of rows, and a timeline that remarks on every
+ * day off is keeping score — which is the one thing §11.6 rules out by name.
+ * Two clear days is the point at which a break is a break.
+ *
+ * Drawing these is the whole reason the timeline is a flat list rather than one
+ * grouped by day: a break in training is part of the record, and a heading per
+ * day states the days that exist while saying nothing about the ones that do
+ * not.
+ */
+export function gapsAfter(
+  timestampsNewestFirst: number[],
+): Map<number, TrainingGap> {
+  const gaps = new Map<number, TrainingGap>();
+
+  for (let index = 0; index < timestampsNewestFirst.length - 1; index += 1) {
+    const newer = timestampsNewestFirst[index];
+    const older = timestampsNewestFirst[index + 1];
+
+    if (newer === undefined || older === undefined) {
+      continue;
+    }
+
+    const from = addDays(startOfDay(older), 1);
+    const to = addDays(startOfDay(newer), -1);
+
+    // `from >= to` covers the same day, consecutive days, and one clear day
+    // between — none of which is a break worth drawing.
+    if (from < to) {
+      gaps.set(index, { fromMs: from, toMs: to });
+    }
+  }
+
+  return gaps;
+}
+
+function startOfDay(epochMs: number): number {
+  const date = new Date(epochMs);
+  date.setHours(0, 0, 0, 0);
+  return date.getTime();
+}
+
+function addDays(epochMs: number, days: number): number {
+  const date = new Date(epochMs);
+  date.setDate(date.getDate() + days);
+  return date.getTime();
+}

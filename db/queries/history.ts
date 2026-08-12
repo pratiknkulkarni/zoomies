@@ -56,6 +56,27 @@ export function liveEntryRefs() {
 }
 
 /**
+ * One row per live set, carrying only the session it belongs to.
+ *
+ * The timeline says `11 sets` on every row, and that figure is a count of rows
+ * every time it is read — there is no stored total and there must not be one
+ * (invariant 3). Rooted at `sets` so logging or deleting one moves the number.
+ *
+ * Counting in SQL with a `GROUP BY` would return fewer rows, but `useLiveQuery`
+ * watches the root table rather than the shape of the result, so it would save
+ * transfer and change nothing about when the query re-runs. One column per set
+ * keeps it the same kind of query as `liveEntryRefs` above, which is worth more
+ * than the bytes.
+ */
+export function liveSetRefs() {
+  return db
+    .select({ sessionId: exerciseEntries.sessionId })
+    .from(sets)
+    .innerJoin(exerciseEntries, eq(exerciseEntries.id, sets.exerciseEntryId))
+    .where(and(isNull(sets.deletedAt), isNull(exerciseEntries.deletedAt)));
+}
+
+/**
  * Every measurement in one session, for the detail screen's per-set lines.
  *
  * Rooted at `set_metric_values` so correcting a set from history refreshes the
@@ -97,6 +118,17 @@ export function indexEntriesBySession(
   }
 
   return bySession;
+}
+
+/** How many sets each session holds. Absent means none, never zero stored. */
+export function countBySession(rows: { sessionId: string }[]): Map<string, number> {
+  const counts = new Map<string, number>();
+
+  for (const row of rows) {
+    counts.set(row.sessionId, (counts.get(row.sessionId) ?? 0) + 1);
+  }
+
+  return counts;
 }
 
 /**

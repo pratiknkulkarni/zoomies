@@ -345,9 +345,14 @@ The index sits in a fixed column so the figures align down a common edge
 whatever the digit count, for the reason §6.7 fixes a label column. It is
 `text-5`, the quietest ink in the system — it is a position, not a measurement.
 
-Values are mono. **The document specifies 17px here and this uses the existing
-16px `metricSm`**: a second token one pixel away from an existing one is how a
-type scale stops being a scale, and §2.3 already refuses two competing ones.
+Values are `metricXs`, the token named for dense numeric lists, which is what
+this is.
+
+**The document specifies 17px here and this reads smaller on purpose.** Geist
+Mono carries a far larger x-height than the IBM Plex Mono the document assumed,
+so 16px mono sat almost level with the 19px exercise name above it and the two
+competed. Nominal size is not what the eye measures; a mono figure holds its
+own about two steps below the sans beside it.
 
 ---
 

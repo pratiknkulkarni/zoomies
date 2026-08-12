@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   formatClock,
+  formatDayRange,
   formatDuration,
   formatMeasure,
   formatMetricDetail,
@@ -310,6 +311,32 @@ describe('formatMetricDetail', () => {
   it('describes a metric no preset covers rather than calling it invalid', () => {
     expect(formatMetricDetail({ type: 'number', unit: 'm' }, false)).toBe(
       'a number in m',
+    );
+  });
+});
+
+describe('formatDayRange', () => {
+  const day = (month: number, date: number) =>
+    new Date(2026, month, date).getTime();
+
+  // The month is stated once where both ends share it — `8 Aug–11 Aug` repeats
+  // a word the reader has already had.
+  it('states the month once across a range inside it', () => {
+    expect(formatDayRange(day(7, 8), day(7, 11))).toBe('8–11 Aug');
+  });
+
+  it('reads as one date when the range is a single day', () => {
+    expect(formatDayRange(day(7, 9), day(7, 9))).toBe('9 Aug');
+  });
+
+  /** Both months are needed, and the parts are long enough to want the space. */
+  it('names both months across a boundary', () => {
+    expect(formatDayRange(day(6, 28), day(7, 3))).toBe('28 Jul – 3 Aug');
+  });
+
+  it('names both months across a year, without stating the year', () => {
+    expect(formatDayRange(day(11, 28), new Date(2027, 0, 3).getTime())).toBe(
+      '28 Dec – 3 Jan',
     );
   });
 });

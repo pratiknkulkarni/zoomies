@@ -212,6 +212,32 @@ export function formatSessionDate(epochMs: number, now = Date.now()): string {
 }
 
 /**
+ * A stretch of days: `9 Aug`, `8–11 Aug`, `28 Jul – 3 Aug`.
+ *
+ * The month is stated once where both ends share it, because `8 Aug–11 Aug`
+ * repeats a word the reader has already had. Where they differ both are needed,
+ * and the range gets spaces around its dash — the parts are long enough that a
+ * tight dash stops reading as one span.
+ *
+ * No year. This appears between two dated rows, which carry it if it matters.
+ */
+export function formatDayRange(fromMs: number, toMs: number): string {
+  const from = new Date(fromMs);
+  const to = new Date(toMs);
+
+  const month = (date: Date) =>
+    date.toLocaleDateString('en-GB', { month: 'short' });
+
+  if (fromMs === toMs) {
+    return `${from.getDate()} ${month(from)}`;
+  }
+  if (from.getMonth() === to.getMonth() && from.getFullYear() === to.getFullYear()) {
+    return `${from.getDate()}–${to.getDate()} ${month(to)}`;
+  }
+  return `${from.getDate()} ${month(from)} – ${to.getDate()} ${month(to)}`;
+}
+
+/**
  * When a session ran: `18:42–19:30`.
  *
  * Beside the date and the duration this answers a question neither of them
