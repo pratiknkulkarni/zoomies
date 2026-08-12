@@ -87,13 +87,13 @@ function ChooseExercise({ onChoose }: { onChoose: (of: Exercise) => void }) {
       */}
       <View>
         <BackButton />
-        <Text className="px-xl pt-sm font-sans-semibold text-display text-text">
+        <Text className="px-2xl pt-sm font-sans-semibold text-display text-text">
           Quick log
         </Text>
-        <Text className="px-xl pb-md pt-xs text-bodySm text-text-2">
+        <Text className="px-2xl pb-md pt-xs text-bodySm text-text-2">
           One exercise, logged outside a session.
         </Text>
-        <View className="px-xl pb-lg">
+        <View className="px-2xl pb-lg">
           <Input
             value={query}
             onChangeText={setQuery}
@@ -118,7 +118,7 @@ function ChooseExercise({ onChoose }: { onChoose: (of: Exercise) => void }) {
           />
         )}
         ListEmptyComponent={
-          <View className="px-xl">
+          <View className="px-2xl">
             {searching ? (
               <Text className="text-bodySm text-text-2">
                 No exercise matches {query.trim()}.
@@ -227,11 +227,11 @@ function LogForm({
         */}
         <BackButton onPress={requestExit} />
 
-        <Text className="px-xl pt-sm font-sans-semibold text-display text-text">
+        <Text className="px-2xl pt-sm font-sans-semibold text-display text-text">
           {exercise.name}
         </Text>
 
-        <View className="gap-lg px-xl pt-2xl">
+        <View className="gap-lg px-2xl pt-xl">
           {own.length === 0 ? (
             <Text className="text-bodySm text-text-2">
               This exercise records nothing yet. Add a metric to it first.

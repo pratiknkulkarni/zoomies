@@ -51,7 +51,7 @@ export function SetRow({
         accessibilityRole="button"
         accessibilityLabel={`Edit set ${set.setIndex + 1}`}
         onPress={() => setEditing(true)}
-        className="min-h-row flex-row items-center gap-md px-xl py-md active:bg-muted"
+        className="min-h-row flex-row items-center gap-md px-2xl py-md active:bg-muted"
       >
         <Text className="w-field font-mono text-metricSm text-text-3">
           {set.setIndex + 1}
@@ -145,7 +145,7 @@ function Editor({
   };
 
   return (
-    <View className="gap-md bg-surface px-xl py-lg">
+    <View className="gap-md bg-surface px-2xl py-lg">
       <View className="flex-row items-center justify-between">
         <Text className="font-mono text-metricSm text-text-2">
           Set {set.setIndex + 1}

@@ -208,7 +208,7 @@ export default function ExerciseDetailScreen() {
       <Screen bleed>
         <BackButton />
         {settled ? (
-          <Text className="px-xl pt-xl text-body text-text-2">
+          <Text className="px-2xl pt-2xl text-body text-text-2">
             This exercise is no longer here.
           </Text>
         ) : null}
@@ -226,11 +226,11 @@ export default function ExerciseDetailScreen() {
           <>
             <BackButton />
 
-            <Text className="px-xl pt-sm font-sans-semibold text-display text-text">
+            <Text className="px-2xl pt-sm font-sans-semibold text-display text-text">
               {exercise.name}
             </Text>
 
-            <View className="gap-lg px-xl pt-xl">
+            <View className="gap-lg px-2xl pt-2xl">
               <Field label="Family" value={exercise.family} />
               <Field label="Notes" value={exercise.notes} />
               {exercise.isArchived ? (
@@ -240,10 +240,10 @@ export default function ExerciseDetailScreen() {
 
             <Records records={records} metrics={metrics} />
 
-            <SectionLabel className="px-xl pb-sm pt-2xl">Metrics</SectionLabel>
+            <SectionLabel className="px-2xl pb-sm pt-xl">Metrics</SectionLabel>
 
             {metrics.length === 0 ? (
-              <Text className="px-xl text-bodySm text-text-2">
+              <Text className="px-2xl text-bodySm text-text-2">
                 Nothing is recorded for this exercise yet.
               </Text>
             ) : (
@@ -259,7 +259,7 @@ export default function ExerciseDetailScreen() {
             )}
 
             {sections.length > 0 ? (
-              <SectionLabel className="px-xl pb-sm pt-2xl">History</SectionLabel>
+              <SectionLabel className="px-2xl pb-sm pt-xl">History</SectionLabel>
             ) : null}
           </>
         }
@@ -276,7 +276,7 @@ export default function ExerciseDetailScreen() {
           />
         )}
         ListEmptyComponent={
-          <View className="px-xl pt-2xl">
+          <View className="px-2xl pt-xl">
             <EmptyState
               title="Nothing logged yet"
               body="Sets appear here once you train this, in a session or a quick log."
@@ -289,7 +289,7 @@ export default function ExerciseDetailScreen() {
           virtualized list — every other use is a `ScrollView`.
         */
         ListFooterComponent={
-          <View className="gap-md px-xl pb-3xl pt-2xl">
+          <View className="gap-md px-2xl pb-3xl pt-xl">
             <Button
               variant="secondary"
               onPress={() =>
@@ -318,10 +318,10 @@ export default function ExerciseDetailScreen() {
  * Personal records, one line per metric (§11.5 — a duration record and a rep
  * record are separate things and never combine).
  *
- * **Stated, not congratulated.** No accent here, no exclamation and no change
- * arrow: this is a fact about the exercise sitting between what it is and what
- * it has done. DESIGN.md §10.5 cuts celebration, and §3.3 spends the accent on
- * marking the set in the list below instead.
+ * **Stated, not congratulated.** No exclamation and no change arrow: this is a
+ * fact about the exercise sitting between what it is and what it has done.
+ * DESIGN.md §10.5 cuts celebration, and there is no accent anywhere in the
+ * system to spend on it (§3.2).
  *
  * Absent entirely until something ranks. A `Records` heading over `—` says
  * nothing that the empty history two sections down does not already say.
@@ -344,9 +344,9 @@ function Records({
 
   return (
     <>
-      <SectionLabel className="px-xl pb-sm pt-2xl">Records</SectionLabel>
+      <SectionLabel className="px-2xl pb-sm pt-xl">Records</SectionLabel>
 
-      <View className="gap-md px-xl">
+      <View className="gap-md px-2xl">
         {held.map(({ metric, record }) => (
           <View key={metric.id} className="flex-row items-baseline gap-md">
             <Text className="w-label text-caption text-text-3">
@@ -392,7 +392,7 @@ function SessionHeader({ session }: { session: Session | undefined }) {
       onPress={() =>
         router.push({ pathname: '/history/[id]', params: { id: session.id } })
       }
-      className="flex-row items-baseline gap-md px-xl pb-xs pt-lg active:bg-muted"
+      className="flex-row items-baseline gap-md px-2xl pb-xs pt-lg active:bg-muted"
     >
       <SectionLabel>{when}</SectionLabel>
       {what ? <Text className="text-caption text-text-3">{what}</Text> : null}
@@ -407,10 +407,10 @@ function SessionHeader({ session }: { session: Session | undefined }) {
  * dropping it would make `10 reps` indistinguishable from `10 reps` beside a
  * note nobody wrote (invariant 2).
  *
- * The record marker is one of the three places DESIGN.md §3.3 allows the accent
- * at all. It is a word rather than a fill or a glyph — the rule permits one
- * accent-filled element on screen and this list can hold several marks, one per
- * metric.
+ * The record marker is a word carried by weight, not colour — there is no
+ * accent in the system (DESIGN.md §3.2), and this list can hold several marks
+ * at once, one per metric. Its final treatment arrives with this screen's
+ * refit; the tag component that will carry it does not exist yet.
  */
 function SetLine({
   set,
@@ -428,14 +428,16 @@ function SetLine({
   const note = formatSetNote(metrics, notes ?? new Map());
 
   return (
-    <View className="gap-xs px-xl py-xs">
+    <View className="gap-xs px-2xl py-xs">
       <View className="flex-row items-baseline gap-md">
         <Text className="flex-1 text-bodySm text-text-2">
           {formatSetValues(metrics, values ?? new Map(), { missing: 'name' })}
           {set.toFailure ? '  to failure' : ''}
         </Text>
         {isRecord ? (
-          <Text className="text-caption text-accent">Record</Text>
+          <Text className="font-sans-semibold text-caption text-text">
+            Record
+          </Text>
         ) : null}
       </View>
 

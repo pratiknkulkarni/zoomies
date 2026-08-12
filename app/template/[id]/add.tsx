@@ -124,13 +124,13 @@ export default function AddExerciseScreen() {
       */}
       <View>
         <BackButton />
-        <Text className="px-xl pt-sm font-sans-semibold text-display text-text">
+        <Text className="px-2xl pt-sm font-sans-semibold text-display text-text">
           Add an exercise
         </Text>
-        <Text className="px-xl pb-md pt-xs text-bodySm text-text-2">
+        <Text className="px-2xl pb-md pt-xs text-bodySm text-text-2">
           {formatSlotCount(slots.length)} in this template
         </Text>
-        <View className="px-xl pb-lg">
+        <View className="px-2xl pb-lg">
           <Input
             value={query}
             onChangeText={setQuery}
@@ -156,7 +156,7 @@ export default function AddExerciseScreen() {
           />
         )}
         ListEmptyComponent={
-          <View className="px-xl">
+          <View className="px-2xl">
             {/*
               An empty library and an empty result are different facts. Saying
               "your library is empty" while a search is running would be a lie.
@@ -218,7 +218,7 @@ const PickerRow = memo(function PickerRow({
           tapAdded();
           void addSlot(templateId, exercise.id);
         }}
-        className="min-h-row flex-1 justify-center py-md pl-xl active:bg-muted"
+        className="min-h-row flex-1 justify-center py-md pl-2xl active:bg-muted"
       >
         <Text className="font-sans-semibold text-heading text-text">
           {exercise.name}

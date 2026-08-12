@@ -51,7 +51,7 @@ export default function HomeScreen() {
         ItemSeparatorComponent={Separator}
         ListHeaderComponent={
           <View>
-            <Text className="px-xl pt-xl font-sans-semibold text-display text-text">
+            <Text className="px-2xl pt-2xl font-sans-semibold text-display text-text">
               Home
             </Text>
 
@@ -61,13 +61,13 @@ export default function HomeScreen() {
               prompt of §6.3 arrives in step 6; this is the way back into it.
             */}
             {session ? (
-              <View className="gap-sm px-xl pt-2xl">
+              <View className="gap-sm px-2xl pt-xl">
                 <SectionLabel>In progress</SectionLabel>
                 <ResumePrompt session={session} />
               </View>
             ) : null}
 
-            <View className="flex-row items-center justify-between pl-xl pr-md pt-2xl">
+            <View className="flex-row items-center justify-between pl-2xl pr-md pt-xl">
               <SectionLabel>Templates</SectionLabel>
               <IconButton
                 label="New template"
@@ -91,7 +91,7 @@ export default function HomeScreen() {
           />
         )}
         ListEmptyComponent={
-          <View className="px-xl">
+          <View className="px-2xl">
             <EmptyState
               title="Your templates"
               body="A template is a plan you train from — an ordered list of exercises with targets."
@@ -110,7 +110,7 @@ export default function HomeScreen() {
 
             `secondary`, so Home keeps to one primary button (DESIGN.md §10).
           */
-          <View className="px-xl pt-2xl">
+          <View className="px-2xl pt-xl">
             <Button
               variant="secondary"
               className="w-full"

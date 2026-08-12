@@ -77,11 +77,11 @@ export default function CompleteScreen() {
       >
         <BackButton />
 
-        <Text className="px-xl pt-sm font-sans-semibold text-display text-text">
+        <Text className="px-2xl pt-sm font-sans-semibold text-display text-text">
           Finish
         </Text>
         {session?.name ? (
-          <Text className="px-xl pt-xs text-bodySm text-text-2">
+          <Text className="px-2xl pt-xs text-bodySm text-text-2">
             {session.name}
           </Text>
         ) : null}
@@ -91,7 +91,7 @@ export default function CompleteScreen() {
         ) : null}
 
         {review && review.raises.length > 0 ? (
-          <View className="gap-md px-xl pt-2xl">
+          <View className="gap-md px-2xl pt-xl">
             <SectionLabel>Beaten</SectionLabel>
             {review.raises.map((raise) => (
               <RaiseRow key={raise.entryId} raise={raise} />
@@ -103,7 +103,7 @@ export default function CompleteScreen() {
           <SessionNote key={id} sessionId={id} notes={session.notes} />
         ) : null}
 
-        <View className="px-xl pt-2xl">
+        <View className="px-2xl pt-xl">
           <Button variant="primary" onPress={finish}>
             <Text>Finish session</Text>
           </Button>
@@ -124,7 +124,7 @@ export default function CompleteScreen() {
  */
 function Untrained({ names }: { names: string[] }) {
   return (
-    <View className="gap-sm px-xl pt-2xl">
+    <View className="gap-sm px-2xl pt-xl">
       <SectionLabel>Not trained</SectionLabel>
 
       {/*
@@ -222,7 +222,7 @@ function SessionNote({
   };
 
   return (
-    <View className="gap-xs px-xl pt-2xl">
+    <View className="gap-xs px-2xl pt-xl">
       <SectionLabel>Note</SectionLabel>
       <Input
         value={draft}

@@ -60,7 +60,7 @@ export default function EntryScreen() {
 
         {!entry ? (
           settled ? (
-            <Text className="px-xl pt-xl text-body text-text-2">
+            <Text className="px-2xl pt-2xl text-body text-text-2">
               This exercise is no longer in the session.
             </Text>
           ) : null
@@ -156,7 +156,7 @@ function Logging({ entryId }: { entryId: string }) {
 
   return (
     <>
-      <View className="flex-row items-start justify-between gap-md px-xl pt-sm">
+      <View className="flex-row items-start justify-between gap-md px-2xl pt-sm">
         <Text className="flex-1 font-sans-semibold text-display text-text">
           {exercise.at(0)?.name ?? 'Exercise'}
         </Text>
@@ -180,7 +180,7 @@ function Logging({ entryId }: { entryId: string }) {
         </View>
       </View>
 
-      <View className="gap-sm px-xl pt-xl">
+      <View className="gap-sm px-2xl pt-2xl">
         <TargetRow entry={entry} metrics={metrics} />
         <Row
           label="Last time"
@@ -208,7 +208,7 @@ function Logging({ entryId }: { entryId: string }) {
         session, not adding to one; the set rows below stay editable, which is
         what correcting a mislog actually needs.
       */}
-      <View className="px-xl pt-2xl">
+      <View className="px-2xl pt-xl">
         {finished ? null : metrics.length === 0 ? (
           <Text className="text-bodySm text-text-2">
             This exercise records nothing yet. Add a metric to it first.
@@ -241,8 +241,8 @@ function Logging({ entryId }: { entryId: string }) {
       </View>
 
       {performed.length > 0 ? (
-        <View className="pt-2xl">
-          <SectionLabel className="px-xl pb-sm">Logged</SectionLabel>
+        <View className="pt-xl">
+          <SectionLabel className="px-2xl pb-sm">Logged</SectionLabel>
           {performed.map((set, index) => (
             <View key={set.id}>
               {index > 0 ? <Separator /> : null}

@@ -159,7 +159,7 @@ export function EntryNotes({ entry }: { entry: ExerciseEntry }) {
   };
 
   return (
-    <View className="gap-xs px-xl pt-2xl">
+    <View className="gap-xs px-2xl pt-xl">
       <SectionLabel>Notes</SectionLabel>
       <Input
         value={notes}

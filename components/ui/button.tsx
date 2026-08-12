@@ -15,20 +15,25 @@ import { cn } from '@/lib/utils';
  * scales rather than extending them. The web-only branches went with them;
  * this app is iOS and Android.
  *
- * Four variants, and no `size`. Height is 48 everywhere — §9 sets that floor
- * for tired hands, and a smaller button would breach it.
+ * Four variants, and no `size`. The primary is taller and slightly rounder than
+ * its siblings (§6.1) — it is the one thing on the screen a thumb goes to
+ * without looking. Nothing drops below the §9 floor of 48.
  */
 const buttonVariants = cva(
-  'h-control flex-row items-center justify-center gap-sm rounded-button px-lg transition duration-fast active:scale-press active:bg-muted',
+  'flex-row items-center justify-center gap-sm rounded-button px-lg transition duration-fast active:scale-press active:bg-muted',
   {
     variants: {
       variant: {
-        // §3.3 — one of exactly three places the accent may appear, and only
-        // one such element may be on screen at a time.
-        primary: 'w-full bg-accent',
-        secondary: 'self-start border border-border bg-surface',
-        ghost: 'self-start',
-        danger: 'self-start bg-danger-bg',
+        /*
+         * Solid ink, and the only filled block on its screen (§3.2). It
+         * inverts on its own between themes — `text` is near-black on light
+         * and near-white on dark — so this carries no theme conditional and
+         * stays the brightest thing in a dark garage.
+         */
+        primary: 'h-primary w-full rounded-card bg-text',
+        secondary: 'h-control self-start border border-border bg-surface',
+        ghost: 'h-control self-start',
+        danger: 'h-control self-start bg-danger-bg',
       },
     },
     defaultVariants: { variant: 'secondary' },
@@ -38,7 +43,9 @@ const buttonVariants = cva(
 const buttonTextVariants = cva('font-sans-semibold text-body', {
   variants: {
     variant: {
-      primary: 'text-accent-fg',
+      // Paper on ink, which is the ground colour rather than a token of its
+      // own — the fill is `text`, so its label is `bg`.
+      primary: 'text-bg',
       secondary: 'text-text',
       ghost: 'text-text-2',
       danger: 'text-danger',

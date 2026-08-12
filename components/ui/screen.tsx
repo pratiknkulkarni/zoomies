@@ -39,7 +39,7 @@ export function Screen({ children, bleed = false, footer }: ScreenProps) {
   return (
     <KeyboardAvoidingView
       behavior="padding"
-      className={bleed ? 'flex-1 bg-bg' : 'flex-1 bg-bg px-xl'}
+      className={bleed ? 'flex-1 bg-bg' : 'flex-1 bg-bg px-2xl'}
       style={{ paddingTop: insets.top }}
     >
       <View className="flex-1">{children}</View>
@@ -58,7 +58,7 @@ export function Screen({ children, bleed = false, footer }: ScreenProps) {
           className="border-t border-border bg-bg"
           style={{ paddingBottom: insets.bottom }}
         >
-          <View className={bleed ? 'px-xl py-md' : 'py-md'}>{footer}</View>
+          <View className={bleed ? 'px-2xl py-md' : 'py-md'}>{footer}</View>
         </View>
       ) : null}
     </KeyboardAvoidingView>

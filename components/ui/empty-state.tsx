@@ -16,7 +16,7 @@ type EmptyStateProps = {
  */
 function EmptyState({ title, body, action }: EmptyStateProps) {
   return (
-    <View className="items-start gap-sm py-2xl">
+    <View className="items-start gap-sm py-xl">
       <Text className="font-sans-semibold text-heading text-text">{title}</Text>
       <Text className="text-bodySm text-text-2">{body}</Text>
       {action ? (

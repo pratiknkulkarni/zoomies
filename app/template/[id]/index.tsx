@@ -94,7 +94,7 @@ export default function TemplateScreen() {
           <>
             <BackButton />
             {settled ? (
-              <Text className="px-xl pt-xl text-body text-text-2">
+              <Text className="px-2xl pt-2xl text-body text-text-2">
                 This template is no longer here.
               </Text>
             ) : null}
@@ -164,7 +164,7 @@ function Loaded({
     <>
       <BackButton onPress={requestExit} />
 
-      <View className="px-xl pt-sm">
+      <View className="px-2xl pt-sm">
         <Text className="pb-lg font-sans-semibold text-display text-text">
           {template.name}
         </Text>
@@ -175,7 +175,7 @@ function Loaded({
         />
       </View>
 
-      <View className="gap-xs px-xl pt-sm">
+      <View className="gap-xs px-2xl pt-sm">
         <SectionLabel>Name</SectionLabel>
         <Input
           value={name}
@@ -196,7 +196,7 @@ function Loaded({
         ) : null}
       </View>
 
-      <SectionLabel className="px-xl pb-sm pt-2xl">Exercises</SectionLabel>
+      <SectionLabel className="px-2xl pb-sm pt-xl">Exercises</SectionLabel>
 
       <SlotList
         templateId={template.id}
@@ -205,7 +205,7 @@ function Loaded({
         metricsById={metricsById}
       />
 
-      <View className="gap-md px-xl pt-xl">
+      <View className="gap-md px-2xl pt-2xl">
         <Button
           variant="secondary"
           onPress={() =>
@@ -219,7 +219,7 @@ function Loaded({
         </Button>
       </View>
 
-      <View className="px-xl pt-2xl">
+      <View className="px-2xl pt-xl">
         <Button variant="danger" onPress={onDelete}>
           <Text>Delete template</Text>
         </Button>
@@ -229,7 +229,8 @@ function Loaded({
 }
 
 /**
- * The primary action, and the only accent on the screen (DESIGN.md §3).
+ * The primary action, and the only block of solid ink on the screen
+ * (DESIGN.md §3.2).
  *
  * An empty template cannot start a session — there would be nothing to log, and
  * a session with no entries is a row that exists only to be discarded. With one

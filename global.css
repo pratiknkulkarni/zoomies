@@ -14,41 +14,58 @@
  * contents against the content globs, and `dark` is a class NativeWind applies
  * at runtime rather than one written into a component — inside a layer the
  * whole dark block is purged and the app renders light tokens in dark mode.
+ *
+ * **There is no accent colour.** Emphasis is weight, rule and solid ink; the
+ * primary button is filled with `text` and inverts on its own between themes.
+ * `danger` survives for the two irreversible acts and nothing else (§3.2).
  */
 
 :root {
-  /* Neutrals — DESIGN.md §3.1. Warm off-white, never pure white. */
-  --color-bg: 250 250 248; /* #FAFAF8 */
-  --color-surface: 255 255 255; /* #FFFFFF */
-  --color-muted: 241 240 236; /* #F1F0EC */
-  --color-border: 227 226 220; /* #E3E2DC */
-  --color-text: 26 26 23; /* #1A1A17 */
-  --color-text-2: 107 106 98; /* #6B6A62 */
-  --color-text-3: 156 155 146; /* #9C9B92 */
+  /*
+   * Neutrals — DESIGN.md §3.1. Eleven steps, five of them ink.
+   *
+   * `surface` is the one lifted plane on a screen and appears at most once:
+   * the live exercise row, or the focused field. Two of them and neither reads
+   * as live.
+   */
+  --color-bg: 244 242 238; /* #F4F2EE — ground, every screen */
+  --color-surface: 255 255 255; /* #FFFFFF — the one live row, the focused field */
+  --color-muted: 239 236 231; /* #EFECE7 — fixed bars, callouts, input fills */
 
-  /* Accent, moss — DESIGN.md §3.2. Three sanctioned uses only, see §3.3. */
-  --color-accent: 85 104 79; /* #55684F */
-  --color-accent-bg: 237 240 234; /* #EDF0EA */
-  --color-accent-fg: 250 250 248; /* #FAFAF8 */
+  --color-text: 26 25 23; /* #1A1917 — text, filled set marks, primary fill */
+  --color-text-2: 74 72 67; /* #4A4843 — notes and secondary prose */
+  --color-text-3: 107 104 98; /* #6B6862 — metadata, targets, inactive tabs */
+  --color-text-4: 138 135 127; /* #8A877F — section labels, completed exercises */
+  --color-text-5: 169 164 154; /* #A9A49A — set indices, axis labels, the em dash */
 
-  /* Destructive — DESIGN.md §3.4. Delete and discard only. */
+  --color-border: 201 196 185; /* #C9C4B9 — control borders */
+  --color-rule: 220 216 208; /* #DCD8D0 — structural rules, header and footer */
+  --color-rule-2: 230 226 218; /* #E6E2DA — list rules */
+
+  /* Destructive — DESIGN.md §3.2. Delete and discard only. */
   --color-danger: 180 68 58; /* #B4443A */
   --color-danger-bg: 247 235 233; /* #F7EBE9 */
 }
 
 .dark:root {
-  /* Warm near-black, never pure black. */
-  --color-bg: 15 15 14; /* #0F0F0E */
-  --color-surface: 26 26 24; /* #1A1A18 */
-  --color-muted: 37 37 35; /* #252523 */
-  --color-border: 51 50 47; /* #33322F */
-  --color-text: 244 243 238; /* #F4F3EE */
-  --color-text-2: 163 162 152; /* #A3A298 */
-  --color-text-3: 110 109 101; /* #6E6D65 */
+  /*
+   * The same design at a lower ground — nothing moves and nothing is
+   * recoloured. Warm near-black, never pure black: an OLED-true #000 would
+   * lose the rules entirely in a lit room.
+   */
+  --color-bg: 19 19 18; /* #131312 */
+  --color-surface: 30 30 27; /* #1E1E1B */
+  --color-muted: 26 26 24; /* #1A1A18 */
 
-  --color-accent: 140 162 133; /* #8CA285 */
-  --color-accent-bg: 42 50 42; /* #2A322A */
-  --color-accent-fg: 15 15 14; /* #0F0F0E */
+  --color-text: 236 234 229; /* #ECEAE5 */
+  --color-text-2: 180 177 170; /* #B4B1AA */
+  --color-text-3: 145 142 134; /* #918E86 */
+  --color-text-4: 121 118 111; /* #79766F */
+  --color-text-5: 99 97 91; /* #63615B */
+
+  --color-border: 59 58 54; /* #3B3A36 */
+  --color-rule: 43 42 39; /* #2B2A27 */
+  --color-rule-2: 35 34 32; /* #232220 */
 
   --color-danger: 217 122 110; /* #D97A6E */
   --color-danger-bg: 46 31 29; /* #2E1F1D */

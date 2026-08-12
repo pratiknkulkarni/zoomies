@@ -150,7 +150,7 @@ function Sheet({
         <Pressable
           accessibilityRole="none"
           onPress={() => {}}
-          className="gap-md rounded-t-sheet bg-bg px-xl pb-2xl pt-xl"
+          className="gap-md rounded-t-sheet bg-bg px-2xl pb-xl pt-2xl"
         >
           <SectionLabel>{label}</SectionLabel>
 

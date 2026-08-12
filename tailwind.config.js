@@ -22,23 +22,31 @@ module.exports = {
   // system by default. The manual override in Phase 10 sets it explicitly.
   darkMode: 'class',
   theme: {
-    // §3 — the only colours that exist. No pure white, no pure black.
+    // §3 — the only colours that exist. No pure black, and no accent: emphasis
+    // is weight, rule and solid ink. `danger` is the single hue in the system
+    // and reaches only delete and discard.
     colors: {
       transparent: 'transparent',
       current: 'currentColor',
       bg: withAlpha('--color-bg'),
       surface: withAlpha('--color-surface'),
       muted: withAlpha('--color-muted'),
+      // Two weights of hairline. `border` edges a control the thumb can press;
+      // `rule` and `rule-2` are structure and list separation, and are lighter
+      // so a list of twenty rows does not read as a grid.
       border: withAlpha('--color-border'),
+      rule: {
+        DEFAULT: withAlpha('--color-rule'),
+        2: withAlpha('--color-rule-2'),
+      },
+      // Five steps of ink, in the order they recede: text, prose, metadata,
+      // section labels, set indices and the em dash for unrecorded.
       text: {
         DEFAULT: withAlpha('--color-text'),
         2: withAlpha('--color-text-2'),
         3: withAlpha('--color-text-3'),
-      },
-      accent: {
-        DEFAULT: withAlpha('--color-accent'),
-        bg: withAlpha('--color-accent-bg'),
-        fg: withAlpha('--color-accent-fg'),
+        4: withAlpha('--color-text-4'),
+        5: withAlpha('--color-text-5'),
       },
       danger: {
         DEFAULT: withAlpha('--color-danger'),
@@ -46,26 +54,27 @@ module.exports = {
       },
     },
 
-    // §4 — 4pt base, but only these seven steps. Arbitrary values are what
-    // make a layout look accidental.
+    // §4 — seven steps and no others. 24 is the screen gutter and is never
+    // broken; 18 separates sections, 14 separates rows, 10 and below sit inside
+    // a row, and 34 appears only above a new block on a sparse screen.
     spacing: {
       0: '0px',
       xs: '4px',
-      sm: '8px',
-      md: '12px',
-      lg: '16px',
-      xl: '24px',
-      '2xl': '32px',
-      '3xl': '48px',
+      sm: '6px',
+      md: '10px',
+      lg: '14px',
+      xl: '18px',
+      '2xl': '24px',
+      '3xl': '34px',
     },
 
-    // §5 — larger than typical, matching the rounded geometry of the
-    // reference set.
+    // §5 — a control is tighter than the panel that holds it, which is tighter
+    // than a sheet.
     borderRadius: {
       none: '0px',
-      button: '12px',
-      card: '16px',
-      sheet: '24px',
+      button: '10px',
+      card: '12px',
+      sheet: '22px',
       full: '9999px',
     },
 
@@ -83,9 +92,9 @@ module.exports = {
     // because React Native cannot synthesise a weight for a bundled face.
     // Line height 1.4 for headings and figures, 1.5 for prose.
     fontSize: {
-      display: ['32px', { lineHeight: '45px' }],
+      display: ['27px', { lineHeight: '38px' }],
       title: ['24px', { lineHeight: '34px' }],
-      heading: ['18px', { lineHeight: '25px' }],
+      heading: ['19px', { lineHeight: '27px' }],
       body: ['16px', { lineHeight: '24px' }],
       bodySm: ['14px', { lineHeight: '21px' }],
       caption: ['13px', { lineHeight: '20px' }],
@@ -111,10 +120,10 @@ module.exports = {
     // instead. Removing the scale means `font-bold` does not compile.
     fontWeight: {},
 
-    // §2.4 — the label treatment: 11px uppercase at 0.08em over text-3.
+    // §2.4 — the label treatment: 11px uppercase at 0.14em over text-4.
     letterSpacing: {
       normal: '0px',
-      label: '0.88px',
+      label: '1.54px',
     },
 
     // §7 — animation clarifies state; it never entertains.
@@ -129,7 +138,8 @@ module.exports = {
       // the spacing scale — but still named, so no component reaches for an
       // arbitrary pixel value.
       height: {
-        control: '48px', // button
+        control: '56px', // secondary button, and the floor for any control
+        primary: '62px', // the one primary action on a screen
         field: '56px', // numeric input
         // §6.3 — the timer's progress track. The same 1px as a border, but a
         // height rather than a border width, because the track is a filled

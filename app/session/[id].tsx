@@ -71,11 +71,11 @@ export default function SessionScreen() {
           <View>
             <BackButton />
             {session ? (
-              <Text className="px-xl pb-xl pt-sm font-sans-semibold text-display text-text">
+              <Text className="px-2xl pb-2xl pt-sm font-sans-semibold text-display text-text">
                 {session.name ?? 'Session'}
               </Text>
             ) : settled ? (
-              <Text className="px-xl pt-xl text-body text-text-2">
+              <Text className="px-2xl pt-2xl text-body text-text-2">
                 This session is no longer here.
               </Text>
             ) : null}
@@ -104,7 +104,7 @@ export default function SessionScreen() {
         }}
         ListEmptyComponent={
           session ? (
-            <View className="px-xl">
+            <View className="px-2xl">
               <EmptyState
                 title="Nothing planned"
                 body="This session has no exercises yet. Add one to start logging."
@@ -116,7 +116,7 @@ export default function SessionScreen() {
           session ? (
             <View>
               {session.pausedAt !== null ? (
-                <Text className="px-xl pt-2xl text-bodySm text-text-2">
+                <Text className="px-2xl pt-xl text-bodySm text-text-2">
                   Paused. Time from here on is not counted.
                 </Text>
               ) : null}

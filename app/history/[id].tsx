@@ -71,7 +71,7 @@ export default function HistorySessionScreen() {
           <>
             <BackButton />
             {settled ? (
-              <Text className="px-xl pt-xl text-body text-text-2">
+              <Text className="px-2xl pt-2xl text-body text-text-2">
                 This session is no longer here.
               </Text>
             ) : null}
@@ -166,10 +166,10 @@ function Detail({ session }: { session: Session }) {
     <>
       <BackButton onPress={requestExit} />
 
-      <Text className="px-xl pt-sm font-sans-semibold text-display text-text">
+      <Text className="px-2xl pt-sm font-sans-semibold text-display text-text">
         {formatSessionDate(session.completedAt ?? session.startedAt)}
       </Text>
-      <Text className="px-xl pt-xs text-bodySm text-text-2">
+      <Text className="px-2xl pt-xs text-bodySm text-text-2">
         {session.isQuickLog
           ? 'Quick log'
           : length === null
@@ -180,7 +180,7 @@ function Detail({ session }: { session: Session }) {
       {/* A quick log has no name of its own (§6.1), so it is not offered one —
           naming it would make it look like a session that was planned. */}
       {session.isQuickLog ? null : (
-        <View className="gap-xs px-xl pt-2xl">
+        <View className="gap-xs px-2xl pt-xl">
           <SectionLabel>Name</SectionLabel>
           <Input
             value={name}
@@ -191,10 +191,10 @@ function Detail({ session }: { session: Session }) {
         </View>
       )}
 
-      <SectionLabel className="px-xl pb-sm pt-2xl">Logged</SectionLabel>
+      <SectionLabel className="px-2xl pb-sm pt-xl">Logged</SectionLabel>
 
       {entries.length === 0 ? (
-        <Text className="px-xl text-bodySm text-text-2">
+        <Text className="px-2xl text-bodySm text-text-2">
           Nothing was logged in this session.
         </Text>
       ) : (
@@ -212,7 +212,7 @@ function Detail({ session }: { session: Session }) {
         ))
       )}
 
-      <View className="gap-xs px-xl pt-2xl">
+      <View className="gap-xs px-2xl pt-xl">
         <SectionLabel>Note</SectionLabel>
         <Input
           value={note}
@@ -225,7 +225,7 @@ function Detail({ session }: { session: Session }) {
       </View>
 
       {dirty ? (
-        <View className="px-xl pt-lg">
+        <View className="px-2xl pt-lg">
           <FormActions
             dirty={dirty}
             onDiscard={discard}
@@ -234,7 +234,7 @@ function Detail({ session }: { session: Session }) {
         </View>
       ) : null}
 
-      <View className="px-xl pt-2xl">
+      <View className="px-2xl pt-xl">
         <Button variant="danger" onPress={confirmDelete}>
           <Text>Delete session</Text>
         </Button>
@@ -275,7 +275,7 @@ function EntrySummary({
       onPress={() =>
         router.push({ pathname: '/entry/[id]', params: { id: entry.id } })
       }
-      className="gap-xs px-xl py-md active:bg-muted"
+      className="gap-xs px-2xl py-md active:bg-muted"
     >
       <View className="flex-row items-center gap-md">
         <Text className="flex-1 font-sans-semibold text-heading text-text">

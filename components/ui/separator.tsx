@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
  * Inset to the screen padding so the line starts where the text does.
  */
 function Separator({ className }: { className?: string }) {
-  return <View className={cn('ml-xl border-b border-border', className)} />;
+  return <View className={cn('ml-2xl border-b border-border', className)} />;
 }
 
 export { Separator };

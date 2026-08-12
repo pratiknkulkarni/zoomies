@@ -84,9 +84,9 @@ export function MetricEditor({
 
   return (
     <View>
-      <SectionLabel className="px-xl pb-sm">Metrics</SectionLabel>
+      <SectionLabel className="px-2xl pb-sm">Metrics</SectionLabel>
 
-      <Text className="px-xl pb-md text-bodySm text-text-2">
+      <Text className="px-2xl pb-md text-bodySm text-text-2">
         What this exercise measures.
       </Text>
 
@@ -111,13 +111,13 @@ export function MetricEditor({
       ))}
 
       {metrics.length === 0 ? (
-        <Text className="px-xl pb-md text-bodySm text-text-2">
+        <Text className="px-2xl pb-md text-bodySm text-text-2">
           Nothing is recorded for this exercise yet.
         </Text>
       ) : null}
 
       {!adding ? (
-        <View className="px-xl pt-xl">
+        <View className="px-2xl pt-2xl">
           <Button
             variant="secondary"
             disabled={unused.length === 0}
@@ -129,7 +129,7 @@ export function MetricEditor({
           </Button>
         </View>
       ) : (
-        <View className="gap-md px-xl pt-xl">
+        <View className="gap-md px-2xl pt-2xl">
           <SectionLabel>Add a metric</SectionLabel>
 
           {unused.map((preset) => (
@@ -229,7 +229,7 @@ function MetricRow({
   const current = presetFor(metric);
 
   return (
-    <View className="gap-sm px-xl py-md">
+    <View className="gap-sm px-2xl py-md">
       <View className="gap-xs">
         <SectionLabel>Name</SectionLabel>
         <Input

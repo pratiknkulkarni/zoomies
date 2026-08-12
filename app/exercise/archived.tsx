@@ -42,7 +42,7 @@ export default function ArchivedExercisesScreen() {
         ListHeaderComponent={
           <View>
             <BackButton />
-            <Text className="px-xl pb-xl pt-sm font-sans-semibold text-display text-text">
+            <Text className="px-2xl pb-2xl pt-sm font-sans-semibold text-display text-text">
               Archived
             </Text>
           </View>
@@ -61,7 +61,7 @@ export default function ArchivedExercisesScreen() {
         )}
         // Reachable only by unarchiving the last one without leaving.
         ListEmptyComponent={
-          <View className="px-xl">
+          <View className="px-2xl">
             <EmptyState
               title="Your archive"
               body="Exercises you archive land here. They leave your library and pickers, and keep every set logged against them."

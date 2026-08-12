@@ -55,7 +55,7 @@ export default function SlotScreen() {
           <>
             <BackButton />
             {settled ? (
-              <Text className="px-xl pt-xl text-body text-text-2">
+              <Text className="px-2xl pt-2xl text-body text-text-2">
                 This exercise is no longer in the template.
               </Text>
             ) : null}
@@ -134,11 +134,11 @@ function Editor({ slot }: { slot: TemplateSlot }) {
     <>
       <BackButton onPress={requestExit} />
 
-      <Text className="px-xl pt-sm font-sans-semibold text-display text-text">
+      <Text className="px-2xl pt-sm font-sans-semibold text-display text-text">
         {exercise.at(0)?.name ?? 'Exercise'}
       </Text>
 
-      <View className="gap-xl px-xl pt-xl">
+      <View className="gap-2xl px-2xl pt-2xl">
         <View className="gap-xs">
           <SectionLabel>Sets</SectionLabel>
           <Input

@@ -36,7 +36,7 @@ export function SlotList({
 }) {
   if (slots.length === 0) {
     return (
-      <Text className="px-xl text-bodySm text-text-2">
+      <Text className="px-2xl text-bodySm text-text-2">
         No exercises yet. A template is the order you train them in.
       </Text>
     );
@@ -97,7 +97,7 @@ function SlotRow({
   };
 
   return (
-    <View className="min-h-row flex-row items-center gap-md px-xl py-md">
+    <View className="min-h-row flex-row items-center gap-md px-2xl py-md">
       {/*
         Only the label opens the target editor. The whole row cannot be
         pressable when three of its own controls sit inside it.

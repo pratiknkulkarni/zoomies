@@ -87,12 +87,12 @@ export default function HistoryScreen() {
         ItemSeparatorComponent={Separator}
         stickySectionHeadersEnabled={false}
         ListHeaderComponent={
-          <Text className="px-xl pb-sm pt-xl font-sans-semibold text-display text-text">
+          <Text className="px-2xl pb-sm pt-2xl font-sans-semibold text-display text-text">
             History
           </Text>
         }
         renderSectionHeader={({ section }) => (
-          <View className="px-xl pb-sm pt-2xl">
+          <View className="px-2xl pb-sm pt-xl">
             <SectionLabel>{section.title}</SectionLabel>
           </View>
         )}
@@ -110,7 +110,7 @@ export default function HistoryScreen() {
         )}
         ListEmptyComponent={
           settled ? (
-            <View className="px-xl">
+            <View className="px-2xl">
               <EmptyState
                 title="Your training"
                 body="Sessions appear here once you finish them. So do quick logs."
