@@ -4,17 +4,21 @@ import {
   formatClock,
   formatDayRange,
   formatDuration,
+  formatLastTrained,
   formatMeasure,
   formatMetricDetail,
   formatMetricSummary,
+  formatMonth,
   formatPlanSummary,
   formatRecordsWhat,
   formatSessionDate,
   formatSetNote,
   formatSetSeries,
   formatSetValues,
+  formatShortDate,
   formatSlotTally,
   formatTimeRange,
+  formatTrainingWindow,
   formatVolume,
 } from './format';
 
@@ -341,6 +345,53 @@ describe('formatDayRange', () => {
   it('names both months across a year, without stating the year', () => {
     expect(formatDayRange(day(11, 28), new Date(2027, 0, 3).getTime())).toBe(
       '28 Dec – 3 Jan',
+    );
+  });
+});
+
+describe('formatShortDate', () => {
+  it('drops the weekday a session date carries', () => {
+    expect(formatShortDate(new Date(2026, 4, 6, 19).getTime())).toBe('6 May');
+  });
+
+  it('does not pad the day', () => {
+    expect(formatShortDate(new Date(2026, 7, 3).getTime())).toBe('3 Aug');
+  });
+});
+
+describe('formatMonth', () => {
+  // Sentence case at the source; the label treatment uppercases it (§2.5).
+  it('is the short month in sentence case', () => {
+    expect(formatMonth(new Date(2026, 4, 1).getTime())).toBe('May');
+  });
+});
+
+describe('formatTrainingWindow', () => {
+  it('states the fixed window once history runs past it', () => {
+    expect(
+      formatTrainingWindow(new Date(2026, 6, 19).getTime(), true, 28),
+    ).toBe('last 28 days');
+  });
+
+  // A window wider than the history states days of nothing that never
+  // happened — the app did not exist for them.
+  it('shortens to the history when the history is younger', () => {
+    expect(
+      formatTrainingWindow(new Date(2026, 7, 16).getTime(), false, 28),
+    ).toBe('since 16 Aug');
+  });
+});
+
+describe('formatLastTrained', () => {
+  it('gives the date and the gap, never one alone', () => {
+    expect(formatLastTrained(new Date(2026, 4, 6).getTime(), 101)).toBe(
+      '6 May · 101 days',
+    );
+  });
+
+  it('does not say 1 days', () => {
+    expect(formatLastTrained(new Date(2026, 7, 14).getTime(), 1)).toBe(
+      '14 Aug · 1 day',
     );
   });
 });

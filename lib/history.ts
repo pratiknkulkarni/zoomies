@@ -1,3 +1,5 @@
+import { addDays, startOfDay } from './days';
+
 /**
  * Figures derived from a session, computed at read time (FEATURES.md §9).
  *
@@ -111,16 +113,4 @@ export function gapsAfter(
   }
 
   return gaps;
-}
-
-function startOfDay(epochMs: number): number {
-  const date = new Date(epochMs);
-  date.setHours(0, 0, 0, 0);
-  return date.getTime();
-}
-
-function addDays(epochMs: number, days: number): number {
-  const date = new Date(epochMs);
-  date.setDate(date.getDate() + days);
-  return date.getTime();
 }

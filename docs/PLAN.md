@@ -334,7 +334,44 @@
 > repeated**: the write path was not touched, and that is the claim to test.
 > 155 unit tests.
 >
-> **Next: run Y and Z on the Pixel 7a, then Phase 9 — Dashboard.**
+> **Phase 9 — the dashboard. Built 12 Aug 2026**, same branch, as
+> `app/look-back.tsx`. Four blocks, not five, and **no charting stack**: §4.4
+> dissolved exactly as §4.3 did, and for the same reason — the object the screen
+> actually wanted was simpler than the library that would have drawn it.
+>
+> **The days-trained grid replaced two blocks.** Seven rows by thirteen weeks of
+> filled and unfilled squares answers both §11.3's *Last 7 days* and its
+> 12-week *Sessions per week* bar chart, and it is a grid of `View`s. That is
+> the whole reason this phase installs nothing.
+>
+> **The streak objection was settled rather than assumed.** A filled-square
+> calendar is the most streak-coded object in software, and §11.6 excludes
+> streaks by name. Three mechanisms make it one — a count, an intensity ramp,
+> and a fixed grid of blank past — and none is present: no number, binary fill
+> (§11.1 forbids the volume figure a ramp would need), and the grid starts at
+> the first session and grows a column a week.
+>
+> Four things the build decided that the spec did not:
+>
+> - **A day that has not happened is drawn as nothing at all.** The outline
+>   means *skipped*, and Thursday of this week has not been skipped. A fainter
+>   outline fails on its own terms: the step below `mark` is invisible on paper
+>   and near-black in the dark.
+> - **A first-ever set is not a record.** It is a baseline. Without the rule,
+>   month one is a wall of them, since every exercise's first set is its best.
+> - **Never-trained is not a long gap**, and nothing under a week appears in the
+>   neglect list at all — a list ranking the whole library by recency is the
+>   same object with the meaning removed.
+> - **28 days, not this week.** A week holds nought to four sessions and swings
+>   between halves and doubles on a Sunday. The grid already draws this week.
+>
+> `lib/days.ts` is new and `lib/history.ts` now imports it: the timeline's gap
+> rules and the grid must agree about which day a 00:30 session belongs to, and
+> a second copy of `startOfDay` is how they would come to disagree. 214 unit
+> tests.
+>
+> **Next: run Y, Z and AA on the Pixel 7a.** Then merge Phases 8, 8a, 8b and 9
+> to `main`.
 
 Update this block when a phase closes. It is the first thing read at the start
 of a session.
@@ -890,55 +927,55 @@ that wants it. Drawing option C lands with the empty surfaces it belongs to.
 
 ---
 
-### Phase 9 — Dashboard
+### Phase 9 — Dashboard. Built 12 Aug 2026
 
-Built in the shipping order of `FEATURES.md` §11.7, **not** the presentation
-order of §11.3 — four of the five blocks are near-empty for the first month.
+**Four blocks, not five**, on `app/look-back.tsx`, reached from History's header
+rather than from a fourth tab or from Home. §11.3 was amended to match; the
+reasoning is there and is not restated here.
 
-1. **Not trained recently** — three to five active exercises by days since last
-   logged. Useful from week two.
-2. **Recent records** — PRs set in the last 30 days. Stated, never
-   congratulated.
-3. **This week** — sessions and sets. Two numbers, small type, not a hero.
-4. **Last 7 days** — seven dots, filled if trained. Filled versus hollow, not
-   two colours. No number attached. This is not a streak.
-5. **Sessions per week** — 12-week bar chart. Says nothing until roughly three
-   months of data exist; may land in Phase 11. Bars are neutral; the accent does
-   not appear in charts.
+| # | Block | Where it comes from |
+|---|---|---|
+| 1 | Days trained — 7 × 13 squares | `daysTrainedGrid` over `trainedAtRefs` |
+| 2 | Sessions and quick logs, 28 days | `trainingCounts` over `completedSessions` |
+| 3 | Longest since trained | `longestSinceTrained` over `lastTrainedByExercise` |
+| 4 | Recent records, 30 days | `recentRecords` over `rankableValues` — the one new query |
 
-Counting rules: quick logs count toward sets, records and days-since-trained but
-**never** the sessions figure. Ad-hoc sessions do count.
+Counting rules held: quick logs count toward sets, records and
+days-since-trained but **never** the sessions figure, and ad-hoc sessions do
+count. Nothing is stored (invariant 3) — a set corrected from three weeks ago
+moves all four blocks at once.
+
+**§4.4 dissolved.** The grid replaced the 12-week bar chart, so the dashboard
+plots nothing and needs no charting stack. §10.2's best-set trend is now the
+sole outstanding justification for one, which makes it the case §8 already
+refused: a library for a single sparkline.
+
+**Six live queries, five of which already existed.** Each is rooted at the table
+it must react to, as everywhere else — `useLiveQuery` subscribes to the root
+alone. `rankableValues` is the only new one: records ask what was beaten in
+thirty days, and beating something means comparing against everything before it,
+so the window cannot be pushed into SQL.
 
 **Exit criteria**
 
 1. **DoD 11** — see what has not been trained recently.
 2. A quick log does not increment the sessions figure.
-3. Blocks 1, 2 and 4 render correctly with a single week of data.
+3. Every block renders correctly with a single week of data — the grid one
+   column wide, the counts saying `since` rather than `last 28 days`, and both
+   lists stating why they are empty rather than rendering as blank.
 4. Nothing on the screen is celebratory and nothing animates.
+5. `SMOKE_TEST.md` **AA** passes on device in both themes.
 
-**Carried in from the design experiment** (`docs/zoomies_screen.pdf`), to be
-weighed when this is planned rather than adopted here:
+**Not built, and recorded rather than dropped:**
 
-- **One grid instead of two blocks.** Seven weekday rows by thirteen week
-  columns, filled where trained, running from the first session rather than from
-  a fixed twelve weeks of blank past. It answers both §11.3's *Last 7 days* and
-  its *Sessions per week*, and it is a grid of `View`s.
-
-  **The thing to settle first:** a filled-square calendar is the most
-  streak-coded object in software. This one attaches no number, marks no current
-  run and penalises no gap, which is exactly what §11.3 asks of the seven dots —
-  but thirteen weeks of it is a different proposition from seven, and §11.6 is
-  unambiguous. Decide it deliberately.
-- **Sessions and quick logs as two counts side by side**, rather than quick logs
-  being silently excluded. Honours §11.5 while keeping the training visible.
-- **Days-since sorted by longest gap, with the date beside it** — `Nordic Curl ·
-  6 May · 101 days` — so a movement deliberately stopped reads as a fact rather
-  than a debt.
-- **The best-set trend as dots, not a line**, so a gap reads as a gap rather
-  than a line implying training in between, with a control naming which
-  measurement is plotted because seconds and reps do not share a scale.
-- The design has **no recent-records block**; §11.3 does. Worth deciding whether
-  the exercise screen carrying records is enough.
+- **The best-set trend** (`FEATURES.md` §10.2, design screen 9) — dots rather
+  than a line, so a gap reads as a gap rather than as a line implying training
+  in between, with a control naming which measurement is plotted because seconds
+  and reps do not share a scale. It is the last chart in the application and the
+  only thing still asking for §4.4's dependency.
+- **The grid does not scroll back** past thirteen weeks. A quarter is what fits
+  a phone at a legible square size; a year would need horizontal paging, which
+  is a gesture on a screen that currently has none.
 
 ---
 
@@ -971,7 +1008,8 @@ dependency not yet listed in `TECH_STACK.md`.
   real device
 - Icon, adaptive icon and splash — the open items in `DESIGN.md` §12
 - Privacy policy URL; App Privacy and Data Safety disclosures
-- The 12-week sessions chart, if it did not land in Phase 9
+- `FEATURES.md` §10.2's best-set trend, if it did not land earlier. The 12-week
+  sessions chart is gone — Phase 9's grid answers it (§11.3).
 
 **Exit criteria**
 
@@ -1059,13 +1097,16 @@ if a driver arrives later.
   dashboard, the trend moved to Phase 9 where one decision covers both.
   `FEATURES.md` §10.2 records it.
 
-  **Likely to dissolve, like §4.3 did.** Both figures the application needs are
-  simpler than a chart library: a grid of filled and unfilled squares for days
-  trained, and a scatter of dots for the best set per session. Neither has axes,
-  gridlines, tooltips, gestures or animation — DESIGN.md §3.5 and §7 forbid all
-  of them — and neither needs anything `react-native-svg` cannot draw, which is
-  already a dependency as a peer of the icons. Decide it in Phase 9 against the
-  screens, not in the abstract.
+  **Half dissolved, like §4.3 did.** Phase 9 shipped the dashboard with no
+  charting stack at all: the days-trained grid replaced the 12-week bar chart
+  and is built from `View`s, so it needs neither Skia nor `react-native-svg`.
+
+  **What is left is one sparkline.** §10.2's best-set trend is a scatter of dots
+  with no axes, gridlines, tooltips, gestures or animation — DESIGN.md §7
+  forbids all of them — and `react-native-svg` is already a dependency as a peer
+  of the icons. So the question is no longer "chart library or not" but whether
+  one screen justifies drawing forty dots by hand. Decide it against that
+  screen; there is nothing else in the application waiting on the answer.
 - The appearance override needs persistent local storage —
   `@react-native-async-storage/async-storage` per §5, which names AsyncStorage
   but does not list the package.

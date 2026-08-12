@@ -70,9 +70,32 @@ export default function HistoryScreen() {
         data={history}
         keyExtractor={(session) => session.id}
         ListHeaderComponent={
-          <Text className="px-2xl pb-sm pt-2xl font-sans-semibold text-display text-text">
-            History
-          </Text>
+          <View className="flex-row items-baseline justify-between gap-lg px-2xl pb-sm pt-2xl">
+            <Text className="font-sans-semibold text-display text-text">
+              History
+            </Text>
+            {/*
+              Look back is not a fourth tab. It is the same material as this
+              screen read at a distance — the timeline says what happened, the
+              dashboard says what it adds up to — and a tab would put a review
+              of the last quarter one tap from the Start button, which §11.3
+              keeps off Home for exactly that reason.
+
+              Hidden until something has been trained: an empty timeline has
+              nothing to look back on, and offering the trip would be offering
+              a blank screen.
+            */}
+            {history.length > 0 ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Look back"
+                onPress={() => router.push('/look-back')}
+                className="min-h-touch justify-center active:bg-muted"
+              >
+                <Text className="text-body text-text-2">Look back ›</Text>
+              </Pressable>
+            ) : null}
+          </View>
         }
         renderItem={({ item, index }) => (
           <>

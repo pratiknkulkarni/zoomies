@@ -1236,3 +1236,124 @@ filled. `Discard session` is at the foot of the list, far from both, and still
 asks twice.
 
 **Observed:**
+
+---
+
+## AA. Look back — Phase 9
+
+The dashboard. Nothing here writes, so nothing here can lose a set — the risk is
+the opposite one, that a figure is confidently wrong. Every check below is a
+statement that could be false without looking false.
+
+Run in **both themes**.
+
+**AA1 — the way in.** Open History.
+
+Expect: `Look back ›` beside the title, opening the dashboard. It is **not** a
+fourth tab and it is **not** on Home — §11.3 keeps a review of the last quarter
+away from the Start button. On a fresh install with nothing trained, the link is
+absent entirely.
+
+**Observed:**
+
+**AA2 — the grid starts at your first session.** Read the label above it.
+
+Expect: `DAYS TRAINED · <first day> – <today>`, and columns only for weeks that
+have happened. It must **not** show thirteen weeks of blank past. Once history
+runs past thirteen weeks the grid stops growing and the label starts at the
+first column drawn, not at the first session ever.
+
+**Observed:**
+
+**AA3 — a square is a day, not a session.** Find a day you trained twice, or
+trained and also quick-logged.
+
+Expect: one filled square, no darker than any other. There is no intensity
+ramp — §11.1 rules out the combined volume figure one would have to be shaded
+by.
+
+**Observed:**
+
+**AA4 — a day that has not happened is blank.** Look at the last column, unless
+today is Sunday.
+
+Expect: today and every day before it carries a mark — filled or outlined — and
+the days after today carry **nothing at all**. An outline there would say
+*skipped*, and a Thursday that has not arrived has not been skipped.
+
+**Observed:**
+
+**AA5 — no streak anywhere.** Read the whole block.
+
+Expect: no number attached to the grid, no highlighted current run, no marker
+where a run broke, no flame, and nothing that changes when you miss a day beyond
+that day's square being an outline. §11.6.
+
+**Observed:**
+
+**AA6 — a quick log is not a session.** Note both counts, then quick-log
+something and come back.
+
+Expect: the **quick logs** figure went up by one and the **sessions** figure did
+not move. §11.5. Now finish an ad-hoc session with no plan: that one *does*
+count as a session.
+
+**Observed:**
+
+**AA7 — the window tells the truth about young history.** On a fresh install
+with a few days of training.
+
+Expect: the captions read `since <date>`, not `last 28 days` — the app did not
+exist for the other twenty-four days and must not report them as nothing. With
+more than 28 days of history they read `last 28 days`.
+
+**Observed:**
+
+**AA8 — the neglect list is a fact, not a debt.** Read it.
+
+Expect: longest gap first, each row `<name>` on the left and `6 May · 101 days`
+on the right — the date is there so a movement you deliberately stopped reads as
+something you decided. Nothing trained inside the last week appears at all. An
+exercise you have **never** trained does not appear either: it has no last date,
+and a number invented from when it was added would be a figure about the library
+(invariant 2). Tapping a row opens that exercise.
+
+**Observed:**
+
+**AA9 — a record is something you beat.** Read the records block.
+
+Expect: each row states the figure and, beneath it, `up from <previous> · <date>`
+— the second line is what makes the first mean anything. The **first set of an
+exercise never appears**: it is a baseline, not a record. Equalling a best does
+not appear either, and the same rule §10.1 applies elsewhere holds here — the
+earlier set keeps it.
+
+**Observed:**
+
+**AA10 — a correction reaches all four blocks.** From History, open an old
+session and correct a set upward past its old best; go back to Look back.
+
+Expect: the record appears or moves. Now delete every set of a day: that day's
+square empties, the counts drop, and the exercise's gap in the neglect list
+grows. Nothing on this screen is stored (invariant 3), and this is what that
+means in practice.
+
+**Observed:**
+
+**AA11 — the empty states say what is missing.** On a fresh install, and again
+on one with a week of training.
+
+Expect: with nothing trained, one empty state and no grid — never an empty
+quarter of outlines. With everything trained inside the last week, the neglect
+list says so in a sentence rather than rendering as a blank space. With nothing
+beaten yet, the records block says so and explains that a first set is a
+starting point.
+
+**Observed:**
+
+**AA12 — nothing is celebrated and nothing moves.** Watch the screen open.
+
+Expect: no confetti, no counting-up figures, no animated reveal, no exclamation
+mark anywhere. Records are stated. §11.6, `DESIGN.md` §8.
+
+**Observed:**

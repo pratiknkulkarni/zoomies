@@ -633,8 +633,15 @@ would be a second source of truth that a corrected set could not reach.
 
 `victory-native` v41+ requires `@shopify/react-native-skia`, which no document
 justifies yet (`PLAN.md` §4.4). Rather than install a charting stack for one
-sparkline, the trend waits for Phase 9, where the dashboard needs charts anyway
-and one decision covers both.
+sparkline, the trend waited for Phase 9, where the dashboard was expected to
+need charts anyway and one decision would cover both.
+
+**Phase 9 shipped without one.** §11.3's grid replaced the 12-week bar chart, so
+the dashboard needs no plotting at all — which leaves this trend as the sole
+thing in the application that would justify the dependency, and one sparkline is
+the case that was already refused. It stays outstanding rather than being cut:
+§11.4 is still the right place for it, and the decision is now purely about what
+one screen is worth.
 
 §11.7 makes the same argument from the data's side: a trend says nothing before
 roughly twelve weeks of it exist. The set list, newest first, already shows
@@ -662,26 +669,61 @@ sets, days). This rules out most vanity metrics automatically.
 
 ### 11.3 Dashboard Blocks
 
-Five blocks, in order. Nothing else.
+Four blocks, in order. Nothing else. The screen is titled **Look back** and is
+reached from History, not from Home — what you want at 18:39 in a garage is a
+Start button, not a review of the last quarter.
 
-**This week** — sessions and sets. Two numbers, small type. Not a hero element.
+**Days trained** — one square per day, filled where anything was logged. Seven
+rows, Monday first, by up to thirteen week columns.
 
-**Last 7 days** — a row of seven dots, filled if trained that day. Factual and
-glanceable, with no counter attached.
+*This is deliberately not a streak.* No number, no current run, no reset, no
+flame, no penalty for a rest day. It shows the quarter; it does not score it.
+Binary, never shaded by volume — §11.1 rules out a combined figure across a
+pull-up and a hold, so an intensity ramp would have to invent the number it
+shaded by.
 
-*This is deliberately not a streak.* No number, no reset, no flame, no penalty
-for a rest day. It shows the week; it does not score it.
+**It starts at the first session, not thirteen weeks ago.** A fixed quarter of
+blank past shown to someone in week two is a report of failing to train before
+they owned the app. The grid grows a column a week and then scrolls forward,
+which is also when it starts saying something about consistency. Days that have
+not happened yet are drawn as nothing at all: the outline means *skipped*, and a
+Thursday that has not arrived has not been skipped.
 
-**Sessions per week** — bar chart, last 12 weeks. The most useful consistency
-trend. Needs roughly three months of data before it says anything, so it ships
-late.
+**Sessions and quick logs** — two counts over the last 28 days. Small type, not
+a hero element. §11.5 keeps quick logs out of the sessions figure; stating them
+beside it rather than dropping them is the difference between a rule and a
+silence, because a week of doorway sets is not a week of sessions but is
+certainly not a week of nothing. Where history is younger than the window the
+caption says `since 16 Aug` instead of `last 28 days` — a window wider than the
+history states days of nothing that never happened.
 
-**Not trained recently** — three to five active exercises sorted by days since
-last logged. `Ring Dip — 19 days`. Directly answers the design notes' question
+**Longest since trained** — three to five active exercises, longest gap first,
+`Nordic Curl · 6 May · 101 days`. Directly answers the design notes' question
 "what exercises have I neglected." Cheap to compute and useful from week two.
+
+Sorted by the gap **with the date beside it**, so a movement deliberately
+stopped reads as a fact rather than a debt. Never-trained is not a long gap: it
+has no last date, and something added yesterday is not neglect (invariant 2).
+Nothing under a week appears at all — a list that ranked the whole library by
+recency would be the same object with the meaning removed.
 
 **Recent records** — personal records set in the last 30 days.
 `Ring Support Hold — 42s, up from 38s`. Factual, no celebration.
+
+A record here is an **event**, not a standing: the exercise screen (§10) answers
+"what is my best", and this answers "what did I just beat". So a first-ever set
+is not a record — it is a baseline, and month one would otherwise be a wall of
+them, since every exercise's first set is its best set. One row per exercise and
+metric, the most recent.
+
+**What replaced what.** This specified five blocks: *This week*, *Last 7 days*,
+*Sessions per week* (a 12-week bar chart), *Not trained recently* and *Recent
+records*. The grid answers both *Last 7 days* and *Sessions per week* in one
+object made of `View`s, which also removed the only reason Phase 9 needed a
+charting stack (§10.2, `PLAN.md` §4.4). *This week* became 28 days because a
+week holds nought to four sessions and swings between halves and doubles on a
+Sunday, and its *sets* figure became quick logs because the grid above already
+draws this week and §11.5's exclusion was the thing worth making visible.
 
 ### 11.4 Per-Exercise Analytics
 
@@ -708,9 +750,14 @@ predicted maxes, readiness scores.
 
 ### 11.7 Shipping Order
 
-Four of the five blocks are near-empty for the first month. Ship **Not trained
-recently** and **Recent records** first — they work from week two. Hold the
-charts until twelve weeks of data exist.
+All four blocks shipped together in Phase 9, which the grid made possible: it
+needs no chart, and it is honest in week one because it draws only the weeks
+that have happened. **Longest since trained** and **Recent records** were the
+two that had to work from week two, and both do — the first from the second
+week, the second from the first time anything is beaten.
+
+There is no chart left to hold. §11.4's trend is the only one in the
+application, and it is the last thing outstanding here.
 
 ---
 
@@ -819,6 +866,7 @@ Without reading documentation.
 | Aug 2026 | Two amendments after reviewing Phase 2. §3.3 now states that archived exercises still count toward owned families — "active" was ambiguous between `is_active` and not-archived, and the narrower reading hid suggestions at the moment archiving made them most relevant. §3.5 names the Archived screen, which the spec had assumed without ever describing, leaving archiving one-way in the build. |
 | Aug 2026 | Phase 3 amendments. §5 now says templates live on Home — the spec defined them fully but never said how they are reached, the same omission §3.5 had for archiving. §5.2 records that templates themselves do not reorder, and that deleting one takes its slots, which is the opposite of the call made for an exercise's metrics and for the opposite reason: nothing points at a slot. |
 | Aug 2026 | Phase 6 amendments. §2 gains `template_slot_id` on `exercise_entries` and a storage rule saying what it is not: provenance for the raise prompt, never a target source, because reading a target through it would undo the snapshot two rows above it. The raise had nowhere to write otherwise — an entry knew its exercise, and §5.2 lets one exercise fill two slots with different targets. §6.6 rewritten around three things implementation forced into the open: a majority is strictly more than half and a tie is not a beat; the write goes to the slot and never to the completed session; and **a raise may never be a lowering**, so it is gated on the slot's own figure rather than on the possibly-overridden target that was trained against. §2 also lost `rest_seconds`, which Phase 5 dropped from the schema and from §5.1 but not from the data-model block. |
+| Aug 2026 | Phase 9 amendments. §11.3 goes from five blocks to four. The **days-trained grid** replaces both *Last 7 days* and the 12-week *Sessions per week* bar chart — it answers the week and the quarter in one object made of `View`s, and with the chart went the only reason the dashboard needed a plotting stack. The streak objection was settled deliberately rather than assumed: a filled-square calendar is the most streak-coded object in software, and the three mechanisms that make it one are a count, an intensity ramp and a fixed grid of blank past. None is present, and §11.1 already forbade the second. *This week* became **28 days** — a week holds nought to four sessions and says nothing either way — and its *sets* figure became **quick logs**, because the grid above already draws this week and §11.5's exclusion was the thing worth making visible rather than silent. *Not trained recently* is now sorted by the gap **with the date beside it**, so a movement deliberately stopped reads as a fact rather than a debt, and excludes never-trained and anything under a week. *Recent records* now requires a set to have **beaten** something: a first-ever set is a baseline, and without the rule month one is a wall of records. §10.2 records that the trend is now the sole justification left for `victory-native`. |
 
 ---
 

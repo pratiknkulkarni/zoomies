@@ -374,6 +374,54 @@ so 16px mono sat almost level with the 19px exercise name above it and the two
 competed. Nominal size is not what the eye measures; a mono figure holds its
 own about two steps below the sans beside it.
 
+### 6.12 Day Grid
+
+Seven rows by up to thirteen columns on Look back: one square per day, filled
+`text` where anything was logged, outlined `mark` where nothing was
+(`FEATURES.md` §11.3).
+
+**The same two marks as §6.11, at a different scale.** A filled square is
+something you did and an outlined one is something you did not — one vocabulary
+across the application, so the grid needs no key.
+
+**A day that has not happened is drawn as nothing at all.** There is no third
+mark and there must not be one: the outline means *skipped*, and Thursday of
+this week has not been skipped. A fainter outline was tried and fails on its
+own terms — the step below `mark` is invisible on paper and near-black in the
+dark, so the distinction would exist only in the token file. Blank is the one
+treatment that is neither *did* nor *did not*, and it costs nothing, because
+`future` occurs in the last column and nowhere else.
+
+**Binary, never shaded.** An intensity ramp would rank days by volume, and
+`FEATURES.md` §11.1 rules out a combined figure across a pull-up and a hold —
+so the ramp would be shading by a number that had to be invented first. §9 gets
+there independently: state is never carried by colour alone.
+
+Columns are `flex-1` with `gap-xs`, so the grid is the same width at one column
+as at thirteen and the first month is not a stripe down the left edge. The
+weekday axis is one mono `label` character in a `w-lg` column; the month axis is
+laid out in **spans** rather than a label per column, because `MAY` is wider
+than a square and each month has four or five of them to sit in.
+
+### 6.13 Count Pair
+
+Two figures side by side, each `metric` in mono over a `caption` in `text-3`:
+
+```
+11                      4
+sessions,               quick logs,
+last 28 days            last 28 days
+```
+
+**The caption is not decoration.** `11` alone is not a fact, and the two halves
+of the caption do different jobs — the noun says what was counted and the window
+says over what, which is the part that changes as history grows (`FEATURES.md`
+§11.3).
+
+Equal weight, side by side, never one above the other. They are two measurements
+of the same month, and stacking them would make the upper one a headline and the
+lower one a footnote — which is exactly the reading §11.5 exists to prevent.
+
 ---
 
 ## 7. Motion
@@ -429,8 +477,13 @@ here, not a backlog item.
 
 1. **One `display` element per screen.** Two large numbers competing means
    neither is the answer.
+
+   §6.13's pair is not an exception to this. Both figures are `metric` rather
+   than `display`, and they do not compete because neither is the answer on its
+   own — `11 sessions` and `4 quick logs` are two measurements of one month, and
+   the whole point of the pair is that reading either alone is the mistake.
 2. **One `primary` button per screen.**
-3. **Section = label + content.** An 11px uppercase `text-3` label above; the
+3. **Section = label + content.** An 11px uppercase `text-4` label above; the
    content below at its natural size.
 4. **The active session screen carries the least chrome of any screen.** No
    header actions, no tab bar, no decorative elements. The exercise list and the
@@ -492,3 +545,4 @@ component contains a conditional.
 |---|---|
 | Aug 2026 | Created. Direction: quiet editorial. Geist + Geist Mono. Moss accent. Full token set defined. Per-exercise doodles cut. |
 | Aug 2026 | Phase 8b, from the second design run (`zoomies_screen.pdf`). **The accent is deleted.** All three of its sanctioned uses read better as ink, and a coloured record marker argued against `FEATURES.md` §15's "stated, not congratulated" while claiming to honour it. `danger` survives as the only hue and reaches two acts. The neutral ramp goes from seven steps to eleven — `text-4`, `text-5`, `rule` and `rule-2` — so a section label, a set index and a list rule stop borrowing tokens meant for something else. Spacing becomes `4 · 6 · 10 · 14 · 18 · 24 · 34`, which moves the screen gutter from `xl` to `2xl`; the names stayed ordinal so the swap was mechanical. Type: `display` 32→27, `heading` 18→19, label tracking 0.08em→0.14em. Radii tighten to 10 / 12 / 22. The primary button becomes solid `text` with a `bg` label, which inverts between themes with no conditional. Geist stays — the document specifies Libre Franklin and IBM Plex Mono, and the difference at these sizes did not justify two font packages and a re-check that no frame renders in a fallback face. |
+| Aug 2026 | Phase 9. Two components added: **§6.12 Day Grid** and **§6.13 Count Pair**. The grid reuses §6.11's two marks at a different scale, which is why it needs no key — one vocabulary across the application. It adds no third mark for a day that has not happened yet: the outline means *skipped*, a Thursday that has not arrived has not been skipped, and a fainter outline fails on its own terms because the step below `mark` is invisible on paper and near-black in the dark. Composition rule 1 gains a note that §6.13's pair is not an exception — both figures are `metric`, and neither is the answer alone. Rule 3 corrected from `text-3` to `text-4`, which the Phase 8b ramp moved and this line did not follow. |

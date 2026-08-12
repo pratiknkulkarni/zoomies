@@ -254,12 +254,75 @@ export function formatDayRange(fromMs: number, toMs: number): string {
     date.toLocaleDateString('en-GB', { month: 'short' });
 
   if (fromMs === toMs) {
-    return `${from.getDate()} ${month(from)}`;
+    return formatShortDate(fromMs);
   }
   if (from.getMonth() === to.getMonth() && from.getFullYear() === to.getFullYear()) {
     return `${from.getDate()}–${to.getDate()} ${month(to)}`;
   }
   return `${from.getDate()} ${month(from)} – ${to.getDate()} ${month(to)}`;
+}
+
+/**
+ * One day, without its weekday: `6 May`.
+ *
+ * `formatSessionDate` leads with `Sat` because a session is an occasion and
+ * which day of the week it fell on is part of reading a timeline. A date beside
+ * a figure is not — `Nordic Curl · Wed 6 May · 101 days` puts three facts where
+ * two were asked for, and the weekday is the one nobody wanted.
+ *
+ * No year, like the range it backs. Where a date is old enough for that to
+ * matter the figure beside it already says so: `101 days` is the fact, and the
+ * date is where it started.
+ */
+export function formatShortDate(epochMs: number): string {
+  const date = new Date(epochMs);
+
+  return `${date.getDate()} ${date.toLocaleDateString('en-GB', {
+    month: 'short',
+  })}`;
+}
+
+/**
+ * The month under a column of the day grid: `May`.
+ *
+ * Rendered uppercase by the label treatment (DESIGN.md §2.4), not here — the
+ * source stays sentence case (§2.5) so nothing downstream has to undo it.
+ */
+export function formatMonth(epochMs: number): string {
+  return new Date(epochMs).toLocaleDateString('en-GB', { month: 'short' });
+}
+
+/**
+ * What a count covers: `last 28 days`, or `since 16 Aug`.
+ *
+ * **A window wider than the history is a lie about the history.** `4 sessions,
+ * last 28 days` in week one states twenty-four days of nothing that never
+ * happened — the app did not exist for them. Once training runs past the window
+ * the fixed phrase is the honest one, and it is also the one that lets two
+ * readings a month apart be compared.
+ */
+export function formatTrainingWindow(
+  sinceMs: number,
+  wholeWindow: boolean,
+  windowDays: number,
+): string {
+  return wholeWindow
+    ? `last ${windowDays} days`
+    : `since ${formatShortDate(sinceMs)}`;
+}
+
+/**
+ * When a movement was last trained and how long ago: `6 May · 101 days`.
+ *
+ * Both, never one. The figure alone is a debt — it counts up and nothing about
+ * it says the number was ever chosen. The date makes it a fact about a decision
+ * that may have been deliberate, which is the difference between a list you can
+ * read and a list that nags (§11.6).
+ */
+export function formatLastTrained(lastTrainedAt: number, days: number): string {
+  return `${formatShortDate(lastTrainedAt)}${SEPARATOR}${
+    days === 1 ? '1 day' : `${days} days`
+  }`;
 }
 
 /**
