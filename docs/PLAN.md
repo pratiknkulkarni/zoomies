@@ -304,9 +304,37 @@
 > place and sits outside the training loop, so nothing it touches can lose a
 > set. It creates `Tag` and the set line, which the next two screens inherit.
 >
-> `SMOKE_TEST.md` Y carries the check, in both themes. 123 unit tests.
+> **Every screen in the queue is now refit**, one commit each: the session read
+> back, the timeline, one exercise across everything, the library, the archive,
+> Home, quick log, the completion review, the plan, the live session and the
+> live exercise.
 >
-> **Next: run Y, then the rest of the queue in §1 Phase 8b.**
+> Six things the refit decided that the document did not:
+>
+> - **A single rest day is not a gap** in the timeline. Training every other day
+>   would otherwise draw a rule between every pair of rows, and a timeline that
+>   remarks on every day off is keeping score — §11.6 by another name. Two clear
+>   days is where a break starts. A test asserting the opposite is what surfaced
+>   it.
+> - **Set figures read two steps below the name beside them.** Geist Mono has a
+>   far larger x-height than the document's IBM Plex, so nominal parity was
+>   visual competition.
+> - **`danger` is a red word in a border, never a red fill.** A tinted block
+>   reads as a state rather than an act.
+> - **The quick-log line carries no clock.** The document times it; a figure
+>   rendered on arrival is wrong by however long the screen sits open.
+> - **A counted set is logged from a pinned bar; a held one is not.** The clock
+>   *is* the screen while it runs, and the bottom edge is the smallest space on
+>   it.
+> - **Neither session control is filled.** Mid-session the exercise rows are
+>   what the eye should land on, and a black `End session` where a thumb scrolls
+>   is a hazard rather than an affordance.
+>
+> `SMOKE_TEST.md` Y and Z carry the checks, both in both themes. **Z1 is K2
+> repeated**: the write path was not touched, and that is the claim to test.
+> 155 unit tests.
+>
+> **Next: run Y and Z on the Pixel 7a, then Phase 9 — Dashboard.**
 
 Update this block when a phase closes. It is the first thing read at the start
 of a session.
@@ -831,15 +859,15 @@ the last one built.
 
 | # | Document | Screen | State |
 |---|---|---|---|
-| 1 | 8 · session read back | `app/history/[id].tsx` | **Built** — creates `Tag`, the set line, `formatTimeRange` |
-| 2 | 7 · history timeline | `app/(tabs)/history.tsx` | gap rules, `ONE-OFF`, a set count per session |
-| 3 | 9 · one exercise, all time | `app/exercise/[id]/index.tsx` | stat pair, sets collapsed per session; chart is Phase 9 |
-| 4 | 10 · exercises | `app/(tabs)/exercises.tsx` | grouped, `reps · 14 Aug` |
-| 5 | 13 · archived | `app/exercise/archived.tsx` | exercises only — archiving plans is a feature |
-| 6 | 5 · home | `app/(tabs)/index.tsx` | `Start` on the row |
-| 7 | 3 · quick log, 4 · review | `app/quick-log.tsx`, `app/complete/[id].tsx` | |
-| 8 | 14, 16, 17, 11, 12 | plans and exercises | minus rest and added weight |
-| 9 | 1, 2, 2B | `app/session/[id].tsx`, `app/entry/[id].tsx`, `features/session/` | **last**, with its own smoke-test section |
+| 1 | 8 · session read back | `app/history/[id].tsx` | Built — creates `Tag`, the set line, `formatTimeRange` |
+| 2 | 7 · history timeline | `app/(tabs)/history.tsx` | Built — gap rules, `ONE-OFF`, a set count per session |
+| 3 | 9 · one exercise, all time | `app/exercise/[id]/index.tsx` | Built — stat pair, a session per row; chart is Phase 9 |
+| 4 | 10 · exercises | `app/(tabs)/exercises.tsx` | Built — grouped, `reps · 14 Aug`, search |
+| 5 | 13 · archived | `app/exercise/archived.tsx` | Built — exercises only; archiving plans is a feature |
+| 6 | 5 · home | `app/(tabs)/index.tsx` | Built — `Start` on the row |
+| 7 | 3 · quick log, 4 · review | `app/quick-log.tsx`, `app/complete/[id].tsx` | Built — opens on the last exercise; the review shows the session |
+| 8 | 14 · plan | `app/template/[id]/index.tsx` | Built — `last …` per slot, Start at the foot |
+| 9 | 1, 2, 2B | `app/session/[id].tsx`, `app/entry/[id].tsx`, `features/session/` | Built — set marks, live row, pinned bar. `SMOKE_TEST.md` Z |
 
 Group 9 goes last on purpose: invariant 1 lives in those files, and the set
 mark, the pinned record bar and the 92px clock all arrive together.

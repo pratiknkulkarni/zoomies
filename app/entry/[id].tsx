@@ -10,7 +10,6 @@ import { ScrollView, View } from 'react-native';
 import { BackButton } from '@/components/ui/back-button';
 import { Screen } from '@/components/ui/screen';
 import { SectionLabel } from '@/components/ui/section-label';
-import { Separator } from '@/components/ui/separator';
 import { Text } from '@/components/ui/text';
 import { exerciseById, metricsForExercise } from '@/db/queries/exercises';
 import {
@@ -25,7 +24,11 @@ import {
 import { EntryNotes, TargetRow } from '@/features/session/entry-extras';
 import { SetLog } from '@/features/session/set-log';
 import { SetRow } from '@/features/session/set-row';
-import { formatLastTime, formatSetCount } from '@/lib/format';
+import {
+  formatLastTime,
+  formatSessionDate,
+  formatSetCount,
+} from '@/lib/format';
 
 /** Named so the activate and deactivate calls cannot drift apart. */
 const KEEP_AWAKE_TAG = 'zoomies-session';
@@ -34,14 +37,24 @@ const KEEP_AWAKE_TAG = 'zoomies-session';
  * Logging one exercise (FEATURES.md §7.2).
  *
  * ```
- * Chin-Up                              2 / 3
- *   Target      3 × 9 reps
- *   Last time   8 · 8 · 7 · 6
+ * ← Rings A
+ * Ring Dip                                      3 / 4
+ * Target today · 4 × 8 reps      9 Aug · 8 · 8 · 8 · 6
+ *
+ * THIS SESSION
+ * 1   8 reps
+ * 2   8 reps
+ * 3   7 reps  [TO FAILURE]
+ *     grip went first
+ * ───────────────────────────────────────────────────
+ * [ − ]        8 reps        [ + ]
+ * [           Record set 4           ]
  * ```
  *
- * Target in normal weight, last time greyed — it is context, not an
- * instruction. Both come from the entry's own snapshot, so nothing here can be
- * changed by editing the template mid-session.
+ * The plan and the precedent share a line: what today asks for on the left, and
+ * what this actually did last time on the right, greyed because it is context
+ * rather than an instruction. Both come from the entry's own snapshot, so
+ * nothing here can be changed by editing the template mid-session.
  */
 export default function EntryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -50,26 +63,20 @@ export default function EntryScreen() {
   const entry = found.at(0);
   const settled = updatedAt !== undefined;
 
-  return (
-    <Screen bleed>
-      <ScrollView
-        contentContainerClassName="pb-3xl"
-        keyboardShouldPersistTaps="handled"
-      >
+  if (!entry) {
+    return (
+      <Screen bleed>
         <BackButton />
+        {settled ? (
+          <Text className="px-2xl pt-2xl text-body text-text-2">
+            This exercise is no longer in the session.
+          </Text>
+        ) : null}
+      </Screen>
+    );
+  }
 
-        {!entry ? (
-          settled ? (
-            <Text className="px-2xl pt-2xl text-body text-text-2">
-              This exercise is no longer in the session.
-            </Text>
-          ) : null
-        ) : (
-          <Logging key={entry.id} entryId={entry.id} />
-        )}
-      </ScrollView>
-    </Screen>
-  );
+  return <Logging key={entry.id} entryId={entry.id} />;
 }
 
 function Logging({ entryId }: { entryId: string }) {
@@ -154,134 +161,130 @@ function Logging({ entryId }: { entryId: string }) {
     return null;
   }
 
+  /**
+   * **No logging UI once the session is over.**
+   *
+   * This screen is reachable from History as well as from training (§9), and
+   * arriving from a session three weeks old to be offered `Record set 4` — with
+   * a live countdown, for a duration exercise — states something false about
+   * what you are looking at. §7.3 grants editing and deleting a set after a
+   * session, not adding to one; the set rows below stay editable, which is what
+   * correcting a mislog actually needs.
+   */
+  const log =
+    finished || metrics.length === 0 ? null : (
+      <SetLog
+        entryId={entry.id}
+        metrics={metrics}
+        nextSetNumber={performed.length + 1}
+        setsUntilTarget={
+          entry.targetSets === null ? null : entry.targetSets - performed.length
+        }
+        /*
+          Only when the target is on the primary metric. An exercise can be
+          targeted at one measurement while being timed on another, and counting
+          down from the wrong number would be nonsense.
+        */
+        durationTargetMs={
+          primary &&
+          primary.type === 'duration' &&
+          entry.targetMetricId === primary.id &&
+          entry.targetValue !== null
+            ? entry.targetValue * 1000
+            : null
+        }
+      />
+    );
+
+  /**
+   * **A counted set is logged from a pinned bar; a held one is not.**
+   *
+   * Counting is a glance at the number and a press, so the control belongs
+   * under the thumb whatever the list above it is doing. A hold is the opposite:
+   * the clock *is* the screen while it runs (§8), and pinning it to the bottom
+   * edge would put the largest figure in the application in the smallest
+   * space.
+   */
+  const held = primary?.type === 'duration';
+
   return (
-    <>
-      <View className="flex-row items-start justify-between gap-md px-2xl pt-sm">
-        <Text className="flex-1 font-sans-semibold text-display text-text">
-          {exercise.at(0)?.name ?? 'Exercise'}
-        </Text>
-        {/*
-          The figure alone said nothing. With a target it read `4 / 3` and
-          without one it was a lone `0` floating beside the exercise name —
-          FEATURES.md §7.1 gets away with the bare `2 / 4` on the session list
-          because a column of them reads as a column, and this screen has no
-          such context. The §2.4 label supplies the noun without changing the
-          figure, so the session list stays exactly as specified.
-
-          `Sets done` rather than `Sets`: with a target the figure reads `4 / 3`
-          and the bare noun still left which number was which unsaid — done, or
-          outstanding, or planned.
-        */}
-        <View className="items-end pt-sm">
-          <Text className="font-mono text-metricSm text-text-2">
-            {formatSetCount(performed.length, entry.targetSets)}
+    <Screen bleed footer={log && !held ? log : undefined}>
+      <ScrollView
+        contentContainerClassName="pb-2xl"
+        keyboardShouldPersistTaps="handled"
+      >
+        <View className="flex-row items-center gap-md pr-2xl">
+          <BackButton />
+          <Text className="flex-1 text-bodySm text-text-3" numberOfLines={1}>
+            {session?.name ?? ''}
           </Text>
-          <SectionLabel>Sets done</SectionLabel>
         </View>
-      </View>
 
-      <View className="gap-sm px-2xl pt-2xl">
-        <TargetRow entry={entry} metrics={metrics} />
-        <Row
-          label="Last time"
-          value={
-            lastTime
-              ? formatLastTime(lastTime.values) +
+        <View className="flex-row items-baseline gap-lg px-2xl pt-sm">
+          <Text
+            className="flex-1 font-sans-semibold text-display text-text"
+            numberOfLines={1}
+          >
+            {exercise.at(0)?.name ?? 'Exercise'}
+          </Text>
+          {/*
+            A bare `0` beside the name said nothing — §7.1 gets away with `2 / 4`
+            on the session list because a column of them reads as a column. With
+            no target the figure names its own unit instead of borrowing a label
+            for it.
+          */}
+          <Text className="font-mono text-metric text-text">
+            {entry.targetSets === null
+              ? performed.length === 1
+                ? '1 set'
+                : `${performed.length} sets`
+              : formatSetCount(performed.length, entry.targetSets)}
+          </Text>
+        </View>
+
+        {/* The plan and the precedent on one line: what today asks for, and
+            what this actually did last time. */}
+        <View className="flex-row items-center gap-lg px-2xl">
+          <TargetRow entry={entry} metrics={metrics} />
+          <Text className="font-mono text-metricXs text-text-4">
+            {lastTime
+              ? `${formatSessionDate(lastTime.performedAt)} · ${formatLastTime(
+                  lastTime.values,
+                )}` +
                 // §7.2 — a fallback from another context is labelled rather
                 // than silently compared against.
                 (lastTime.fromElsewhere
-                  ? `  (${lastTime.sessionName ?? 'elsewhere'})`
+                  ? ` (${lastTime.sessionName ?? 'elsewhere'})`
                   : '')
-              : 'Not trained yet'
-          }
-          muted
-        />
-      </View>
+              : 'not trained before'}
+          </Text>
+        </View>
 
-      {/*
-        **No logging UI once the session is over.**
-
-        This screen is reachable from History as well as from training (§9), and
-        arriving from a session three weeks old to be offered `Log a set` — with
-        a live countdown, for a duration exercise — states something false about
-        what you are looking at. §7.3 grants editing and deleting a set after a
-        session, not adding to one; the set rows below stay editable, which is
-        what correcting a mislog actually needs.
-      */}
-      <View className="px-2xl pt-xl">
-        {finished ? null : metrics.length === 0 ? (
-          <Text className="text-bodySm text-text-2">
+        {metrics.length === 0 ? (
+          <Text className="px-2xl pt-xl text-bodySm text-text-2">
             This exercise records nothing yet. Add a metric to it first.
           </Text>
-        ) : (
-          <SetLog
-            entryId={entry.id}
-            metrics={metrics}
-            nextSetNumber={performed.length + 1}
-            setsUntilTarget={
-              entry.targetSets === null
-                ? null
-                : entry.targetSets - performed.length
-            }
-            /*
-              Only when the target is on the primary metric. An exercise can be
-              targeted at 10kg of added load while holding for time, and
-              counting down from 10 seconds because of that would be nonsense.
-            */
-            durationTargetMs={
-              primary &&
-              primary.type === 'duration' &&
-              entry.targetMetricId === primary.id &&
-              entry.targetValue !== null
-                ? entry.targetValue * 1000
-                : null
-            }
-          />
-        )}
-      </View>
+        ) : null}
 
-      {performed.length > 0 ? (
-        <View className="pt-xl">
-          <SectionLabel className="px-2xl pb-sm">Logged</SectionLabel>
-          {performed.map((set, index) => (
-            <View key={set.id}>
-              {index > 0 ? <Separator /> : null}
+        {held && log ? <View className="px-2xl pt-xl">{log}</View> : null}
+
+        {performed.length > 0 ? (
+          <View className="pt-xl">
+            <SectionLabel className="px-2xl pb-sm">This session</SectionLabel>
+            {performed.map((set) => (
               <SetRow
+                key={set.id}
                 entryId={entry.id}
                 set={set}
                 metrics={metrics}
                 values={valuesBySet.get(set.id) ?? []}
               />
-            </View>
-          ))}
-        </View>
-      ) : null}
+            ))}
+          </View>
+        ) : null}
 
-      <EntryNotes key={entry.id} entry={entry} />
-    </>
-  );
-}
-
-/** DESIGN.md §6.7 — the label-and-value row. */
-function Row({
-  label,
-  value,
-  muted,
-}: {
-  label: string;
-  value: string;
-  muted: boolean;
-}) {
-  return (
-    <View className="flex-row gap-md">
-      <Text className="w-label text-caption text-text-3">{label}</Text>
-      <Text
-        className={
-          muted ? 'flex-1 text-bodySm text-text-3' : 'flex-1 text-body text-text'
-        }
-      >
-        {value}
-      </Text>
-    </View>
+        <EntryNotes key={entry.id} entry={entry} />
+      </ScrollView>
+    </Screen>
   );
 }

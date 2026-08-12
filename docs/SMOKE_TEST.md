@@ -1143,3 +1143,96 @@ is the same 24 on every screen, and section gaps are visibly tighter than
 before.
 
 **Observed:**
+
+## Z. The training screens, after the Phase 8b refit
+
+The last group refit, and the only one holding invariant 1. **Nothing in the
+write path changed** — `logSet`, `quickLog` and the hold timer are untouched —
+so the point of this section is to prove that by exercising them, not to admire
+the layout.
+
+Run in **both themes**, and run Z1 before anything else.
+
+**Z1 — a set still cannot be lost.** Log a set and force-stop the app from the
+recents switcher as fast as you can, several times at different speeds. Relaunch.
+
+Expect: every set is there. This is smoke test K2 repeated because the screen
+around the button was rebuilt; the button's own code was not.
+
+**Observed:**
+
+**Z2 — the marks say what is left.** Open a session with a plan.
+
+Expect: a filled mark per set done, an outline per set still to do. An exercise
+with no target sets shows **no marks at all** — outlines against a number
+nobody chose would invent a shortfall. Exceeding a target adds filled marks
+rather than overflowing.
+
+**Observed:**
+
+**Z3 — the live row.** Look at which exercise is lifted onto the pale panel.
+
+Expect: the first one still short of its target, held in **plan order** — it
+must not jump to the top. Log its last set and the lift moves to the next
+unfinished exercise. With the whole plan done, no row is lifted.
+
+**Observed:**
+
+**Z4 — the clock is wall time.** Note the elapsed figure, background the app for
+about two minutes, come back.
+
+Expect: it advanced by the real two minutes. Now **Pause**: the figure stops and
+the line beneath says `paused`. Wait a minute, resume — the paused minute is not
+counted. This is invariant 4 and the arithmetic is unit tested; what needs a
+thumb is that the interval stops when paused.
+
+**Observed:**
+
+**Z5 — recording a set is still two taps.** Open a counted exercise from the
+session.
+
+Expect: the fields sit in a bar pinned to the bottom edge, above the keyboard
+when one is up. `Record set 4` names the right set, counts up as you log and
+back down if you delete one. The list above scrolls under it.
+
+**Observed:**
+
+**Z6 — a hold is not pinned.** Open a duration exercise.
+
+Expect: the clock is in the body of the screen, large, with its one button — not
+squeezed into a bottom bar. It still counts down from a target, still records at
+zero, still survives locking the phone.
+
+**Observed:**
+
+**Z7 — the target still overrides for this session only.** Tap `Target today`,
+change it, save.
+
+Expect: the entry's figure changes; the plan does not. Go back to the plan
+screen and confirm its target is untouched (§7.4).
+
+**Observed:**
+
+**Z8 — a logged set reads back.** Log one with two values and a note.
+
+Expect: `1  31 s · 12 reps` with the note beneath, and a bordered `TO FAILURE`
+tag where it applies. Tap it — the editor still opens, still saves, still
+deletes.
+
+**Observed:**
+
+**Z9 — nothing offers to log a finished session.** From History, open a session
+and tap into an exercise.
+
+Expect: the set list and its editors, and **no logging bar and no clock**. §7.3
+grants correcting a set after a session, not adding to one.
+
+**Observed:**
+
+**Z10 — the way out.** From a running session.
+
+Expect: `Pause` and `End session` side by side under the clock, neither of them
+filled. `Discard session` is at the foot of the list, far from both, and still
+asks twice.
+
+**Observed:**
