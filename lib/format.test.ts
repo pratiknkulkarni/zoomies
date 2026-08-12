@@ -7,6 +7,7 @@ import {
   formatMeasure,
   formatMetricDetail,
   formatMetricSummary,
+  formatPlanSummary,
   formatRecordsWhat,
   formatSessionDate,
   formatSetNote,
@@ -400,5 +401,34 @@ describe('formatVolume', () => {
   // `0 sets over 0 sessions` is a sentence about nothing.
   it('is undefined before anything is logged', () => {
     expect(formatVolume(0, 0)).toBeUndefined();
+  });
+});
+
+describe('formatPlanSummary', () => {
+  const aug9 = new Date(2026, 7, 9).getTime();
+
+  it('says what a plan holds and when it last ran', () => {
+    expect(formatPlanSummary(4, 14, aug9)).toBe(
+      '4 exercises · 14 sets · last run Sun 9 Aug',
+    );
+  });
+
+  /**
+   * A slot with no target sets means "as many as you do" (§5.1), so it adds
+   * nothing to the total — and a plan made entirely of those must not claim a
+   * total it does not have.
+   */
+  it('omits the set count when the plan asks for no particular number', () => {
+    expect(formatPlanSummary(3, 0, aug9)).toBe('3 exercises · last run Sun 9 Aug');
+  });
+
+  // Stated rather than omitted: a blank there reads as missing data, and a
+  // plan built but not yet used is an ordinary, temporary state.
+  it('says a plan has never run', () => {
+    expect(formatPlanSummary(2, 6, null)).toBe('2 exercises · 6 sets · never run');
+  });
+
+  it('says an empty plan is empty', () => {
+    expect(formatPlanSummary(0, 0, null)).toBe('No exercises · never run');
   });
 });

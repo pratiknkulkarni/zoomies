@@ -63,6 +63,31 @@ export function formatSlotCount(count: number): string {
 }
 
 /**
+ * What a plan is, on one line: `4 exercises · 14 sets · last run 9 Aug`.
+ *
+ * The set count is what the plan **asks for**, summed from the slots, not what
+ * any session did. A slot with no target sets contributes nothing to it (§5.1
+ * — null means "as many as you do"), so a plan made entirely of those says only
+ * how many exercises it holds rather than claiming a total it does not have.
+ *
+ * `never run` is stated rather than omitted. A plan built and not yet used is a
+ * common and temporary state, and a blank there reads as missing data.
+ */
+export function formatPlanSummary(
+  exercises: number,
+  targetSets: number,
+  lastRunAt: number | null,
+): string {
+  return [
+    formatSlotCount(exercises),
+    targetSets === 0 ? null : targetSets === 1 ? '1 set' : `${targetSets} sets`,
+    lastRunAt === null ? 'never run' : `last run ${formatSessionDate(lastRunAt)}`,
+  ]
+    .filter(Boolean)
+    .join(SEPARATOR);
+}
+
+/**
  * How a set says a metric went unrecorded.
  *
  * `omit` drops it. During training that keeps rows scannable, and it is what
