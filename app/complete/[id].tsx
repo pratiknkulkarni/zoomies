@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
 import { BackButton } from '@/components/ui/back-button';
@@ -16,8 +16,31 @@ import {
   type CompletionReview,
   type TargetRaise,
 } from '@/db/queries/completion';
-import { sessionById } from '@/db/queries/sessions';
-import { formatMeasure } from '@/lib/format';
+import {
+  allLiveExercises,
+  allMetrics,
+  indexExercisesById,
+  indexMetricsById,
+  indexMetricsByExercise,
+  type ExerciseMetric,
+} from '@/db/queries/exercises';
+import { valuesForSession } from '@/db/queries/history';
+import {
+  entriesForSession,
+  indexSetsByEntry,
+  indexValuesBySet,
+  sessionById,
+  setsForSession,
+  type ExerciseEntry,
+  type LoggedSet,
+  type SetMetricValue,
+} from '@/db/queries/sessions';
+import {
+  formatMeasure,
+  formatSetNote,
+  formatSetSeries,
+  formatTarget,
+} from '@/lib/format';
 
 /**
  * The review between the last set and history (FEATURES.md §6.5, §6.6).
@@ -86,6 +109,11 @@ export default function CompleteScreen() {
           </Text>
         ) : null}
 
+        {/* What just happened, before anything asks about it. The warning and
+            the raise prompt are both claims about the session, and both read
+            better with the session in front of you. */}
+        <Recap sessionId={id} />
+
         {review && review.untrained.length > 0 ? (
           <Untrained names={review.untrained.map((entry) => entry.name)} />
         ) : null}
@@ -110,6 +138,159 @@ export default function CompleteScreen() {
         </View>
       </ScrollView>
     </Screen>
+  );
+}
+
+/**
+ * The whole session in one look, in the order it was trained.
+ *
+ * **Collapsed to a line per exercise**, not a line per set. This is the last
+ * screen before history and its job is recognition — did that go the way I
+ * think it did — which a wall of individual sets answers worse than
+ * `10 · 9 · 9 · 7` does. Every set is separately visible and correctable one
+ * screen later (§7.3, §9).
+ *
+ * An exercise with nothing logged stays on the list, greyed, with what was
+ * planned beside it. §6.5 says it reads as not trained and never as zeros, and
+ * dropping it from the recap would make the warning below the only evidence it
+ * was ever part of the plan.
+ */
+function Recap({ sessionId }: { sessionId: string }) {
+  const { data: entries } = useLiveQuery(entriesForSession(sessionId), [
+    sessionId,
+  ]);
+  const { data: setRows } = useLiveQuery(setsForSession(sessionId), [sessionId]);
+  const { data: valueRows } = useLiveQuery(valuesForSession(sessionId), [
+    sessionId,
+  ]);
+  const { data: exercises } = useLiveQuery(allLiveExercises());
+  const { data: metrics } = useLiveQuery(allMetrics());
+
+  const setsByEntry = useMemo(() => indexSetsByEntry(setRows), [setRows]);
+  const valuesBySet = useMemo(() => indexValuesBySet(valueRows), [valueRows]);
+  const exercisesById = useMemo(
+    () => indexExercisesById(exercises),
+    [exercises],
+  );
+  const metricsByExercise = useMemo(
+    () => indexMetricsByExercise(metrics),
+    [metrics],
+  );
+  const metricsById = useMemo(() => indexMetricsById(metrics), [metrics]);
+
+  if (entries.length === 0) {
+    return null;
+  }
+
+  return (
+    <View className="gap-lg px-2xl pt-xl">
+      {entries.map((entry) => (
+        <RecapRow
+          key={entry.id}
+          entry={entry}
+          name={exercisesById.get(entry.exerciseId)?.name ?? 'Exercise'}
+          metrics={metricsByExercise.get(entry.exerciseId) ?? []}
+          targetMetric={
+            entry.targetMetricId
+              ? metricsById.get(entry.targetMetricId)
+              : undefined
+          }
+          performed={setsByEntry.get(entry.id) ?? []}
+          valuesBySet={valuesBySet}
+        />
+      ))}
+    </View>
+  );
+}
+
+function RecapRow({
+  entry,
+  name,
+  metrics,
+  targetMetric,
+  performed,
+  valuesBySet,
+}: {
+  entry: ExerciseEntry;
+  name: string;
+  metrics: ExerciseMetric[];
+  targetMetric: ExerciseMetric | undefined;
+  performed: LoggedSet[];
+  valuesBySet: Map<string, SetMetricValue[]>;
+}) {
+  const trained = performed.length > 0;
+  const hasTarget = entry.targetSets !== null || entry.targetValue !== null;
+  const target = formatTarget(entry, targetMetric);
+
+  const measured = metrics.filter((metric) => metric.type !== 'notes');
+
+  const series = (metric: ExerciseMetric) =>
+    formatSetSeries(
+      performed.map(
+        (set) =>
+          valuesBySet
+            .get(set.id)
+            ?.find((value) => value.exerciseMetricId === metric.id)?.valueNum ??
+          null,
+      ),
+      metric,
+    );
+
+  const notes = performed
+    .map((set) =>
+      formatSetNote(
+        metrics,
+        new Map(
+          (valuesBySet.get(set.id) ?? []).map((value) => [
+            value.exerciseMetricId,
+            value.valueText,
+          ]),
+        ),
+      ),
+    )
+    .filter((note): note is string => note !== null);
+
+  return (
+    <View className="gap-xs">
+      <View className="flex-row items-baseline gap-lg">
+        <Text
+          className={
+            trained
+              ? 'flex-1 font-sans-semibold text-heading text-text'
+              : 'flex-1 font-sans-semibold text-heading text-text-4'
+          }
+        >
+          {name}
+        </Text>
+        {hasTarget ? (
+          <Text className="text-bodySm text-text-3">
+            {trained ? `target ${target}` : `Not trained · planned ${target}`}
+          </Text>
+        ) : trained ? null : (
+          <Text className="text-bodySm text-text-3">Not trained</Text>
+        )}
+      </View>
+
+      {measured.map((metric, index) =>
+        trained ? (
+          <Text
+            key={metric.id}
+            className={
+              index === 0
+                ? 'font-mono text-metricXs text-text'
+                : 'font-mono text-metricXs text-text-3'
+            }
+          >
+            {index === 0 ? '' : `${metric.name.toLowerCase()} `}
+            {series(metric)}
+          </Text>
+        ) : null,
+      )}
+
+      {notes.length > 0 ? (
+        <Text className="text-bodySm text-text-2">{notes.join(' · ')}</Text>
+      ) : null}
+    </View>
   );
 }
 
@@ -223,7 +404,7 @@ function SessionNote({
 
   return (
     <View className="gap-xs px-2xl pt-xl">
-      <SectionLabel>Note</SectionLabel>
+      <SectionLabel>How it went</SectionLabel>
       <Input
         value={draft}
         onChangeText={change}
