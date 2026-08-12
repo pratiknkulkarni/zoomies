@@ -272,9 +272,13 @@
 > counter above answers "was that my second or third"; this answers it at the
 > instant of pressing.
 >
-> `SMOKE_TEST.md` X carries the re-check. 120 unit tests.
+> **Closed 12 Aug 2026.** `SMOKE_TEST.md` X passes on the Pixel 7a — the name
+> once, the missing metric named identically on both reading surfaces,
+> `Recorded` for a set that measured nothing, a written note on its own line and
+> an unwritten one taking no line at all, and the button counting up on log and
+> back down on delete. 120 unit tests.
 >
-> **Next: run X, then Phase 9 — Dashboard.**
+> **Next: Phase 9 — Dashboard.**
 
 Update this block when a phase closes. It is the first thing read at the start
 of a session.
@@ -760,9 +764,10 @@ chosen over `Primary · Duration · s` deliberately and the docstring says why.
 Also here, from the design experiment: the log button names the set it is about
 to write. `SMOKE_TEST.md` X carries the re-check.
 
-**Verification is unrun on hardware.** 111 unit tests pass, `tsc` and lint are
-clean. `SMOKE_TEST.md` W carries the device pass; criterion 1 is DoD 10 and
-needs a thumb.
+**Verified on the Pixel 7a 12 Aug 2026** — `SMOKE_TEST.md` X, all seven items,
+including the two the fix could plausibly have got wrong: X4, a note must never
+read as unrecorded, and X6, the button must never name a set number that already
+exists. 120 unit tests, `tsc` and lint clean.
 
 ---
 

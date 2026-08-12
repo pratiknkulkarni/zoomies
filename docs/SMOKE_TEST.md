@@ -995,6 +995,7 @@ column and nowhere else. An exercise recording seconds reads `Hold · 42 s`,
 keeping the unit — the label does not carry it.
 
 **Observed:**
+Fine
 
 **X2 — the missing metric is named.** An exercise with two measured metrics
 where you filled only one, in both the exercise screen's History and a session
@@ -1004,6 +1005,7 @@ Expect: `21 · reps not recorded`, in both places, worded identically. Never a
 bare dash, never `0`.
 
 **Observed:**
+Fine
 
 **X3 — a set that measured nothing.** Find the set that read `— · —` under
 `Pull Day`, or mark one to failure with every field empty.
@@ -1012,6 +1014,7 @@ Expect: `Recorded`. It happened; nothing was measured; that is the whole
 statement.
 
 **Observed:**
+Fine
 
 **X4 — a note is not a missing measurement.** Log a set with a note against an
 exercise that records one, then read it back from both surfaces.
@@ -1021,6 +1024,7 @@ Expect: the figures on one line, the note beneath in smaller grey type. **Never
 missing metric, since notes are stored in a different column from every figure.
 
 **Observed:**
+Fine — the bug this was written to catch is not present.
 
 **X5 — a note that was never written.** The same exercise, a set with no note.
 
@@ -1028,6 +1032,7 @@ Expect: no second line at all. Not a dash — the value line above already
 accounts for everything measured.
 
 **Observed:**
+Fine
 
 **X6 — the button names the set.** Start a session, open an exercise with three
 sets logged.
@@ -1037,6 +1042,7 @@ list and it counts back down. It must never name a set number that already
 exists.
 
 **Observed:**
+Fine — counts up on log and back down on delete.
 
 **X7 — the button under a timer.** An exercise measured in seconds.
 
@@ -1044,3 +1050,4 @@ Expect: the hold timer is still the only action, with no second button beside
 it. §7 gives the timer the write.
 
 **Observed:**
+Fine
