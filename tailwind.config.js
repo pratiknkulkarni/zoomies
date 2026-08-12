@@ -48,6 +48,9 @@ module.exports = {
         4: withAlpha('--color-text-4'),
         5: withAlpha('--color-text-5'),
       },
+      // §6.11 — the unfilled set mark. Its own step because it inverts
+      // relative to `border` between themes, so neither hairline can stand in.
+      mark: withAlpha('--color-mark'),
       danger: withAlpha('--color-danger'),
     },
 

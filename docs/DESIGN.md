@@ -348,6 +348,26 @@ whatever the digit count, for the reason §6.7 fixes a label column. It is
 Values are `metricXs`, the token named for dense numeric lists, which is what
 this is.
 
+### 6.11 Set Marks
+
+One small rectangle per set on the session screen: filled `text` for done,
+outlined `mark` for still to do.
+
+**The thing read from the floor.** Mid-session the question is what is left, and
+a row of marks answers it without reading a number — which matters because the
+counter beside it is small and the phone is at arm's length.
+
+Filled versus outlined, never two tones of the same shape: §9 forbids state
+carried by colour alone, and there is no second colour to carry it with anyway.
+
+**Absent entirely where there is no target.** A plan may ask for "as many as you
+do" (`FEATURES.md` §5.1), and outlines drawn against a number nobody chose would
+invent a shortfall. Exceeding a target adds filled marks rather than overflowing
+— §6.5 says exceeding is fine.
+
+`mark` is its own token because it inverts relative to `border` between themes:
+lighter than a control edge on paper, brighter than one in the dark.
+
 **The document specifies 17px here and this reads smaller on purpose.** Geist
 Mono carries a far larger x-height than the IBM Plex Mono the document assumed,
 so 16px mono sat almost level with the 19px exercise name above it and the two

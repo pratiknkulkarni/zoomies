@@ -42,6 +42,13 @@
   --color-rule: 220 216 208; /* #DCD8D0 — structural rules, header and footer */
   --color-rule-2: 230 226 218; /* #E6E2DA — list rules */
 
+  /*
+   * The unfilled set mark. Its own token because it inverts relative to
+   * `border` between themes — lighter than a control edge on paper, brighter
+   * than one in the dark — so neither hairline can stand in for it.
+   */
+  --color-mark: 221 217 209; /* #DDD9D1 */
+
   /* Destructive — DESIGN.md §3.2. Delete and discard only. */
   --color-danger: 180 68 58; /* #B4443A */
 }
@@ -65,6 +72,8 @@
   --color-border: 59 58 54; /* #3B3A36 */
   --color-rule: 43 42 39; /* #2B2A27 */
   --color-rule-2: 35 34 32; /* #232220 */
+
+  --color-mark: 86 84 78; /* #56544E */
 
   --color-danger: 217 122 110; /* #D97A6E */
 }

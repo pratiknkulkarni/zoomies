@@ -39,6 +39,27 @@ export function sessionLengthMs(session: SessionTiming): number | null {
   );
 }
 
+/**
+ * How long a session has been running, for the clock in its header.
+ *
+ * The same arithmetic as `sessionLengthMs`, with `now` standing in for an end
+ * that has not happened. **Derived from timestamps every time it is read**
+ * (invariant 4) — an interval may repaint the figure but must never add to it,
+ * or ninety seconds in another app would cost ninety seconds.
+ *
+ * While paused the clock holds at the moment it was paused rather than at the
+ * moment it is read. Pausing states that training stopped (§6.2), and a figure
+ * that kept climbing behind a Paused label would be contradicting the label.
+ */
+export function elapsedSessionMs(
+  session: SessionTiming & { pausedAt: number | null },
+  now: number,
+): number {
+  const until = session.completedAt ?? session.pausedAt ?? now;
+
+  return Math.max(0, until - session.startedAt - session.accumulatedPauseMs);
+}
+
 /** A stretch of days between two sessions on which nothing was trained. */
 export type TrainingGap = { fromMs: number; toMs: number };
 

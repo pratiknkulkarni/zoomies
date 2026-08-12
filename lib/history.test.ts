@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { gapsAfter, sessionLengthMs } from './history';
+import { elapsedSessionMs, gapsAfter, sessionLengthMs } from './history';
 
 describe('sessionLengthMs', () => {
   const minute = 60_000;
@@ -61,6 +61,61 @@ describe('sessionLengthMs', () => {
         accumulatedPauseMs: 0,
       }),
     ).toBeNull();
+  });
+});
+
+describe('elapsedSessionMs', () => {
+  const minute = 60_000;
+  const running = {
+    startedAt: 0,
+    completedAt: null,
+    accumulatedPauseMs: 0,
+    pausedAt: null,
+  };
+
+  it('climbs with the clock while a session runs', () => {
+    expect(elapsedSessionMs(running, 24 * minute)).toBe(24 * minute);
+  });
+
+  /**
+   * Invariant 4 read from the display side: the figure is derived from
+   * timestamps, so ninety seconds in another app costs nothing.
+   */
+  it('does not lose time spent outside the app', () => {
+    expect(elapsedSessionMs(running, 90_000)).toBe(90_000);
+  });
+
+  it('excludes time already spent paused', () => {
+    expect(
+      elapsedSessionMs({ ...running, accumulatedPauseMs: 5 * minute }, 30 * minute),
+    ).toBe(25 * minute);
+  });
+
+  /**
+   * A clock climbing behind a `Paused` label would be contradicting the label.
+   * It holds at the moment training stopped.
+   */
+  it('holds still while paused, however long the pause lasts', () => {
+    const paused = { ...running, pausedAt: 10 * minute };
+
+    expect(elapsedSessionMs(paused, 12 * minute)).toBe(10 * minute);
+    expect(elapsedSessionMs(paused, 90 * minute)).toBe(10 * minute);
+  });
+
+  /** Once finished it is a fact, and `now` stops being part of it. */
+  it('stops at completion', () => {
+    expect(
+      elapsedSessionMs(
+        { ...running, completedAt: 48 * minute },
+        999 * minute,
+      ),
+    ).toBe(48 * minute);
+  });
+
+  it('never returns a negative figure', () => {
+    expect(
+      elapsedSessionMs({ ...running, accumulatedPauseMs: 30 * minute }, minute),
+    ).toBe(0);
   });
 });
 
