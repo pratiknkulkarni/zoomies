@@ -28,16 +28,19 @@ export function SlotList({
   slots,
   exercisesById,
   metricsById,
+  lastBySlot,
 }: {
   templateId: string;
   slots: TemplateSlot[];
   exercisesById: Map<string, Exercise>;
   metricsById: Map<string, ExerciseMetric>;
+  /** What each slot's exercise actually did last time, keyed by slot id. */
+  lastBySlot?: Map<string, string>;
 }) {
   if (slots.length === 0) {
     return (
       <Text className="px-2xl text-bodySm text-text-2">
-        No exercises yet. A template is the order you train them in.
+        No exercises yet. A plan is the order you train them in.
       </Text>
     );
   }
@@ -56,6 +59,7 @@ export function SlotList({
                 ? metricsById.get(slot.targetMetricId)
                 : undefined
             }
+            last={lastBySlot?.get(slot.id)}
             isFirst={index === 0}
             isLast={index === slots.length - 1}
           />
@@ -70,6 +74,7 @@ function SlotRow({
   slot,
   exercise,
   targetMetric,
+  last,
   isFirst,
   isLast,
 }: {
@@ -77,6 +82,7 @@ function SlotRow({
   slot: TemplateSlot;
   exercise: Exercise | undefined;
   targetMetric: ExerciseMetric | undefined;
+  last: string | undefined;
   isFirst: boolean;
   isLast: boolean;
 }) {
@@ -108,20 +114,34 @@ function SlotRow({
         onPress={() =>
           router.push({ pathname: '/slot/[id]', params: { id: slot.id } })
         }
-        className="min-h-touch flex-1 justify-center active:bg-muted"
+        className="min-h-touch flex-1 justify-center gap-xs active:bg-muted"
       >
-        <Text
-          className={cn(
-            'text-heading',
-            // §9 forbids colour alone, so weight carries the difference too.
-            // No italic: `fontStyle` is off in the Tailwind config because no
-            // italic face is bundled.
-            exercise ? 'font-sans-semibold text-text' : 'font-sans text-text-3',
-          )}
-        >
-          {name}
-        </Text>
-        <Text className="pt-xs text-caption text-text-2">
+        <View className="flex-row items-baseline gap-lg">
+          <Text
+            className={cn(
+              'flex-1 text-heading',
+              // §9 forbids colour alone, so weight carries the difference too.
+              // No italic: `fontStyle` is off in the Tailwind config because no
+              // italic face is bundled.
+              exercise
+                ? 'font-sans-semibold text-text'
+                : 'font-sans text-text-3',
+            )}
+            numberOfLines={1}
+          >
+            {name}
+          </Text>
+
+          {/* What this actually did last time, so the plan can be judged
+              against it before the session starts rather than after. */}
+          {last ? (
+            <Text className="font-mono text-metricXs text-text-4">
+              last {last}
+            </Text>
+          ) : null}
+        </View>
+
+        <Text className="text-caption text-text-3">
           {formatTarget(slot, targetMetric)}
         </Text>
       </Pressable>
