@@ -790,6 +790,57 @@ With no cloud in v1, **this is the only backup**. Non-negotiable.
 Import is deferred, but the export format should be designed so import is
 possible later.
 
+### 12.1 What the File Says
+
+```json
+{
+  "format": "zoomies-export",
+  "version": 1,
+  "exportedAt": 1755100000000,
+  "schemaVersion": 5,
+  "tables": { "exercises": [ … ], "sets": [ … ] }
+}
+```
+
+Four rules, all of them following from *this is the only backup*:
+
+- **Every table, discovered from the schema.** A table added to `db/schema.ts`
+  joins the export by existing. A list kept by hand works until someone adds a
+  table, and then every backup taken before anyone notices is quietly
+  incomplete. This is the property most worth testing and it is tested against
+  the real schema.
+- **Every column, via `SELECT *`.** Same failure one level down. It also means
+  the SQL column names are what lands in the file, which is what an importer
+  writes back and what a rename in the schema file cannot move out from under a
+  file already on disk.
+- **Soft-deleted rows included.** Every other read filters `deleted_at`, which
+  is what makes a deleted set disappear from the application. Doing it here
+  would make it disappear from the backup — a much larger claim, and one the
+  user would have no way of discovering.
+- **Nothing aggregated and nothing renamed.** Invariant 3 says totals are not
+  stored; a total written into a file is stored. The file is a copy of the
+  database, not a view of the application.
+
+`version` is the file's shape and `schemaVersion` is the rows'. They move
+independently: a later release can change how the envelope looks without
+touching the schema, and vice versa. Versioning from the first release is the
+whole of what "designed so import is possible later" costs, because the second
+release cannot add a version to files already written.
+
+**Written to the cache directory and handed to the share sheet.** Once the user
+has put it somewhere, that copy is the one that matters; keeping a growing pile
+of exports inside the application would be a second, invisible store of training
+history.
+
+### 12.2 Where It Lives
+
+Settings, reached from Home. Not a fourth tab, and not buried: a backup nobody
+can find is not a backup, and Home is the screen that gets opened.
+
+Settings holds this and §13's appearance override. Nothing else. It is a
+**Pattern B** screen (§18) — both choices commit as they are made, so there is
+nothing on it to leave unsaved.
+
 ---
 
 ## 13. Appearance
@@ -797,13 +848,25 @@ possible later.
 Dark and light themes, following the system setting automatically, with manual
 override.
 
-Direction: **quiet editorial.** Near-monochrome warm neutrals, hierarchy from
-type scale rather than colour, rounded geometry, generous whitespace, one muted
-accent used in exactly three places.
+**Three choices: System, Light, Dark.** System is the default and is what any
+unreadable stored value falls back to — a preference must never cost a launch.
+The choice is one row in `meta` (`TECH_STACK.md` §5.1), read synchronously
+before the first frame: an override applied in an effect would show one frame of
+the wrong theme on every launch.
 
-Typeface is **Geist** with **Geist Mono** for all numeric display. Accent is
-moss. Full token set, component styles and composition rules are in `DESIGN.md`,
-which is authoritative for anything visual.
+It commits on the tap and applies before it is stored. The theme is what the tap
+was for and should not wait on a disk write; the row is what makes it survive a
+force-quit. It is the one write in the application not wrapped in a transaction,
+because it is one row and cannot lose training history.
+
+Direction: **quiet editorial.** Near-monochrome warm neutrals, hierarchy from
+type scale rather than colour, rounded geometry, generous whitespace, and **no
+accent** — Phase 8b deleted it, and `danger` is the only hue left. Emphasis is
+weight, rule and solid ink.
+
+Typeface is **Geist** with **Geist Mono** for all numeric display. Full token
+set, component styles and composition rules are in `DESIGN.md`, which is
+authoritative for anything visual.
 
 **No illustration in v1.** Per-exercise doodles were considered and cut.
 
@@ -887,6 +950,7 @@ Without reading documentation.
 | Aug 2026 | Phase 6 amendments. §2 gains `template_slot_id` on `exercise_entries` and a storage rule saying what it is not: provenance for the raise prompt, never a target source, because reading a target through it would undo the snapshot two rows above it. The raise had nowhere to write otherwise — an entry knew its exercise, and §5.2 lets one exercise fill two slots with different targets. §6.6 rewritten around three things implementation forced into the open: a majority is strictly more than half and a tie is not a beat; the write goes to the slot and never to the completed session; and **a raise may never be a lowering**, so it is gated on the slot's own figure rather than on the possibly-overridden target that was trained against. §2 also lost `rest_seconds`, which Phase 5 dropped from the schema and from §5.1 but not from the data-model block. |
 | Aug 2026 | Phase 9 amendments. §11.3 goes from five blocks to four. The **days-trained grid** replaces both *Last 7 days* and the 12-week *Sessions per week* bar chart — it answers the week and the quarter in one object made of `View`s, and with the chart went the only reason the dashboard needed a plotting stack. The streak objection was settled deliberately rather than assumed: a filled-square calendar is the most streak-coded object in software, and the three mechanisms that make it one are a count, an intensity ramp and a fixed grid of blank past. None is present, and §11.1 already forbade the second. *This week* became **28 days** — a week holds nought to four sessions and says nothing either way — and its *sets* figure became **quick logs**, because the grid above already draws this week and §11.5's exclusion was the thing worth making visible rather than silent. *Not trained recently* is now sorted by the gap **with the date beside it**, so a movement deliberately stopped reads as a fact rather than a debt, and excludes never-trained and anything under a week. *Recent records* now requires a set to have **beaten** something: a first-ever set is a baseline, and without the rule month one is a wall of records. §10.2 records that the trend is now the sole justification left for `victory-native`. |
 | Aug 2026 | Phase 9 fixes, from the first run on device. The **days-trained grid** was sized by how new the user is: `flex-1` over however many columns the history filled gave week two two columns and squares the width of a thumb. §11.3 now separates the two rules that were tangled into one — the grid is **always thirteen columns wide**, and it **draws from the first logged day**, holding the earlier columns open and blank. Blank now means *outside the record* at either end rather than *not yet happened*, so the first column is ragged at the top exactly as the last is ragged at the bottom. §9 gains the timeline's row rules and its one-line rule, and loses two stale sentences: it has not been grouped by day since Phase 8b, and a quick log carries a `ONE-OFF` tag rather than the words `Quick log`. |
+| Aug 2026 | Phase 10. §12 gains **§12.1**, which states what the file says and why: every table discovered from the schema, every column via `SELECT *`, soft-deleted rows kept, nothing aggregated or renamed. The first three all guard the same failure — a list kept by hand works until someone adds to the schema, and then every backup taken before anyone notices is quietly incomplete. `version` and `schemaVersion` are two numbers because the envelope and the rows change independently, and the second release cannot add a version to files already written. **§12.2** puts it in Settings, reached from Home — a backup nobody can find is not one. §13 gains the three choices and how the override is applied: at module scope before the first frame, because an effect runs after a render and would flash the wrong theme on every launch, and falling back to System on anything unreadable because a preference must never cost a launch. §13 also lost its accent — the text still described moss in three places, deleted in Phase 8b. |
 
 ---
 

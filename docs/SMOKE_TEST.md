@@ -1413,3 +1413,100 @@ Expect: the hairlines are visible but not bright. `rule-2` in dark is barely
 above the ground on purpose; if the rows look boxed, it is the wrong token.
 
 **Observed:**
+
+---
+
+## AC. Settings, export and appearance — Phase 10
+
+Run the appearance checks in **both directions**, not both themes — the point is
+that the override wins over the system and survives a relaunch.
+
+**AC1 — the way in.** Open Home.
+
+Expect: `Settings ›` on the title row, beside `Zoomies`. Not a gear, not a tab.
+
+**Observed:**
+
+**AC2 — the override applies on the tap.** Settings → Appearance → Dark, with
+the phone in light mode.
+
+Expect: the theme changes immediately, with no confirmation and no Save. A tick
+moves to the chosen row and the other two carry no empty box.
+
+**Observed:**
+
+**AC3 — the override survives a force-quit, on the first frame.** With Dark
+chosen and the phone in light mode, force-quit the app and reopen it.
+
+Expect: it opens dark. **Watch the first frame specifically** — a flash of light
+before it settles means the preference is being applied after a render rather
+than before one, which is the defect this was built to avoid.
+
+**Observed:**
+
+**AC4 — System means system.** Choose System, then flip the phone's theme from
+the system shade with the app open.
+
+Expect: the app follows immediately, no relaunch. This is the pre-Phase-10
+behaviour and must be unchanged.
+
+**Observed:**
+
+**AC5 — export produces a file and hands it over.** Settings → Export
+everything.
+
+Expect: the share sheet opens with a file named `zoomies-<today>.json`. Save it
+somewhere you can open — a notes app, a file manager, your own email draft.
+Underneath the button, a line like `9 exercises, 41 sets`.
+
+**Observed:**
+
+**AC6 — the file holds your training.** Open the saved file and read it.
+
+Expect: readable JSON with `"format": "zoomies-export"`, a `version`, an
+`exportedAt`, a `schemaVersion`, and a `tables` object. Find an exercise you
+recognise by name, and a set you logged today.
+
+**Observed:**
+
+**AC7 — nothing is missing.** In the file, check the table list and one set.
+
+Expect: nine tables — `exercise_entries`, `exercise_metrics`, `exercises`,
+`meta`, `sessions`, `set_metric_values`, `sets`, `template_slots`, `templates`.
+Find a set where you left one metric blank: its `set_metric_values` row must
+show `"value_num": null`, **never** `0` and never a missing key. Invariant 2, in
+the one file that exists to preserve it.
+
+**Observed:**
+
+**AC8 — deleted training is still in the backup.** Delete a session you do not
+want, then export again and search the new file for it.
+
+Expect: the session's row is present, with a non-null `deleted_at`. The
+application hides it; the backup does not. If it is absent, a restore would
+silently discard everything the user ever deleted.
+
+**Observed:**
+
+**AC9 — export works in airplane mode.** Turn on airplane mode and export again.
+
+Expect: no difference whatsoever. There is no network call anywhere in the
+application, and this is the check that says so.
+
+**Observed:**
+
+**AC10 — a second export the same day.** Export twice without changing the date.
+
+Expect: it works both times. The filename is the date alone, so the second run
+overwrites the first rather than failing on an existing path.
+
+**Observed:**
+
+**AC11 — leaving settings needs no guard.** Change the appearance, then press
+Back, and separately the Android system back.
+
+Expect: it leaves immediately both times, with no "unsaved changes" prompt.
+Nothing on this screen is a draft (§18 Pattern B) — a prompt here would be
+asking about work that was already committed.
+
+**Observed:**

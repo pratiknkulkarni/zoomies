@@ -394,8 +394,33 @@
 >
 > 216 unit tests.
 >
-> **Next: merge Phases 8, 8a, 8b and 9 to `main`, then Phase 10 — export and
-> settings.**
+> Merged to `main` 13 Aug 2026.
+>
+> **Phase 10 — export and settings. Built 13 Aug 2026**, branch `phase-10-export`.
+> `app/settings.tsx`, reached from Home's title row, holding the two things
+> §12 and §13 ask for and nothing else.
+>
+> **§4.4 is now entirely about one sparkline.** Its storage half dissolved the
+> way its charting half did: the appearance preference is one row in the `meta`
+> table the seed flag already lives in, so Phase 10 installed no storage
+> dependency either. Both halves of that question named a package; neither
+> package was needed.
+>
+> **The export's one important property is completeness.** Tables discovered
+> from the schema, columns from `SELECT *`, soft-deleted rows kept. The
+> discovery lives in `lib/` precisely so a test can run it against the real
+> `db/schema.ts` — which imports no client, and so loads in the runner. A
+> hand-kept list of tables or columns works until someone adds one, and then
+> every backup taken before anyone notices is quietly incomplete.
+>
+> The file is a copy of the database rather than a view of the application:
+> every other read filters `deleted_at`, and doing it here would mean a restore
+> silently discarded everything the user had ever deleted.
+>
+> 234 unit tests.
+>
+> **Next: `SMOKE_TEST.md` AC on the Pixel 7a**, then Phase 11 — icon, splash,
+> store prep, and §10.2's best-set trend.
 
 Update this block when a phase closes. It is the first thing read at the start
 of a session.
@@ -1007,26 +1032,65 @@ so the window cannot be pushed into SQL.
 
 ---
 
-### Phase 10 — Export & Settings
+### Phase 10 — Export & Settings. Built 13 Aug 2026
 
 With no cloud in v1 this is the only backup. Non-negotiable.
 
-- `lib/export.ts` — full JSON export of the entire database via
-  `expo-file-system`, handed to the OS share sheet via `expo-sharing`
-- Format designed so import is possible later, though import is deferred
-- Serialisation round-trip unit tested
-- Appearance setting: system / light / dark
+`app/settings.tsx` holds both halves, reached from Home's title row. A
+**Pattern B** screen (§18): each choice commits as it is made, so there is
+nothing on it to leave unsaved and no exit guard.
 
-**Creates:** `lib/export.ts`, `lib/export.test.ts`, `app/settings.tsx`
+| Piece | Where |
+|---|---|
+| Table discovery, envelope, serialisation, filename | `lib/export.ts` |
+| `SELECT *` over every table, applied-migration count | `db/queries/export.ts` |
+| The three choices, and what an unreadable one means | `lib/appearance.ts` |
+| The `meta` row, read sync and written on tap | `db/queries/settings.ts`, `db/mutations/settings.ts` |
 
-**Blocked by:** open question §4.4 — the theme override needs a storage
-dependency not yet listed in `TECH_STACK.md`.
+**§4.4's storage half dissolved, and nothing was installed for it.** The
+appearance preference is one row in the `meta` table §4.5 already created for
+the seed flag. AsyncStorage's only advantage is being readable before the
+database opens, and this application has no such window — the splash is held
+until migrations and the seed resolve. `TECH_STACK.md` §5.1 records it.
+
+**The export's one important property is completeness**, so it is the one that
+is tested. Tables are discovered from `db/schema.ts` rather than listed, columns
+come from `SELECT *` rather than a select list, and soft-deleted rows are kept.
+A hand-kept list of either works until someone adds a table, and then every
+backup taken before anyone notices is quietly incomplete. `lib/export.ts` holds
+the discovery precisely so a test can run it against the real schema —
+`db/schema.ts` imports no client, which is what makes that possible.
+
+Four things the build decided that the spec did not:
+
+- **The file is a copy of the database, not a view of the application.** Every
+  other read filters `deleted_at`; this one must not, or a restore silently
+  discards everything the user deleted.
+- **`version` and `schemaVersion` are two numbers.** The envelope's shape and
+  the rows' shape move independently, and the second release cannot add a
+  version to files already written.
+- **The preference is applied at module scope, not in an effect.** An effect
+  runs after a render, so an override would flash the wrong theme on every
+  launch.
+- **An unparseable preference costs a theme, never a launch.** It is read before
+  the first frame, so a throw there is a blank screen.
+
+**Creates:** `lib/export.ts`, `lib/export.test.ts`, `lib/appearance.ts`,
+`lib/appearance.test.ts`, `db/queries/export.ts`, `db/queries/settings.ts`,
+`db/mutations/settings.ts`, `app/settings.tsx`. 234 unit tests.
 
 **Exit criteria**
 
 1. **DoD 12** — export everything to a file.
 2. A round-trip preserves every row, including nulls and soft-deleted rows.
 3. Export completes in airplane mode.
+4. Every table in `db/schema.ts` appears in the file — asserted against the
+   schema itself, not against a list.
+5. `SMOKE_TEST.md` **AC** passes on device, including the first frame after a
+   force-quit with an override set.
+
+**Not built:** import (deferred, `FEATURES.md` §12), and any scheduled or
+automatic export — there is nowhere to put it and no network to send it to.
 
 ---
 
@@ -1135,9 +1199,18 @@ if a driver arrives later.
   of the icons. So the question is no longer "chart library or not" but whether
   one screen justifies drawing forty dots by hand. Decide it against that
   screen; there is nothing else in the application waiting on the answer.
-- The appearance override needs persistent local storage —
-  `@react-native-async-storage/async-storage` per §5, which names AsyncStorage
-  but does not list the package.
+- ~~The appearance override needs persistent local storage.~~ **Settled: it does
+  not need a new one.** The preference is one row in the `meta` table §4.5
+  already created for the seed flag. AsyncStorage's only advantage over a SQLite
+  read is being readable before the database opens, and this application has no
+  such window — `app/_layout.tsx` holds the splash until migrations and the seed
+  resolve, so the first frame already renders against an open database. A second
+  store for one enum, kept in step with the thing `TECH_STACK.md` §4.1 calls the
+  source of truth, buys a dependency and a way for the two to disagree.
+  `TECH_STACK.md` §5.1 records it.
+
+  **So §4.4 is now entirely about one sparkline.** Both halves that named a
+  package have dissolved without installing anything.
 
 §13 requires every dependency be justifiable in one sentence there. Add them
 before installing.
