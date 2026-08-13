@@ -22,6 +22,7 @@ import {
   formatSessionDate,
 } from '@/lib/format';
 import { gapsAfter, sessionLengthMs, type TrainingGap } from '@/lib/history';
+import { cn } from '@/lib/utils';
 
 /**
  * The timeline (FEATURES.md §9) — everything trained, newest first.
@@ -31,6 +32,12 @@ import { gapsAfter, sessionLengthMs, type TrainingGap } from '@/lib/history';
  * Training clusters — two sessions and a quick log, then nothing for four days
  * — and the gap is part of the record. A rule reading `8–11 Aug · no training`
  * costs one hairline and says the thing a missing heading could not.
+ *
+ * **Ruled, and regular.** Whitespace alone was not enough here, which is the
+ * condition `DESIGN.md` §1.4 puts on adding a hairline: the rows are two
+ * different heights by design, and a dozen of them with only air between read
+ * as one column of loose text. Every row is ruled, every row is a fixed number
+ * of lines, and nothing wraps.
  *
  * Four live queries rather than joins, as everywhere else: `useLiveQuery`
  * watches only its query's root table, so a joined count would never move when
@@ -70,7 +77,7 @@ export default function HistoryScreen() {
         data={history}
         keyExtractor={(session) => session.id}
         ListHeaderComponent={
-          <View className="flex-row items-baseline justify-between gap-lg px-2xl pb-sm pt-2xl">
+          <View className="flex-row items-baseline justify-between gap-lg border-b border-rule px-2xl pb-md pt-2xl">
             <Text className="font-sans-semibold text-display text-text">
               History
             </Text>
@@ -105,6 +112,16 @@ export default function HistoryScreen() {
                 (id) => exercisesById.get(id)?.name ?? 'Exercise',
               )}
               setCount={setsBySession.get(item.id) ?? 0}
+              /*
+                A rule under every row but the ones that already have something
+                under them. A gap rule separates more loudly than a hairline
+                does, and the last row is followed by nothing to be separated
+                from — a trailing rule in open space reads as a row that failed
+                to load.
+              */
+              divided={
+                gaps.get(index) === undefined && index < history.length - 1
+              }
             />
             <GapRule gap={gaps.get(index)} />
           </>
@@ -135,15 +152,23 @@ export default function HistoryScreen() {
  *
  * An ad-hoc session reads `No plan`, which is a fact about how it started and
  * not an absence: it was training, it just began without one.
+ *
+ * **Ruled, because the rows are not the same height.** A session is two lines
+ * and a quick log is one, and a screen of them with only whitespace between
+ * asks the eye to work out where each one ends — twelve entries read as one
+ * column of loose text rather than twelve things. One hairline per row settles
+ * it, and it is the same `rule-2` the session and dashboard lists already use.
  */
 function Row({
   session,
   exercises,
   setCount,
+  divided,
 }: {
   session: Session;
   exercises: string[];
   setCount: number;
+  divided: boolean;
 }) {
   const date = formatSessionDate(session.completedAt ?? session.startedAt);
   const length = sessionLengthMs(session);
@@ -154,7 +179,10 @@ function Row({
       onPress={() =>
         router.push({ pathname: '/history/[id]', params: { id: session.id } })
       }
-      className="min-h-touch justify-center gap-xs px-2xl py-md active:bg-muted"
+      className={cn(
+        'min-h-touch justify-center gap-xs px-2xl py-md active:bg-muted',
+        divided && 'border-b border-rule-2',
+      )}
     >
       <View className="flex-row items-baseline gap-lg">
         {session.isQuickLog ? (
@@ -183,13 +211,30 @@ function Row({
         </Text>
       </View>
 
-      {/* What was in it. A quick log's title already says everything it holds. */}
+      {/*
+        What was in it. A quick log's title already says everything it holds.
+
+        One line, never two. A six-exercise session wrapped to three lines and
+        made a single row taller than the two beside it put together, which is
+        most of why this screen read as a heap rather than a list. Every session
+        row is now exactly two lines high and every quick log exactly one.
+
+        The names shrink and the set count does not: truncation should eat the
+        detail and never the total, and `Pull-Up · Ring Dip · Ring Sup…` still
+        says what the session was.
+      */}
       {session.isQuickLog ? null : (
-        <Text className="font-mono text-metricXs text-text-5">
-          {[...exercises, setCount === 1 ? '1 set' : `${setCount} sets`].join(
-            ' · ',
-          )}
-        </Text>
+        <View className="flex-row items-baseline gap-sm">
+          <Text
+            className="shrink font-mono text-metricXs text-text-5"
+            numberOfLines={1}
+          >
+            {exercises.join(' · ')}
+          </Text>
+          <Text className="font-mono text-metricXs text-text-5">
+            {setCount === 1 ? '1 set' : `${setCount} sets`}
+          </Text>
+        </View>
       )}
     </Pressable>
   );
