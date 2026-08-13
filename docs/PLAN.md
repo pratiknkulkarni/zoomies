@@ -278,7 +278,7 @@
 > an unwritten one taking no line at all, and the button counting up on log and
 > back down on delete. 120 unit tests.
 >
-> **Phase 8b — the design refit. In progress, 12 Aug 2026**, branch
+> **Phase 8b — the design refit. Closed 13 Aug 2026**, branch
 > `phase-8-records`. The second design run (`docs/zoomies_screen.pdf`) is
 > adopted as the direction: seventeen screens, one per commit, no feature work.
 >
@@ -348,8 +348,8 @@
 > calendar is the most streak-coded object in software, and §11.6 excludes
 > streaks by name. Three mechanisms make it one — a count, an intensity ramp,
 > and a fixed grid of blank past — and none is present: no number, binary fill
-> (§11.1 forbids the volume figure a ramp would need), and the grid starts at
-> the first session and grows a column a week.
+> (§11.1 forbids the volume figure a ramp would need), and nothing is drawn
+> before the first logged day.
 >
 > Four things the build decided that the spec did not:
 >
@@ -370,8 +370,32 @@
 > a second copy of `startOfDay` is how they would come to disagree. 214 unit
 > tests.
 >
-> **Next: run Y, Z and AA on the Pixel 7a.** Then merge Phases 8, 8a, 8b and 9
-> to `main`.
+> **Phase 9 — closed 13 Aug 2026.** Y, Z, AA and AB all pass on the Pixel 7a in
+> both themes. Three things the first device run found, all fixed on the branch:
+>
+> - **The grid was sized by how new the app is.** `flex-1` over however many
+>   columns the history had filled gave week two two columns and squares the
+>   width of a thumb. Width and content were one rule and are now two: thirteen
+>   columns always, nothing drawn before the first logged day, the leading
+>   columns holding their width and drawing nothing. `before` joins `future` as
+>   a state that is not drawn, and the rule reads the same from both ends — the
+>   two marks say *trained* and *skipped*, and neither is true outside the
+>   record.
+> - **The timeline read as a column of loose text.** Twelve entries at two
+>   different heights by design, separated by whitespace alone. A `rule-2` per
+>   row, standing down where a gap rule already separates; and the exercise line
+>   no longer wraps, with the set count pinned so truncation eats the detail
+>   rather than the total. `FEATURES.md` §9 had also drifted — it still claimed
+>   the timeline was grouped by day.
+> - **An exercise could record the same thing twice.** Adding a metric was
+>   offered only the free presets; converting one was offered all of them.
+>   Guarded in the editor and in the mutation. It came out of §4.6, now open:
+>   whether the metric editor should become the document's three checkboxes.
+>
+> 216 unit tests.
+>
+> **Next: merge Phases 8, 8a, 8b and 9 to `main`, then Phase 10 — export and
+> settings.**
 
 Update this block when a phase closes. It is the first thing read at the start
 of a session.
@@ -920,14 +944,14 @@ that wants it. Drawing option C lands with the empty surfaces it belongs to.
    deviations above.
 2. No literal colour, spacing, radius or type size appears outside `global.css`
    and `tailwind.config.js`.
-3. `SMOKE_TEST.md` Y and Z pass on device **in both themes** — the document's
-   claim is that light and dark are one design at two grounds, so anything that
-   moves between them is a defect.
+3. `SMOKE_TEST.md` Y, Z and AB pass on device **in both themes** — the
+   document's claim is that light and dark are one design at two grounds, so
+   anything that moves between them is a defect. *Passed 13 Aug 2026.*
 4. No feature behaves differently than it did before the phase.
 
 ---
 
-### Phase 9 — Dashboard. Built 12 Aug 2026
+### Phase 9 — Dashboard. Closed 13 Aug 2026
 
 **Four blocks, not five**, on `app/look-back.tsx`, reached from History's header
 rather than from a fourth tab or from Home. §11.3 was amended to match; the
@@ -960,11 +984,15 @@ so the window cannot be pushed into SQL.
 
 1. **DoD 11** — see what has not been trained recently.
 2. A quick log does not increment the sessions figure.
-3. Every block renders correctly with a single week of data — the grid one
-   column wide, the counts saying `since` rather than `last 28 days`, and both
-   lists stating why they are empty rather than rendering as blank.
+3. Every block renders correctly with a single week of data — the grid a full
+   thirteen columns wide with only the current week drawn, the counts saying
+   `since` rather than `last 28 days`, and both lists stating why they are empty
+   rather than rendering as blank. **This is the criterion the first build
+   failed**: it read "the grid one column wide", and one column of `flex-1` is
+   one square the width of the screen.
 4. Nothing on the screen is celebratory and nothing animates.
-5. `SMOKE_TEST.md` **AA** passes on device in both themes.
+5. `SMOKE_TEST.md` **AA** passes on device in both themes. *Passed 13 Aug
+   2026, after the fixes in the status block above.*
 
 **Not built, and recorded rather than dropped:**
 
