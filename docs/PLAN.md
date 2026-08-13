@@ -1165,6 +1165,42 @@ point is that a screen no longer has to be learned individually.
 
 ---
 
+### 4.6 The metric editor's model — open, blocks nothing
+
+**Open.** The Phase 8b refit kept our ordered-list editor over the design
+document's three checkboxes (screen 12, `WHAT IT RECORDS`), recorded as a
+deliberate deviation: *"the checkbox model would erase ordering"*. Reviewing the
+first device run, that argument covers less than it claimed.
+
+An exercise can hold **at most one of each preset** — `presetsNotOn` filters the
+add list — so:
+
+- **Renaming buys little.** `Hold (left)` can never sit beside `Hold (right)`,
+  so the name is a label on a metric that is already unique.
+- **Converting is uncheck-and-check** under a checkbox model.
+- **Only ordering is genuinely lost**, and it need not be: a `Logged first` chip
+  row over the checked metrics states it in one line and replaces the per-row
+  arrows.
+
+Against that, our version spends five stacked blocks per metric — name label and
+field, measures label and chips, position and three icon buttons — where the
+document spends one row, on a screen that is already a mixed draft/immediate
+surface (§18) and has to explain that split.
+
+It also **made a bug representable**: converting was offered every preset while
+adding was offered only the free ones, so an exercise holding Reps and Notes
+could turn the Notes into a second Reps in three taps and log two identical
+fields. Guarded in both the mutation and the editor rather than left waiting on
+this decision. A checkbox list would have made it unrepresentable instead, which
+is the strongest argument on the table.
+
+**Blocks nothing.** Phases 10 and 11 do not touch this screen. Adopting it later
+costs one screen and an amendment to `FEATURES.md` §4.1; no schema change and no
+migration, since ordering stays `display_order` and existing custom names keep
+displaying either way.
+
+---
+
 ## 5. Change Log
 
 | Date | Change |

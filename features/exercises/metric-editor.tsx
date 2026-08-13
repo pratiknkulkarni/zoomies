@@ -24,7 +24,6 @@ import {
   type ExerciseMetric,
 } from '@/db/queries/exercises';
 import {
-  METRIC_PRESETS,
   describeMeasure,
   presetFor,
   presetsNotOn,
@@ -105,6 +104,16 @@ export function MetricEditor({
             isLogged={logged.has(metric.id)}
             isFirst={index === 0}
             isLast={index === metrics.length - 1}
+            /*
+              What this row may become: everything the *other* metrics do not
+              already record, plus its own. Offering all three let an exercise
+              holding Reps and Notes convert the Notes into a second Reps —
+              `presetsNotOn` had always guarded the add list and nothing
+              guarded this one.
+            */
+            choices={presetsNotOn(
+              metrics.filter((other) => other.id !== metric.id),
+            )}
             onPendingRename={onPendingRename}
           />
         </View>
@@ -167,6 +176,7 @@ function MetricRow({
   isLogged,
   isFirst,
   isLast,
+  choices,
   onPendingRename,
 }: {
   metric: ExerciseMetric;
@@ -174,6 +184,8 @@ function MetricRow({
   isLogged: boolean;
   isFirst: boolean;
   isLast: boolean;
+  /** What it may become — its own measure, plus whatever no sibling holds. */
+  choices: MetricPreset[];
   /** Reports an unsaved rename upward, or `null` once there is none. */
   onPendingRename: (metricId: string, name: string | null) => void;
 }) {
@@ -271,7 +283,7 @@ function MetricRow({
           </>
         ) : (
           <View className="flex-row flex-wrap gap-sm">
-            {METRIC_PRESETS.map((preset) => (
+            {choices.map((preset) => (
               <Chip
                 key={preset.key}
                 label={preset.name}

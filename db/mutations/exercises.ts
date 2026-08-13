@@ -192,6 +192,43 @@ export async function convertMetric(
       return false;
     }
 
+    /*
+      And refused if the exercise already records that.
+
+      `addMetric` is offered only the presets an exercise is missing, so a
+      duplicate was unreachable that way — but converting was offered all of
+      them. Reps and Notes, open Notes, tap `Reps`, and the exercise records
+      reps twice and logs two identical fields. Three taps.
+
+      The check is here rather than only in the editor for the same reason the
+      one above it is: a mutation that can put an exercise into a state no
+      screen knows how to draw must not depend on a screen having been drawn
+      correctly. Identity is `(type, unit)`, never the name — §4.1, and the
+      same pair `presetFor` matches on.
+    */
+    const [current] = await tx
+      .select({ exerciseId: exerciseMetrics.exerciseId })
+      .from(exerciseMetrics)
+      .where(eq(exerciseMetrics.id, metricId))
+      .limit(1);
+
+    if (!current) {
+      return false;
+    }
+
+    const siblings = await liveMetrics(tx, current.exerciseId);
+
+    const taken = siblings.some(
+      (metric) =>
+        metric.id !== metricId &&
+        metric.type === preset.type &&
+        metric.unit === preset.unit,
+    );
+
+    if (taken) {
+      return false;
+    }
+
     await tx
       .update(exerciseMetrics)
       .set({ name: preset.name, type: preset.type, unit: preset.unit })
