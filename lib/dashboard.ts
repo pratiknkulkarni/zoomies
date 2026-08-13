@@ -28,12 +28,19 @@ export const GRID_WEEKS = 13;
 /**
  * What one square says.
  *
- * `future` is **not** a rest day and must not be drawn as one — a Thursday that
- * has not happened is not a Thursday you skipped. It is a state rather than an
- * absence because the current week is always partly in it, and the renderer has
- * to be able to tell the two apart.
+ * Two of the four are drawn and two are not, and the line between them is
+ * whether the day is **inside the record**. `trained` and `rest` are: they
+ * happened, the app was keeping count, and one of them has a set in it.
+ * `before` and `future` are not — a Thursday that has not arrived is not a
+ * Thursday you skipped, and neither is a Tuesday three weeks before you first
+ * opened the app. Drawing either as an empty square would report a failure to
+ * train at a time nothing was being recorded.
+ *
+ * They stay separate states rather than one because their reasons are opposite
+ * ends of the window, and a renderer that collapsed them would have no way to
+ * say so.
  */
-export type DayState = 'trained' | 'rest' | 'future';
+export type DayState = 'trained' | 'rest' | 'before' | 'future';
 
 export type GridDay = { dayMs: number; state: DayState };
 
@@ -41,9 +48,14 @@ export type GridDay = { dayMs: number; state: DayState };
 export type MonthSpan = { monthMs: number; columns: number };
 
 export type DaysGrid = {
-  /** Seven rows, Monday first, each one entry per week column. */
+  /** Seven rows, Monday first, each `GRID_WEEKS` entries wide. */
   rows: GridDay[][];
   months: MonthSpan[];
+  /**
+   * How many leading columns are entirely `before` — undrawn, but occupying
+   * their width so the squares never resize. The month axis skips them.
+   */
+  leading: number;
   /** The first day the grid can show training on, for the range label. */
   fromMs: number;
   /** Today. */
@@ -59,11 +71,15 @@ export type DaysGrid = {
  * which a single figure cannot answer honestly because the shape of a month is
  * the whole content of it.
  *
- * **It starts at your first session, not thirteen weeks ago.** A fixed quarter
- * of blank past shown to someone in week two is a report of failing to train
- * before they owned the app. The grid grows a column a week until it reaches
- * `GRID_WEEKS` and then scrolls forward, which is also the point at which it
- * begins to say something about consistency.
+ * **It is always thirteen columns wide and starts drawing at your first
+ * session.** Those are two different things and the difference is the whole of
+ * this function. A grid that also *narrowed* to the weeks it had would give
+ * week two two columns to fill the screen with, and a square sized by how new
+ * you are is a square the width of a thumb — which is what shipped, and what
+ * this fixes. So the geometry is fixed at a quarter and the leading columns are
+ * simply not drawn: the width is constant, today's column sits at the right
+ * edge for good, and nobody is shown a quarter of blank past they never had the
+ * chance to fill.
  *
  * Binary, never shaded by volume. §11.1 rules out a combined volume figure
  * across a pull-up and a hold, so an intensity ramp would have to invent the
@@ -87,30 +103,42 @@ export function daysTrainedGrid(
   const earliest = performedAt.reduce((low, at) => Math.min(low, at), Infinity);
 
   const lastColumn = startOfWeek(today);
-  // A fixed cap on how far back it reaches, so the grid stops growing rather
-  // than shrinking its squares to nothing after a year of training.
-  const capColumn = addDays(lastColumn, -(weeks - 1) * 7);
-  const firstColumn = Math.max(startOfWeek(earliest), capColumn);
+  // Where the grid's width begins, always. Everything left of `firstColumn` is
+  // held open and left undrawn.
+  const gridStart = addDays(lastColumn, -(weeks - 1) * 7);
+  // Where it begins to say anything: the week of the first session, or the far
+  // edge once history is longer than the window.
+  const firstColumn = Math.max(startOfWeek(earliest), gridStart);
 
-  const columns = Math.floor(daysBetween(firstColumn, lastColumn) / 7) + 1;
+  const leading = Math.floor(daysBetween(gridStart, firstColumn) / 7);
+
+  // The first day drawn, to the day rather than to the week. Starting a Thursday
+  // first-timer's grid on the Monday would draw three squares saying they
+  // skipped three days they had not yet installed the app for. It leaves the
+  // first column ragged at the top, which mirrors the last column being ragged
+  // at the bottom for the days still to come.
+  const began = Math.max(startOfDay(earliest), gridStart);
 
   return {
     rows: Array.from({ length: 7 }, (_, row) =>
-      Array.from({ length: columns }, (_, column): GridDay => {
-        const dayMs = addDays(firstColumn, column * 7 + row);
+      Array.from({ length: weeks }, (_, column): GridDay => {
+        const dayMs = addDays(gridStart, column * 7 + row);
 
         return {
           dayMs,
           state:
-            dayMs > today
-              ? 'future'
-              : trained.has(dayMs)
-                ? 'trained'
-                : 'rest',
+            dayMs < began
+              ? 'before'
+              : dayMs > today
+                ? 'future'
+                : trained.has(dayMs)
+                  ? 'trained'
+                  : 'rest',
         };
       }),
     ),
-    months: monthSpans(firstColumn, columns),
+    months: monthSpans(firstColumn, weeks - leading),
+    leading,
     // The label states what is drawn, not what exists. Where history runs past
     // the cap the grid begins at the cap, and a range naming a first session
     // outside the picture would be describing squares that are not there.

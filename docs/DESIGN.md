@@ -376,32 +376,39 @@ own about two steps below the sans beside it.
 
 ### 6.12 Day Grid
 
-Seven rows by up to thirteen columns on Look back: one square per day, filled
-`text` where anything was logged, outlined `mark` where nothing was
-(`FEATURES.md` §11.3).
+Seven rows by thirteen columns on Look back: one square per day, filled `text`
+where anything was logged, outlined `mark` where nothing was (`FEATURES.md`
+§11.3).
 
 **The same two marks as §6.11, at a different scale.** A filled square is
 something you did and an outlined one is something you did not — one vocabulary
 across the application, so the grid needs no key.
 
-**A day that has not happened is drawn as nothing at all.** There is no third
-mark and there must not be one: the outline means *skipped*, and Thursday of
-this week has not been skipped. A fainter outline was tried and fails on its
-own terms — the step below `mark` is invisible on paper and near-black in the
-dark, so the distinction would exist only in the token file. Blank is the one
-treatment that is neither *did* nor *did not*, and it costs nothing, because
-`future` occurs in the last column and nowhere else.
+**A day outside the record is drawn as nothing at all.** There is no third mark
+and there must not be one: the outline means *skipped*, and neither a Thursday
+that has not arrived nor a Tuesday before the app was keeping count has been
+skipped. A fainter outline was tried and fails on its own terms — the step
+below `mark` is invisible on paper and near-black in the dark, so the
+distinction would exist only in the token file. Blank is the one treatment that
+is neither *did* nor *did not*, and it holds both ragged ends of the picture:
+the first column is short at the top, the last is short at the bottom.
 
 **Binary, never shaded.** An intensity ramp would rank days by volume, and
 `FEATURES.md` §11.1 rules out a combined figure across a pull-up and a hold —
 so the ramp would be shading by a number that had to be invented first. §9 gets
 there independently: state is never carried by colour alone.
 
-Columns are `flex-1` with `gap-xs`, so the grid is the same width at one column
-as at thirteen and the first month is not a stripe down the left edge. The
-weekday axis is one mono `label` character in a `w-lg` column; the month axis is
-laid out in **spans** rather than a label per column, because `MAY` is wider
-than a square and each month has four or five of them to sit in.
+Columns are `flex-1` with `gap-xs` over a **fixed thirteen**, and the fixed part
+is what makes `flex-1` safe. `flex-1` over however many columns the history
+happened to fill is what shipped first, and it sized the square by how new the
+user was: two weeks in, the grid was two squares the width of a thumb. Thirteen
+always; the columns before the first session hold their width and draw nothing.
+
+The weekday axis is one mono `label` character in a `w-lg` column. The month
+axis is laid out in **spans** rather than a label per column, because `MAY` is
+wider than a square and each month has four or five of them to sit in — and it
+begins with a matching blank span over the undrawn columns, since there is no
+month to name there and any mismatch walks every later label off its month.
 
 ### 6.13 Count Pair
 
@@ -546,3 +553,4 @@ component contains a conditional.
 | Aug 2026 | Created. Direction: quiet editorial. Geist + Geist Mono. Moss accent. Full token set defined. Per-exercise doodles cut. |
 | Aug 2026 | Phase 8b, from the second design run (`zoomies_screen.pdf`). **The accent is deleted.** All three of its sanctioned uses read better as ink, and a coloured record marker argued against `FEATURES.md` §15's "stated, not congratulated" while claiming to honour it. `danger` survives as the only hue and reaches two acts. The neutral ramp goes from seven steps to eleven — `text-4`, `text-5`, `rule` and `rule-2` — so a section label, a set index and a list rule stop borrowing tokens meant for something else. Spacing becomes `4 · 6 · 10 · 14 · 18 · 24 · 34`, which moves the screen gutter from `xl` to `2xl`; the names stayed ordinal so the swap was mechanical. Type: `display` 32→27, `heading` 18→19, label tracking 0.08em→0.14em. Radii tighten to 10 / 12 / 22. The primary button becomes solid `text` with a `bg` label, which inverts between themes with no conditional. Geist stays — the document specifies Libre Franklin and IBM Plex Mono, and the difference at these sizes did not justify two font packages and a re-check that no frame renders in a fallback face. |
 | Aug 2026 | Phase 9. Two components added: **§6.12 Day Grid** and **§6.13 Count Pair**. The grid reuses §6.11's two marks at a different scale, which is why it needs no key — one vocabulary across the application. It adds no third mark for a day that has not happened yet: the outline means *skipped*, a Thursday that has not arrived has not been skipped, and a fainter outline fails on its own terms because the step below `mark` is invisible on paper and near-black in the dark. Composition rule 1 gains a note that §6.13's pair is not an exception — both figures are `metric`, and neither is the answer alone. Rule 3 corrected from `text-3` to `text-4`, which the Phase 8b ramp moved and this line did not follow. |
+| Aug 2026 | Phase 9 fix. **§6.12's columns are a fixed thirteen.** `flex-1` over a variable column count sized the square by how long the app had been in use, which was never the intent and read as a broken layout at two weeks in. The undrawn leading columns hold their width, and the month axis gains a matching blank span over them — a span mismatch there walks every later label off the month it names, the same failure the axis gap caused. The third-mark ruling widens: blank now covers a day before the record began as well as a day still to come. |

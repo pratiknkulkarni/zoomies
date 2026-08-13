@@ -553,18 +553,29 @@ This is a deliberate trade, not an oversight.
 ## 9. History
 
 **Timeline** — reverse-chronological list of completed sessions. Date, name,
-duration, exercise count. **Grouped by day**, because training clusters — two
-sessions and a quick log on one day, then nothing for three — and a flat list
-hides the gaps, which is the shape of the record most worth seeing.
+duration, what was in it. **Flat, with the breaks drawn.** Training clusters —
+two sessions and a quick log on one day, then nothing for three — and the gap is
+part of the record. This was grouped under a heading per day, which stated the
+days that exist and said nothing about the ones that do not; a rule reading
+`8–11 Aug · no training` costs one hairline and says the thing a missing heading
+could not.
+
+**Every row is ruled and no row wraps.** A session is two lines and a quick log
+is one, so a screen of them separated by whitespace alone reads as a column of
+loose text rather than as a list of things — the eye cannot find where one entry
+ends. One `rule-2` hairline per row settles it, dropped where a gap rule already
+separates. The exercise line is held to one line with the set count pinned at
+its end: a six-exercise session wrapped to three lines and made one row taller
+than the two beside it together, and truncation must eat the detail rather than
+the total.
 
 **Quick logs appear, marked.** §6.1 makes all three kinds the same rows so there
 is one code path for history; hiding one kind would mean training that is
 recorded and invisible. A quick log has no name of its own, so it borrows its
-exercise's, and it says `Quick log` where a session gives a duration — its start
-and end are the same instant, so a length would read as a very short session
-rather than something that was never one. §11.5 keeps quick logs out of the
-sessions *figure* on the dashboard, which is where the distinction earns its
-keep.
+exercise's, carries a `ONE-OFF` tag, and gives no duration — its start and end
+are the same instant, so a length would read as a very short session rather than
+something that was never one. §11.5 keeps quick logs out of the sessions
+*figure* on the dashboard, which is where the distinction earns its keep.
 
 **Session detail** — everything logged, per set, with notes. **Unrecorded
 values read as `—` here**, unlike on the session screen, which omits them. Mid-
@@ -674,7 +685,7 @@ reached from History, not from Home — what you want at 18:39 in a garage is a
 Start button, not a review of the last quarter.
 
 **Days trained** — one square per day, filled where anything was logged. Seven
-rows, Monday first, by up to thirteen week columns.
+rows, Monday first, by thirteen week columns.
 
 *This is deliberately not a streak.* No number, no current run, no reset, no
 flame, no penalty for a rest day. It shows the quarter; it does not score it.
@@ -682,12 +693,20 @@ Binary, never shaded by volume — §11.1 rules out a combined figure across a
 pull-up and a hold, so an intensity ramp would have to invent the number it
 shaded by.
 
-**It starts at the first session, not thirteen weeks ago.** A fixed quarter of
-blank past shown to someone in week two is a report of failing to train before
-they owned the app. The grid grows a column a week and then scrolls forward,
-which is also when it starts saying something about consistency. Days that have
-not happened yet are drawn as nothing at all: the outline means *skipped*, and a
-Thursday that has not arrived has not been skipped.
+**It is always a quarter wide, and it draws from the first session.** Those are
+two rules, and separating them is what makes it work. A fixed quarter of blank
+past shown to someone in week two is a report of failing to train before they
+owned the app — so nothing before the first logged day is drawn. But a grid that
+*narrowed* to the weeks it had would size its squares by how new the user is,
+which is how it first shipped: week two got two columns to fill a phone with,
+and the squares came out the width of a thumb. So the width is fixed at thirteen
+columns and the leading ones are simply held open and left blank.
+
+**Blank means outside the record, at either end.** The two marks say *trained*
+and *skipped*, and neither is true of a day before the app was keeping count or
+of a day that has not arrived. So the first column is ragged at the top and the
+last is ragged at the bottom, and today's column sits at the right edge for
+good.
 
 **Sessions and quick logs** — two counts over the last 28 days. Small type, not
 a hero element. §11.5 keeps quick logs out of the sessions figure; stating them
@@ -867,6 +886,7 @@ Without reading documentation.
 | Aug 2026 | Phase 3 amendments. §5 now says templates live on Home — the spec defined them fully but never said how they are reached, the same omission §3.5 had for archiving. §5.2 records that templates themselves do not reorder, and that deleting one takes its slots, which is the opposite of the call made for an exercise's metrics and for the opposite reason: nothing points at a slot. |
 | Aug 2026 | Phase 6 amendments. §2 gains `template_slot_id` on `exercise_entries` and a storage rule saying what it is not: provenance for the raise prompt, never a target source, because reading a target through it would undo the snapshot two rows above it. The raise had nowhere to write otherwise — an entry knew its exercise, and §5.2 lets one exercise fill two slots with different targets. §6.6 rewritten around three things implementation forced into the open: a majority is strictly more than half and a tie is not a beat; the write goes to the slot and never to the completed session; and **a raise may never be a lowering**, so it is gated on the slot's own figure rather than on the possibly-overridden target that was trained against. §2 also lost `rest_seconds`, which Phase 5 dropped from the schema and from §5.1 but not from the data-model block. |
 | Aug 2026 | Phase 9 amendments. §11.3 goes from five blocks to four. The **days-trained grid** replaces both *Last 7 days* and the 12-week *Sessions per week* bar chart — it answers the week and the quarter in one object made of `View`s, and with the chart went the only reason the dashboard needed a plotting stack. The streak objection was settled deliberately rather than assumed: a filled-square calendar is the most streak-coded object in software, and the three mechanisms that make it one are a count, an intensity ramp and a fixed grid of blank past. None is present, and §11.1 already forbade the second. *This week* became **28 days** — a week holds nought to four sessions and says nothing either way — and its *sets* figure became **quick logs**, because the grid above already draws this week and §11.5's exclusion was the thing worth making visible rather than silent. *Not trained recently* is now sorted by the gap **with the date beside it**, so a movement deliberately stopped reads as a fact rather than a debt, and excludes never-trained and anything under a week. *Recent records* now requires a set to have **beaten** something: a first-ever set is a baseline, and without the rule month one is a wall of records. §10.2 records that the trend is now the sole justification left for `victory-native`. |
+| Aug 2026 | Phase 9 fixes, from the first run on device. The **days-trained grid** was sized by how new the user is: `flex-1` over however many columns the history filled gave week two two columns and squares the width of a thumb. §11.3 now separates the two rules that were tangled into one — the grid is **always thirteen columns wide**, and it **draws from the first logged day**, holding the earlier columns open and blank. Blank now means *outside the record* at either end rather than *not yet happened*, so the first column is ragged at the top exactly as the last is ragged at the bottom. §9 gains the timeline's row rules and its one-line rule, and loses two stale sentences: it has not been grouped by day since Phase 8b, and a quick log carries a `ONE-OFF` tag rather than the words `Quick log`. |
 
 ---
 

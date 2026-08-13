@@ -26,15 +26,19 @@ const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
  * other side: state is never carried by colour alone, and there is no second
  * colour in the system to carry it with.
  *
- * **A day that has not happened is drawn as nothing at all.** The system has
+ * **A day outside the record is drawn as nothing at all.** The system has
  * exactly two marks — filled for done and outlined for not — and the outline
- * says *skipped*. Thursday of this week has not been skipped. Leaving it blank
- * is the only treatment that is neither, and it costs nothing: `future` occurs
- * in the last column and nowhere else.
+ * says *skipped*. Thursday of this week has not been skipped, and neither has
+ * any day before you first logged something. Blank is the only treatment that
+ * is neither mark, and it is what holds the two ragged ends of the picture:
+ * undrawn at the start, drawn through the middle, undrawn again at the bottom
+ * of the last column.
  *
- * Columns are `flex-1` rather than a fixed size. The grid is between one and
- * thirteen columns wide depending on how long the app has been in use, and a
- * fixed square would leave the first month's grid as a stripe down the left.
+ * Columns are `flex-1` over a **fixed** thirteen, which is the only reason that
+ * works. `flex-1` over however many columns the history happened to fill made
+ * week two a pair of squares the width of a thumb; sizing the square by how new
+ * the user is was never intended and reads as a broken layout. Thirteen columns
+ * always, blank where there is nothing to say.
  */
 export function DayGrid({ grid }: { grid: DaysGrid }) {
   return (
@@ -69,6 +73,12 @@ export function DayGrid({ grid }: { grid: DaysGrid }) {
           the month it names. Contiguous, the two agree to within a pixel.
         */}
         <View className="flex-1 flex-row">
+          {/*
+            The columns before the first session carry no label, because there
+            is no month there to name — only held-open width. It has to be the
+            same held-open width, or every label after it walks off its month.
+          */}
+          {grid.leading > 0 ? <View style={{ flex: grid.leading }} /> : null}
           {grid.months.map((month) => (
             <View
               key={month.monthMs}
@@ -95,7 +105,9 @@ export function DayGrid({ grid }: { grid: DaysGrid }) {
 }
 
 function Day({ day }: { day: GridDay }) {
-  if (day.state === 'future') {
+  // Both ends of the window: nothing was being recorded then, so neither mark
+  // is true. They hold their width and draw nothing.
+  if (day.state === 'before' || day.state === 'future') {
     return <View className="aspect-square flex-1" />;
   }
 

@@ -23,27 +23,52 @@ describe('daysTrainedGrid', () => {
     expect(daysTrainedGrid([], NOW)).toBeNull();
   });
 
-  it('starts at the first session rather than a fixed quarter back', () => {
-    const grid = daysTrainedGrid([at(2026, 8, 12)], NOW);
+  it('is thirteen columns wide whatever the history', () => {
+    const week = daysTrainedGrid([at(2026, 8, 12)], NOW);
+    const years = daysTrainedGrid([at(2024, 1, 1), at(2026, 8, 12)], NOW);
 
-    // One column: the week of the 10th, which is also the current week.
-    expect(grid?.rows).toHaveLength(7);
-    expect(grid?.rows[0]).toHaveLength(1);
-    expect(grid?.fromMs).toBe(at(2026, 8, 12, 0));
-    expect(grid?.toMs).toBe(at(2026, 8, 15, 0));
+    // The geometry never depends on how long the app has been in use. It did,
+    // and week two got two columns to fill a phone with.
+    expect(week?.rows).toHaveLength(7);
+    expect(week?.rows[0]).toHaveLength(13);
+    expect(years?.rows[0]).toHaveLength(13);
+
+    expect(week?.fromMs).toBe(at(2026, 8, 12, 0));
+    expect(week?.toMs).toBe(at(2026, 8, 15, 0));
   });
 
-  it('grows a column a week', () => {
+  it('draws nothing before the first session, and says how much', () => {
+    const grid = daysTrainedGrid([at(2026, 8, 12)], NOW);
+
+    // Twelve columns of held-open width, then the week of the 10th.
+    expect(grid?.leading).toBe(12);
+    expect(grid?.rows[0]?.[0]?.state).toBe('before');
+    expect(grid?.rows[6]?.[11]?.state).toBe('before');
+  });
+
+  it('draws from the first session to the day, not to the week', () => {
+    // 12 August is a Wednesday. Monday and Tuesday of that week are days the
+    // app knew nothing about, and an outlined square would report them as
+    // skipped.
+    const grid = daysTrainedGrid([at(2026, 8, 12)], NOW);
+
+    expect(grid?.rows[0]?.at(-1)?.state).toBe('before');
+    expect(grid?.rows[1]?.at(-1)?.state).toBe('before');
+    expect(grid?.rows[2]?.at(-1)?.state).toBe('trained');
+  });
+
+  it('gives back a column of width a week', () => {
     const grid = daysTrainedGrid([at(2026, 7, 29)], NOW);
 
-    // Weeks of 27 Jul, 3 Aug and 10 Aug.
-    expect(grid?.rows[0]).toHaveLength(3);
+    // Weeks of 27 Jul, 3 Aug and 10 Aug are drawn; the other ten are not.
+    expect(grid?.leading).toBe(10);
   });
 
   it('stops at the cap rather than growing without limit', () => {
     const grid = daysTrainedGrid([at(2024, 1, 1), at(2026, 8, 12)], NOW);
 
-    expect(grid?.rows[0]).toHaveLength(13);
+    expect(grid?.leading).toBe(0);
+    expect(grid?.rows[0]?.[0]?.state).not.toBe('before');
   });
 
   it('labels the range by what is drawn, not by what exists', () => {
@@ -58,9 +83,9 @@ describe('daysTrainedGrid', () => {
   it('fills the day a set was performed and only that day', () => {
     const grid = daysTrainedGrid([at(2026, 8, 12, 19)], NOW);
 
-    // 12 August is a Wednesday: row index 2, Monday first.
-    expect(grid?.rows[2]?.[0]?.state).toBe('trained');
-    expect(grid?.rows[1]?.[0]?.state).toBe('rest');
+    // 12 August is a Wednesday: row index 2, Monday first, in the last column.
+    expect(grid?.rows[2]?.at(-1)?.state).toBe('trained');
+    expect(grid?.rows[3]?.at(-1)?.state).toBe('rest');
   });
 
   it('folds several sets on one day into one square', () => {
@@ -69,21 +94,21 @@ describe('daysTrainedGrid', () => {
       NOW,
     );
 
-    expect(grid?.rows[2]?.[0]?.state).toBe('trained');
+    expect(grid?.rows[2]?.at(-1)?.state).toBe('trained');
   });
 
   it('marks days after today as future, never as rest', () => {
     const grid = daysTrainedGrid([at(2026, 8, 12)], NOW);
 
     // Saturday is today; Sunday has not happened.
-    expect(grid?.rows[5]?.[0]?.state).toBe('rest');
-    expect(grid?.rows[6]?.[0]?.state).toBe('future');
+    expect(grid?.rows[5]?.at(-1)?.state).toBe('rest');
+    expect(grid?.rows[6]?.at(-1)?.state).toBe('future');
   });
 
   it('treats today itself as a day that has happened', () => {
     const grid = daysTrainedGrid([at(2026, 8, 15, 9)], NOW);
 
-    expect(grid?.rows[5]?.[0]?.state).toBe('trained');
+    expect(grid?.rows[5]?.at(-1)?.state).toBe('trained');
   });
 
   it('spans months by the column their Monday falls in', () => {
@@ -104,6 +129,7 @@ describe('daysTrainedGrid', () => {
     // range, and nowhere to put a streak even if someone wanted one.
     expect(Object.keys(grid ?? {}).sort()).toEqual([
       'fromMs',
+      'leading',
       'months',
       'rows',
       'toMs',

@@ -1256,12 +1256,26 @@ absent entirely.
 
 **Observed:**
 
-**AA2 — the grid starts at your first session.** Read the label above it.
+**AA2 — the grid is a quarter wide and draws from your first session.** Read the
+label, then look at the squares.
 
-Expect: `DAYS TRAINED · <first day> – <today>`, and columns only for weeks that
-have happened. It must **not** show thirteen weeks of blank past. Once history
-runs past thirteen weeks the grid stops growing and the label starts at the
-first column drawn, not at the first session ever.
+Expect: `DAYS TRAINED · <first day> – <today>`. The squares are small — thirteen
+columns' worth — **whatever the history**, and they end flush with the right
+gutter. Everything before your first logged day is blank: no outline, no fill,
+just held-open space. This is the two-week case that shipped broken, with two
+columns of squares the width of a thumb.
+
+Once history runs past thirteen weeks nothing is blank on the left, and the
+label starts at the first column drawn rather than at the first session ever.
+
+**Observed:**
+
+**AA2b — the month axis sits under its own months.** Read the axis, on a fresh
+install and again with a few weeks of history.
+
+Expect: the first label sits at the left edge of the month it names, and no
+label appears over the blank leading columns. A blank span that does not match
+the grid's walks every later label off by a column.
 
 **Observed:**
 
@@ -1274,12 +1288,15 @@ by.
 
 **Observed:**
 
-**AA4 — a day that has not happened is blank.** Look at the last column, unless
-today is Sunday.
+**AA4 — a day outside the record is blank, at both ends.** Look at the last
+column, unless today is Sunday; then look at the first column drawn, unless you
+first trained on a Monday.
 
-Expect: today and every day before it carries a mark — filled or outlined — and
-the days after today carry **nothing at all**. An outline there would say
-*skipped*, and a Thursday that has not arrived has not been skipped.
+Expect: every day from your first logged day to today carries a mark — filled or
+outlined — and nothing else does. The last column is short at the bottom and the
+first is short at the top. An outline at either end would say *skipped*, and
+neither a Thursday that has not arrived nor a Tuesday before the app knew you
+has been skipped.
 
 **Observed:**
 
@@ -1355,5 +1372,44 @@ starting point.
 
 Expect: no confetti, no counting-up figures, no animated reveal, no exclamation
 mark anywhere. Records are stated. §11.6, `DESIGN.md` §8.
+
+**Observed:**
+
+---
+
+## AB. The timeline, ruled
+
+Run in **both themes**. History tab, with at least a dozen entries in it,
+including quick logs, multi-exercise sessions and a break of two or more days.
+
+**AB1 — every row is separated.** Scroll the list.
+
+Expect: a hairline under every row, at `rule-2` weight — light enough that a
+dozen of them do not read as a grid. A rule under the `History` header too, at
+the heavier `rule`.
+
+**Observed:**
+
+**AB2 — the rule stands down where something else already separates.** Find a
+break with a `8–11 Aug · no training` rule in it, and scroll to the very bottom.
+
+Expect: no row rule immediately above a gap rule, and none under the last row in
+the list. A hairline directly above the gap's own two is a third line saying the
+same thing; a hairline under the last row is a line in open space.
+
+**Observed:**
+
+**AB3 — no row wraps.** Find the session with the most exercises in it.
+
+Expect: exactly two lines. The exercise names truncate with an ellipsis and the
+set count stays visible at the end of the line — the total is the fact that must
+survive, the names are the detail. Every quick log is exactly one line.
+
+**Observed:**
+
+**AB4 — the rules survive the dark.** Switch themes and read the list again.
+
+Expect: the hairlines are visible but not bright. `rule-2` in dark is barely
+above the ground on purpose; if the rows look boxed, it is the wrong token.
 
 **Observed:**
