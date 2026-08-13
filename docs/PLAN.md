@@ -221,9 +221,181 @@
 > dashboard's sessions *figure*, which is where the distinction matters.
 >
 > `SMOKE_TEST.md` U and V — edit, delete, and the two things history must not do
-> — are unrun. They are regression rather than exit criteria.
+> — were run on device and pass, reported rather than written into the file.
+> Recorded here so the gap is in one place rather than looking unrun forever.
 >
-> **Next: Phase 8 — Exercise Details & Records.**
+> **Phase 8 — Exercise Details & Records. Built 10 Aug 2026**, branch
+> `phase-8-records`. One movement across its whole life: every set ever logged
+> with its session and date, personal records per metric, and the sessions it
+> appeared in.
+>
+> **§4.3 is settled, and the answer was no driver.** The question assumed the
+> ranking would live inside a query. It does not — the queries fetch rows,
+> `lib/records.ts` folds them, and eighteen tests over three-line fixtures cover
+> the exit criterion's ties and nulls without a native devDependency. What stays
+> untested is the queries' own soft-delete filtering, recorded rather than
+> glossed.
+>
+> **A tie keeps the earlier holder.** Matching your best is not beating it — the
+> rule §6.6 already applies to the raise prompt. Null is never a candidate and
+> zero always is, which is invariant 2 read from both sides.
+>
+> **The best-set trend moved to Phase 9** (`FEATURES.md` §10.2). It was the
+> first thing in the project to want a chart, and installing victory-native and
+> Skia for one sparkline would have settled the dashboard's charting stack as a
+> side effect of an exercise screen.
+>
+> **Verified on the Pixel 7a 11 Aug 2026.** `SMOKE_TEST.md` T, U, V and W all
+> pass, including the two checks that would expose a wrong fold — W3, a tie
+> leaves the record's date where it was, and W6, a correction reaches the
+> record. DoD 10 is closed.
+>
+> **Phase 8a — reading a set back. Built 11 Aug 2026**, same branch. W passed
+> and still found that the exercise screen could render a line nobody could
+> read: `21 20 · —`, being a value of 21 against a metric someone had named
+> `20`, then Reps unrecorded.
+>
+> Three faults behind one line. The records row printed the metric name twice,
+> once as its label and once inside the figure. The dash never said *which*
+> metric was missing, so reading it meant counting positions against a list
+> further up the screen. And a set that measured nothing read `— · —`, because
+> the `Recorded` fallback became unreachable the moment any caller asked for a
+> dash.
+>
+> **Fixing the third exposed an older one.** A note is stored in `value_text`
+> and every caller builds its map from `value_num`, so a written note has always
+> looked unrecorded on these screens — invisible while the mode dropped it, and
+> a plain falsehood the moment the mode began naming it. `formatSetValues` no
+> longer speaks for a note; `formatSetNote` gives it its own line.
+>
+> The log button now names the set it is about to write — `Save set 4`. The
+> counter above answers "was that my second or third"; this answers it at the
+> instant of pressing.
+>
+> **Closed 12 Aug 2026.** `SMOKE_TEST.md` X passes on the Pixel 7a — the name
+> once, the missing metric named identically on both reading surfaces,
+> `Recorded` for a set that measured nothing, a written note on its own line and
+> an unwritten one taking no line at all, and the button counting up on log and
+> back down on delete. 120 unit tests.
+>
+> **Phase 8b — the design refit. Closed 13 Aug 2026**, branch
+> `phase-8-records`. The second design run (`docs/zoomies_screen.pdf`) is
+> adopted as the direction: seventeen screens, one per commit, no feature work.
+>
+> **Pass 1 landed the whole appendix in two files.** `global.css` and
+> `tailwind.config.js` are the only places a value exists and the config deletes
+> Tailwind's own scales, so the palette, spacing, radii and type scale went in
+> without touching a component.
+>
+> **The accent is gone.** All three of its sanctioned uses read better as ink —
+> the primary button as a solid block that inverts between themes, the record
+> marker as weight, the day dots as filled versus outline. It turned out to be
+> **one live class in the entire application**. `danger` survives as the only
+> hue and is now a red word inside a border rather than a tinted fill.
+>
+> The neutral ramp went from seven steps to eleven, because a section label, a
+> set index and a list rule were each borrowing a token meant for something
+> else. Spacing moved to `4 · 6 · 10 · 14 · 18 · 24 · 34`, which put the screen
+> gutter on `2xl` and section separation on `xl` — an exact swap of two names,
+> so the sweep across 24 files was mechanical.
+>
+> **Pass 2 rebuilt the first screen**: `app/history/[id].tsx`, the session read
+> back. Chosen because it carries the most of the document's vocabulary in one
+> place and sits outside the training loop, so nothing it touches can lose a
+> set. It creates `Tag` and the set line, which the next two screens inherit.
+>
+> **Every screen in the queue is now refit**, one commit each: the session read
+> back, the timeline, one exercise across everything, the library, the archive,
+> Home, quick log, the completion review, the plan, the live session and the
+> live exercise.
+>
+> Six things the refit decided that the document did not:
+>
+> - **A single rest day is not a gap** in the timeline. Training every other day
+>   would otherwise draw a rule between every pair of rows, and a timeline that
+>   remarks on every day off is keeping score — §11.6 by another name. Two clear
+>   days is where a break starts. A test asserting the opposite is what surfaced
+>   it.
+> - **Set figures read two steps below the name beside them.** Geist Mono has a
+>   far larger x-height than the document's IBM Plex, so nominal parity was
+>   visual competition.
+> - **`danger` is a red word in a border, never a red fill.** A tinted block
+>   reads as a state rather than an act.
+> - **The quick-log line carries no clock.** The document times it; a figure
+>   rendered on arrival is wrong by however long the screen sits open.
+> - **A counted set is logged from a pinned bar; a held one is not.** The clock
+>   *is* the screen while it runs, and the bottom edge is the smallest space on
+>   it.
+> - **Neither session control is filled.** Mid-session the exercise rows are
+>   what the eye should land on, and a black `End session` where a thumb scrolls
+>   is a hazard rather than an affordance.
+>
+> `SMOKE_TEST.md` Y and Z carry the checks, both in both themes. **Z1 is K2
+> repeated**: the write path was not touched, and that is the claim to test.
+> 155 unit tests.
+>
+> **Phase 9 — the dashboard. Built 12 Aug 2026**, same branch, as
+> `app/look-back.tsx`. Four blocks, not five, and **no charting stack**: §4.4
+> dissolved exactly as §4.3 did, and for the same reason — the object the screen
+> actually wanted was simpler than the library that would have drawn it.
+>
+> **The days-trained grid replaced two blocks.** Seven rows by thirteen weeks of
+> filled and unfilled squares answers both §11.3's *Last 7 days* and its
+> 12-week *Sessions per week* bar chart, and it is a grid of `View`s. That is
+> the whole reason this phase installs nothing.
+>
+> **The streak objection was settled rather than assumed.** A filled-square
+> calendar is the most streak-coded object in software, and §11.6 excludes
+> streaks by name. Three mechanisms make it one — a count, an intensity ramp,
+> and a fixed grid of blank past — and none is present: no number, binary fill
+> (§11.1 forbids the volume figure a ramp would need), and nothing is drawn
+> before the first logged day.
+>
+> Four things the build decided that the spec did not:
+>
+> - **A day that has not happened is drawn as nothing at all.** The outline
+>   means *skipped*, and Thursday of this week has not been skipped. A fainter
+>   outline fails on its own terms: the step below `mark` is invisible on paper
+>   and near-black in the dark.
+> - **A first-ever set is not a record.** It is a baseline. Without the rule,
+>   month one is a wall of them, since every exercise's first set is its best.
+> - **Never-trained is not a long gap**, and nothing under a week appears in the
+>   neglect list at all — a list ranking the whole library by recency is the
+>   same object with the meaning removed.
+> - **28 days, not this week.** A week holds nought to four sessions and swings
+>   between halves and doubles on a Sunday. The grid already draws this week.
+>
+> `lib/days.ts` is new and `lib/history.ts` now imports it: the timeline's gap
+> rules and the grid must agree about which day a 00:30 session belongs to, and
+> a second copy of `startOfDay` is how they would come to disagree. 214 unit
+> tests.
+>
+> **Phase 9 — closed 13 Aug 2026.** Y, Z, AA and AB all pass on the Pixel 7a in
+> both themes. Three things the first device run found, all fixed on the branch:
+>
+> - **The grid was sized by how new the app is.** `flex-1` over however many
+>   columns the history had filled gave week two two columns and squares the
+>   width of a thumb. Width and content were one rule and are now two: thirteen
+>   columns always, nothing drawn before the first logged day, the leading
+>   columns holding their width and drawing nothing. `before` joins `future` as
+>   a state that is not drawn, and the rule reads the same from both ends — the
+>   two marks say *trained* and *skipped*, and neither is true outside the
+>   record.
+> - **The timeline read as a column of loose text.** Twelve entries at two
+>   different heights by design, separated by whitespace alone. A `rule-2` per
+>   row, standing down where a gap rule already separates; and the exercise line
+>   no longer wraps, with the set count pinned so truncation eats the detail
+>   rather than the total. `FEATURES.md` §9 had also drifted — it still claimed
+>   the timeline was grouped by day.
+> - **An exercise could record the same thing twice.** Adding a metric was
+>   offered only the free presets; converting one was offered all of them.
+>   Guarded in the editor and in the mutation. It came out of §4.6, now open:
+>   whether the metric editor should become the document's three checkboxes.
+>
+> 216 unit tests.
+>
+> **Next: merge Phases 8, 8a, 8b and 9 to `main`, then Phase 10 — export and
+> settings.**
 
 Update this block when a phase closes. It is the first thing read at the start
 of a session.
@@ -629,11 +801,10 @@ another not, and criterion 2 needs a session with a nonzero pause, neither of
 which existed on the device. Both were created by hand and both read back
 correctly — `SMOKE_TEST.md` T1 and T3.
 
-What remains unrun is regression rather than exit criteria: `SMOKE_TEST.md` U
-and V — edit, delete, and the two things history must not do (offer a logging UI
-for a finished session, hold the screen awake while reading one). Both of those
-corrections are verified by reading `app/entry/[id].tsx`, not by watching a
-display time out.
+`SMOKE_TEST.md` U and V — edit, delete, and the two things history must not do
+(offer a logging UI for a finished session, hold the screen awake while reading
+one) — were run on device and pass. Reported rather than written into the file,
+which is why its `Observed:` lines are empty.
 
 ---
 
@@ -643,8 +814,8 @@ The payoff for making Exercise permanent. Spans **all** templates and includes
 quick logs.
 
 - Every set ever logged, newest first, with its session and date
-- Personal records per exercise **per metric** — most reps, longest hold,
-  heaviest added load. A duration PR and a rep PR are separate.
+- Personal records per exercise **per metric** — most reps, longest hold. A
+  duration PR and a rep PR are separate.
 - Best-set trend over time
 - Which sessions it appeared in
 - Its metric configuration
@@ -660,33 +831,179 @@ nothing is cached or stored.
 2. PR queries pass unit tests, including ties and nulls.
 3. No aggregate value exists in any table.
 
+**Built 10 Aug 2026**, branch `phase-8-records`.
+
+`db/queries/aggregate.ts` was not created and is not missing. The reads it was
+going to hold are three rooted queries in `records.ts`, and the only thing that
+aggregates is a fold in `lib/records.ts`. A second query file would have been a
+name with nothing behind it.
+
+**§4.3 settled without a driver.** The ranking is pure, so the exit criterion's
+"ties and nulls" are eighteen tests over fixtures rather than a native
+devDependency and a migration harness. The cost is that the queries' soft-delete
+filtering stays untested; §4.3 records it.
+
+**The trend moved to Phase 9** (`FEATURES.md` §10.2). It was the first thing in
+the project to want a chart, and installing `victory-native` + Skia for one
+sparkline would have decided the dashboard's charting stack as a side effect of
+an exercise screen.
+
+Three roots rather than one join, for the reason every read layer here gives:
+`sessions` moves on rename and delete, `sets` on logging and deleting, and
+`set_metric_values` on a correction from history. `exercise_entries` needs no
+root of its own — nothing soft-deletes an entry, which was checked rather than
+assumed.
+
+**Closed 11 Aug 2026.** All three exit criteria verified on the Pixel 7a;
+`SMOKE_TEST.md` T, U, V and W pass.
+
+#### Phase 8a — reading a set back
+
+W passed and still found the screen unreadable, which is the useful kind of
+failure: the ranking was right and the sentence describing it was not.
+
+The whole of it is presentation, in `lib/format.ts` and its two callers.
+`formatMeasure` gained a bare form for callers that already name the metric.
+`missing` became a mode — `omit`, `dash`, `name` — and the reading surfaces
+took `name`, so a set says `21 · reps not recorded` rather than `21 · —`. The
+`Recorded` fallback, which had become unreachable, now covers a set that
+measured nothing in every mode.
+
+**The fix found an older bug underneath it.** A note lives in `value_text` and
+every caller builds its map from `value_num`, so a written note had always read
+as unrecorded here. Harmless while the mode dropped it; a false statement the
+moment the mode named it. `formatSetValues` no longer speaks for a note at all.
+
+`formatMetricDetail` was examined and left alone. `Logged first · a count` reads
+oddly above a metric named `20`, but the name is what is odd; the wording was
+chosen over `Primary · Duration · s` deliberately and the docstring says why.
+
+Also here, from the design experiment: the log button names the set it is about
+to write. `SMOKE_TEST.md` X carries the re-check.
+
+**Verified on the Pixel 7a 12 Aug 2026** — `SMOKE_TEST.md` X, all seven items,
+including the two the fix could plausibly have got wrong: X4, a note must never
+read as unrecorded, and X6, the button must never name a set number that already
+exists. 120 unit tests, `tsc` and lint clean.
+
 ---
 
-### Phase 9 — Dashboard
+### Phase 8b — The Design Refit
 
-Built in the shipping order of `FEATURES.md` §11.7, **not** the presentation
-order of §11.3 — four of the five blocks are near-empty for the first month.
+Presentation only. No feature is added, no schema is touched, and every screen
+keeps the data it already reads. The direction is `docs/zoomies_screen.pdf`.
 
-1. **Not trained recently** — three to five active exercises by days since last
-   logged. Useful from week two.
-2. **Recent records** — PRs set in the last 30 days. Stated, never
-   congratulated.
-3. **This week** — sessions and sets. Two numbers, small type, not a hero.
-4. **Last 7 days** — seven dots, filled if trained. Filled versus hollow, not
-   two colours. No number attached. This is not a streak.
-5. **Sessions per week** — 12-week bar chart. Says nothing until roughly three
-   months of data exist; may land in Phase 11. Bars are neutral; the accent does
-   not appear in charts.
+**Two things the document specifies are not built**, because it did not know
+they were cut: the **rest timer** (screens 14, 16, 17 — `FEATURES.md` §15,
+migration 0003 dropped the column) and **added weight** (screens 11, 12, E4 —
+§15, migration 0004). Those fields are simply absent from the layouts.
 
-Counting rules: quick logs count toward sets, records and days-since-trained but
-**never** the sessions figure. Ad-hoc sessions do count.
+**Four deliberate deviations**, each recorded where it applies:
+
+- **The name and note stay drafted fields** on the session screen. The document
+  puts `Rename` in the header and the note behind "Tap to edit"; ours is §18
+  Pattern A, settled and verified across six screens. Changing how a screen is
+  left is a decision about all of §18, not one a single refit should take.
+- **The Suggested section stays** on the Exercises tab (§3.3).
+- **The unfinished-session prompt keeps three options.** The document offers
+  *Close it* / *Carry on*; §6.3 requires Discard, with its second confirmation.
+- **Metrics stay an ordered list.** The document models them as three fixed
+  checkboxes, which would erase the `Logged first` primary that drives the
+  logging UI (§4.1, §7.2).
+
+Geist and Geist Mono are kept over the document's Libre Franklin and IBM Plex
+Mono: both are grotesques, the difference at these sizes is small, and the type
+*scale* is adopted either way.
+
+**The queue.** One screen per commit, lowest risk first, each inheriting what
+the last one built.
+
+| # | Document | Screen | State |
+|---|---|---|---|
+| 1 | 8 · session read back | `app/history/[id].tsx` | Built — creates `Tag`, the set line, `formatTimeRange` |
+| 2 | 7 · history timeline | `app/(tabs)/history.tsx` | Built — gap rules, `ONE-OFF`, a set count per session |
+| 3 | 9 · one exercise, all time | `app/exercise/[id]/index.tsx` | Built — stat pair, a session per row; chart is Phase 9 |
+| 4 | 10 · exercises | `app/(tabs)/exercises.tsx` | Built — grouped, `reps · 14 Aug`, search |
+| 5 | 13 · archived | `app/exercise/archived.tsx` | Built — exercises only; archiving plans is a feature |
+| 6 | 5 · home | `app/(tabs)/index.tsx` | Built — `Start` on the row |
+| 7 | 3 · quick log, 4 · review | `app/quick-log.tsx`, `app/complete/[id].tsx` | Built — opens on the last exercise; the review shows the session |
+| 8 | 14 · plan | `app/template/[id]/index.tsx` | Built — `last …` per slot, Start at the foot |
+| 9 | 1, 2, 2B | `app/session/[id].tsx`, `app/entry/[id].tsx`, `features/session/` | Built — set marks, live row, pinned bar. `SMOKE_TEST.md` Z |
+
+Group 9 goes last on purpose: invariant 1 lives in those files, and the set
+mark, the pinned record bar and the 92px clock all arrive together.
+
+**Not in this phase.** The dashboard and the dot chart are Phase 9. The
+bottom-sheet picker (15, E4) and the two decision sheets (E3, E5) need a sheet
+primitive that does not exist — its own pass, once the queue reaches a screen
+that wants it. Drawing option C lands with the empty surfaces it belongs to.
+
+**Exit criteria**
+
+1. Every screen in the queue matches its page in the document, allowing for the
+   deviations above.
+2. No literal colour, spacing, radius or type size appears outside `global.css`
+   and `tailwind.config.js`.
+3. `SMOKE_TEST.md` Y, Z and AB pass on device **in both themes** — the
+   document's claim is that light and dark are one design at two grounds, so
+   anything that moves between them is a defect. *Passed 13 Aug 2026.*
+4. No feature behaves differently than it did before the phase.
+
+---
+
+### Phase 9 — Dashboard. Closed 13 Aug 2026
+
+**Four blocks, not five**, on `app/look-back.tsx`, reached from History's header
+rather than from a fourth tab or from Home. §11.3 was amended to match; the
+reasoning is there and is not restated here.
+
+| # | Block | Where it comes from |
+|---|---|---|
+| 1 | Days trained — 7 × 13 squares | `daysTrainedGrid` over `trainedAtRefs` |
+| 2 | Sessions and quick logs, 28 days | `trainingCounts` over `completedSessions` |
+| 3 | Longest since trained | `longestSinceTrained` over `lastTrainedByExercise` |
+| 4 | Recent records, 30 days | `recentRecords` over `rankableValues` — the one new query |
+
+Counting rules held: quick logs count toward sets, records and
+days-since-trained but **never** the sessions figure, and ad-hoc sessions do
+count. Nothing is stored (invariant 3) — a set corrected from three weeks ago
+moves all four blocks at once.
+
+**§4.4 dissolved.** The grid replaced the 12-week bar chart, so the dashboard
+plots nothing and needs no charting stack. §10.2's best-set trend is now the
+sole outstanding justification for one, which makes it the case §8 already
+refused: a library for a single sparkline.
+
+**Six live queries, five of which already existed.** Each is rooted at the table
+it must react to, as everywhere else — `useLiveQuery` subscribes to the root
+alone. `rankableValues` is the only new one: records ask what was beaten in
+thirty days, and beating something means comparing against everything before it,
+so the window cannot be pushed into SQL.
 
 **Exit criteria**
 
 1. **DoD 11** — see what has not been trained recently.
 2. A quick log does not increment the sessions figure.
-3. Blocks 1, 2 and 4 render correctly with a single week of data.
+3. Every block renders correctly with a single week of data — the grid a full
+   thirteen columns wide with only the current week drawn, the counts saying
+   `since` rather than `last 28 days`, and both lists stating why they are empty
+   rather than rendering as blank. **This is the criterion the first build
+   failed**: it read "the grid one column wide", and one column of `flex-1` is
+   one square the width of the screen.
 4. Nothing on the screen is celebratory and nothing animates.
+5. `SMOKE_TEST.md` **AA** passes on device in both themes. *Passed 13 Aug
+   2026, after the fixes in the status block above.*
+
+**Not built, and recorded rather than dropped:**
+
+- **The best-set trend** (`FEATURES.md` §10.2, design screen 9) — dots rather
+  than a line, so a gap reads as a gap rather than as a line implying training
+  in between, with a control naming which measurement is plotted because seconds
+  and reps do not share a scale. It is the last chart in the application and the
+  only thing still asking for §4.4's dependency.
+- **The grid does not scroll back** past thirteen weeks. A quarter is what fits
+  a phone at a legible square size; a year would need horizontal paging, which
+  is a gesture on a screen that currently has none.
 
 ---
 
@@ -719,7 +1036,8 @@ dependency not yet listed in `TECH_STACK.md`.
   real device
 - Icon, adaptive icon and splash — the open items in `DESIGN.md` §12
 - Privacy policy URL; App Privacy and Data Safety disclosures
-- The 12-week sessions chart, if it did not land in Phase 9
+- `FEATURES.md` §10.2's best-set trend, if it did not land earlier. The 12-week
+  sessions chart is gone — Phase 9's grid answers it (§11.3).
 
 **Exit criteria**
 
@@ -776,19 +1094,47 @@ Nullable `suggestion_dismissed_at` on `exercises`, in the first migration.
 `target_metric_id` is snapshotted onto `exercise_entries` alongside
 `target_value`, in the first migration. `FEATURES.md` §2 and §2.1 amended.
 
-### 4.3 Database-under-test — Phase 8
+### 4.3 Database-under-test — settled
 
 **Runner settled: Vitest**, recorded in `TECH_STACK.md` §8.
 
-Still open: testing `db/queries/` in Node needs a SQLite driver, because
-`expo-sqlite` does not run there. Likely `better-sqlite3` as a devDependency
-running against the same Drizzle schema. Not needed until the aggregation and
-personal-record queries arrive.
+**Settled in Phase 8: no driver.** The question assumed the ranking would live
+inside a query, and it does not. `db/queries/records.ts` fetches rows;
+`lib/records.ts` folds them; the fold is where every rule that could be wrong
+lives, and it takes fixtures three lines long. `better-sqlite3` would have
+bought a native devDependency, a migration-apply harness and a way to swap the
+module-level `db` singleton under test — to test SQL that decides nothing.
+
+This is the same split `lib/completion.ts` and `lib/history.ts` already use, for
+the same reason: `db/` imports the client, the client imports `expo-sqlite`, and
+the runner cannot open it.
+
+**What it leaves untested is the `isNull(deleted_at)` filtering in the queries
+themselves.** A forgotten soft-delete predicate would show a deleted set as a
+record and no unit test would catch it. Recorded in `lib/records.ts` rather than
+glossed over, and cheap to revisit if it ever bites — the fold does not change
+if a driver arrives later.
 
 ### 4.4 Dependencies not yet justified in `TECH_STACK.md` — Phases 9 and 10
 
 - `victory-native` v41+ requires `@shopify/react-native-skia`, plus reanimated
   and gesture-handler. §6.3 lists the latter two; Skia is unlisted.
+  **Phase 8 declined to pre-empt this.** §10's best-set trend was the first
+  thing to want a chart; rather than install a charting stack for one sparkline,
+  or draw one by hand in `react-native-svg` and set a precedent for the
+  dashboard, the trend moved to Phase 9 where one decision covers both.
+  `FEATURES.md` §10.2 records it.
+
+  **Half dissolved, like §4.3 did.** Phase 9 shipped the dashboard with no
+  charting stack at all: the days-trained grid replaced the 12-week bar chart
+  and is built from `View`s, so it needs neither Skia nor `react-native-svg`.
+
+  **What is left is one sparkline.** §10.2's best-set trend is a scatter of dots
+  with no axes, gridlines, tooltips, gestures or animation — DESIGN.md §7
+  forbids all of them — and `react-native-svg` is already a dependency as a peer
+  of the icons. So the question is no longer "chart library or not" but whether
+  one screen justifies drawing forty dots by hand. Decide it against that
+  screen; there is nothing else in the application waiting on the answer.
 - The appearance override needs persistent local storage —
   `@react-native-async-storage/async-storage` per §5, which names AsyncStorage
   but does not list the package.
@@ -844,6 +1190,42 @@ Whichever is chosen applies to **every** screen in the table above, because the
 point is that a screen no longer has to be learned individually.
 
 `FEATURES.md` gains a section for the decision; this document only sequences it.
+
+---
+
+### 4.6 The metric editor's model — open, blocks nothing
+
+**Open.** The Phase 8b refit kept our ordered-list editor over the design
+document's three checkboxes (screen 12, `WHAT IT RECORDS`), recorded as a
+deliberate deviation: *"the checkbox model would erase ordering"*. Reviewing the
+first device run, that argument covers less than it claimed.
+
+An exercise can hold **at most one of each preset** — `presetsNotOn` filters the
+add list — so:
+
+- **Renaming buys little.** `Hold (left)` can never sit beside `Hold (right)`,
+  so the name is a label on a metric that is already unique.
+- **Converting is uncheck-and-check** under a checkbox model.
+- **Only ordering is genuinely lost**, and it need not be: a `Logged first` chip
+  row over the checked metrics states it in one line and replaces the per-row
+  arrows.
+
+Against that, our version spends five stacked blocks per metric — name label and
+field, measures label and chips, position and three icon buttons — where the
+document spends one row, on a screen that is already a mixed draft/immediate
+surface (§18) and has to explain that split.
+
+It also **made a bug representable**: converting was offered every preset while
+adding was offered only the free ones, so an exercise holding Reps and Notes
+could turn the Notes into a second Reps in three taps and log two identical
+fields. Guarded in both the mutation and the editor rather than left waiting on
+this decision. A checkbox list would have made it unrepresentable instead, which
+is the strongest argument on the table.
+
+**Blocks nothing.** Phases 10 and 11 do not touch this screen. Adopting it later
+costs one screen and an amendment to `FEATURES.md` §4.1; no schema change and no
+migration, since ordering stays `display_order` and existing custom names keep
+displaying either way.
 
 ---
 

@@ -27,8 +27,11 @@ or font size.**
 **Quiet editorial.**
 
 Swiss typographic discipline, softened by rounded geometry and warm neutrals.
-Near-monochrome. Hierarchy comes from **type scale**, not from colour. A single
-muted accent, used in about three places in the entire application.
+**Monochrome.** Hierarchy comes from **type scale**, not from colour. There is
+no accent: emphasis is weight, rule and solid ink.
+
+Light and dark are the same design at two levels of ground — nothing moves and
+nothing is recoloured between them.
 
 The reference set was: a monochrome workout form, a monochrome calendar, a
 black-and-white habit tracker, and a line-art onboarding flow. What they share
@@ -46,8 +49,10 @@ photographic or 3D-rendered imagery, and the terminal/brutalist direction from
 
 1. **Type does the work.** If a hierarchy needs colour to be legible, the type
    scale is wrong.
-2. **The accent is rare.** Three uses. A fourth needs a reason.
-3. **Warm, not clinical.** Never pure `#FFFFFF` or pure `#000000`.
+2. **Adding a colour is the change most likely to break this.** The system has
+   one hue, `danger`, and it reaches two acts. Anything else is ink.
+3. **Warm, not clinical.** Never pure `#000000`. `#FFFFFF` appears once per
+   screen at most, as the single lifted plane.
 4. **Space before borders.** Separate with whitespace first; add a hairline only
    when whitespace is not enough.
 5. **Animation clarifies state.** It never entertains. (`reuirements_two.md`
@@ -87,11 +92,11 @@ weight makes hierarchy mushy.
 
 | Token | Size | Weight | Family | Use |
 |---|---|---|---|---|
-| `display` | 32 | 600 | Geist | Screen titles, the one big number on a screen |
+| `display` | 27 | 600 | Geist | Screen title. **One per screen.** |
 | `title` | 24 | 600 | Geist | Section headings, exercise names on detail screens |
-| `heading` | 18 | 600 | Geist | Card headings, exercise names in lists |
-| `body` | 16 | 400 | Geist | Body text, inputs |
-| `bodySm` | 14 | 400 | Geist | Secondary text, list metadata |
+| `heading` | 19 | 600 | Geist | Exercise name in a list, card headings |
+| `body` | 16 | 400 | Geist | Body text, inputs, button labels (600) |
+| `bodySm` | 14 | 400 | Geist | Targets, dates, explanatory sublines |
 | `caption` | 13 | 400 | Geist | Tertiary text, timestamps |
 | `label` | 11 | 400 | Geist | Uppercase letterspaced labels only |
 | `metric` | 24 | 600 | Geist Mono | Primary numbers — hold time, set counts |
@@ -100,9 +105,13 @@ weight makes hierarchy mushy.
 
 Nothing below 11. Line height 1.4 for display and title, 1.5 for body.
 
+**Sizes are added when a screen needs one, not in advance.** The larger figures
+the training screens want — the counter, the running clock — arrive with those
+screens, so an unused size cannot drift out of step with the thing it was for.
+
 ### 2.4 The Label Treatment
 
-`label` is always uppercase, `letterSpacing: 0.08em`, colour `text-3`.
+`label` is always uppercase, `letterSpacing: 0.14em`, colour `text-4`.
 
 ```
 RING SUPPORT HOLD
@@ -128,95 +137,100 @@ override in settings.
 
 ### 3.1 Neutrals
 
+Eleven steps per theme: three grounds, five of ink, three of hairline.
+
 | Token | Light | Dark | Use |
 |---|---|---|---|
-| `bg` | `#FAFAF8` | `#0F0F0E` | Screen background |
-| `surface` | `#FFFFFF` | `#1A1A18` | Cards, sheets, elevated rows |
-| `muted` | `#F1F0EC` | `#252523` | Input fills, pressed states, inactive chips |
-| `border` | `#E3E2DC` | `#33322F` | Hairlines, dividers |
-| `text` | `#1A1A17` | `#F4F3EE` | Primary text, numbers |
-| `text-2` | `#6B6A62` | `#A3A298` | Secondary text, units, previous values |
-| `text-3` | `#9C9B92` | `#6E6D65` | Labels, placeholders, disabled |
+| `bg` | `#F4F2EE` | `#131312` | Ground. Every screen. |
+| `surface` | `#FFFFFF` | `#1E1E1B` | **The one lifted plane** — the live exercise row, the focused field |
+| `muted` | `#EFECE7` | `#1A1A18` | Fixed bottom bars, callouts, input fills, pressed states |
+| `text` | `#1A1917` | `#ECEAE5` | Text, filled set marks, the primary button's fill |
+| `text-2` | `#4A4843` | `#B4B1AA` | Notes and secondary prose |
+| `text-3` | `#6B6862` | `#918E86` | Metadata, targets, inactive tabs |
+| `text-4` | `#8A877F` | `#79766F` | Section labels, completed exercises |
+| `text-5` | `#A9A49A` | `#63615B` | Set indices, axis labels, the em dash for unrecorded |
+| `border` | `#C9C4B9` | `#3B3A36` | Control borders |
+| `rule` | `#DCD8D0` | `#2B2A27` | Structural rules — header, footer |
+| `rule-2` | `#E6E2DA` | `#232220` | List rules |
 
-Warm off-white and warm near-black. Never pure white or pure black.
+Warm off-white and warm near-black. Never pure black.
 
-### 3.2 Accent — Moss
+**`surface` appears at most once on a screen.** It is what marks the one live
+row or the one focused field; two of them and neither reads as live. Everything
+else that looks raised is `muted`.
 
-| Token | Light | Dark |
-|---|---|---|
-| `accent` | `#55684F` | `#8CA285` |
-| `accent-bg` | `#EDF0EA` | `#2A322A` |
-| `accent-fg` | `#FAFAF8` | `#0F0F0E` |
+**Two weights of hairline, and they are not interchangeable.** `border` edges a
+control a thumb can press. `rule` and `rule-2` are structure and list
+separation, and are lighter — a list of twenty rows separated at `border`
+weight reads as a grid.
 
-`accent-fg` is text sitting **on** an accent fill.
-
-**Chosen over ochre** because ochre sits close to the amber every fitness app
-uses for streaks and calories, and would read as generic. Moss carries the sage
-lineage from the warmer references without importing the wellness aesthetic, and
-holds as the only saturated thing on the screen.
-
-### 3.3 Accent Usage — Exactly Three Places
-
-1. The primary action button on a screen (Start session, Save set, Finish)
-2. The new-record marker
-3. Filled dots in the seven-day row on the dashboard
-
-Nothing else. Not headings, not icons, not active tabs, not the completion
-counter, not chart bars. A fourth use requires amending this document.
-
-Only one accent-filled element may be visible at a time. Sibling actions are
-bordered or text-only.
-
-### 3.4 Destructive
+### 3.2 Destructive — the only hue
 
 | Token | Light | Dark |
 |---|---|---|
 | `danger` | `#B4443A` | `#D97A6E` |
-| `danger-bg` | `#F7EBE9` | `#2E1F1D` |
 
 Delete confirmations and discard actions only. Never for warnings, and never for
 the untrained-exercise prompt at session completion — that is informational, and
 uses `text-2`.
 
-### 3.5 Charts
+**A red word inside a border, never a red fill.** The primary button is the one
+filled block on any screen, and a tinted panel reads as a state rather than as
+an act — the wrong thing to say about a button nobody has pressed yet. The
+`danger-bg` tint is deleted for that reason.
 
-Charts use `text` at 100% for the primary series and `border` for the baseline.
-Bars are neutral. The accent does not appear in charts.
+**There is no accent colour**, and adding one is the change most likely to break
+this design. Moss was defined and spent in three places — the primary button,
+the record marker, the dashboard's day dots — and all three read better as ink:
+the button as a solid block that inverts between themes, the marker as weight,
+the dots as filled versus outline. A record is stated like any other fact, which
+is what `FEATURES.md` §15 asked for and what a coloured marker quietly argued
+against.
+
+### 3.3 Charts
+
+Charts use `text` at 100% for the primary series and `rule` for the baseline.
+Dots and bars are ink. Nothing in a chart is coloured, because nothing anywhere
+is.
 
 ---
 
 ## 4. Spacing
 
-4pt base, but **only these values**: `4 · 8 · 12 · 16 · 24 · 32 · 48`.
+**Only these values**: `4 · 6 · 10 · 14 · 18 · 24 · 34`.
 
-| Token | Value |
-|---|---|
-| `xs` | 4 |
-| `sm` | 8 |
-| `md` | 12 |
-| `lg` | 16 |
-| `xl` | 24 |
-| `2xl` | 32 |
-| `3xl` | 48 |
+| Token | Value | What it separates |
+|---|---|---|
+| `xs` | 4 | Inside a row |
+| `sm` | 6 | Inside a row |
+| `md` | 10 | Inside a row |
+| `lg` | 14 | One row from the next |
+| `xl` | 18 | One section from the next |
+| `2xl` | 24 | **The screen gutter. Never broken.** |
+| `3xl` | 34 | Above a new block, on a sparse screen only |
 
-Restricting the scale is what makes layouts look deliberate. Arbitrary values —
-`18`, `22`, `30` — are what make them look accidental. Never use one.
+Restricting the scale is what makes layouts look deliberate. Arbitrary values
+are what make them look accidental. Never use one.
 
-**Defaults:** screen horizontal padding `xl` (24). Card padding `lg` (16).
-Gap between list rows `md` (12). Gap between sections `2xl` (32).
+**The gutter is `2xl`, not `xl`.** The names are ordinal and the roles are not:
+24 is the widest value in ordinary use because it is the horizontal margin, and
+sections sit closer together than that at 18. Reading `px-2xl` as "wider than a
+section gap" is correct.
 
 ---
 
 ## 5. Shape
 
-| Element | Radius |
-|---|---|
-| Cards, sheets | 16 |
-| Buttons, inputs, chips | 12 |
-| Pills, dots, avatars | full |
-| Bottom sheet top corners | 24 |
+| Element | Token | Radius |
+|---|---|---|
+| Buttons, inputs, chips | `button` | 10 |
+| Cards, panels, the primary button | `card` | 12 |
+| Bottom sheet top corners | `sheet` | 22 |
+| Pills, dots, avatars | `full` | — |
 
-Larger than typical, matching the rounded geometry of the references.
+A control is tighter than the panel that holds it. The primary button takes the
+panel radius rather than the control one — it is a block, not a control among
+others.
 
 **No shadows.** Depth comes from `surface` against `bg`. A hairline `border`
 where separation is genuinely needed. No elevation, no blur, no glow.
@@ -231,15 +245,20 @@ the design system — every primitive is restyled to these tokens on the way in.
 
 ### 6.1 Button
 
-| Variant | Fill | Border | Text | Use |
-|---|---|---|---|---|
-| `primary` | `accent` | none | `accent-fg` | The one main action per screen |
-| `secondary` | `surface` | `border` | `text` | Everything else |
-| `ghost` | none | none | `text-2` | Tertiary, inline |
-| `danger` | `danger-bg` | none | `danger` | Delete, discard |
+| Variant | Fill | Border | Text | Height | Use |
+|---|---|---|---|---|---|
+| `primary` | `text` | none | `bg` | 62 | The one main action per screen |
+| `secondary` | `surface` | `border` | `text` | 56 | Everything else |
+| `ghost` | none | none | `text-2` | 56 | Tertiary, inline |
+| `danger` | `danger-bg` | none | `danger` | 56 | Delete, discard |
 
-Height 48. Radius 12. Full-width on primary actions; auto-width otherwise.
-Press feedback is `scale(0.98)` plus `muted` fill, 120ms.
+**The primary is solid ink and inverts on its own.** `text` is near-black on
+light and near-white on dark, so a fill of `text` with a `bg` label is a black
+block by day and the brightest thing on the screen at night — with no theme
+conditional anywhere. It is the only filled block on its screen.
+
+Full-width on primary actions; auto-width otherwise. Press feedback is
+`scale(0.98)` plus `muted` fill, 120ms.
 
 ### 6.2 Numeric Input
 
@@ -303,6 +322,113 @@ A placeholder must set on one line at 360dp. A multiline `TextInput` is sized by
 its content and not by its placeholder, so a second line is clipped rather than
 grown into.
 
+### 6.9 Tag
+
+A qualifier on the thing beside it — `TO FAILURE` on a set, `ONE-OFF` on a quick
+log in the timeline. 11px uppercase mono inside a 1px box.
+
+Boxed rather than coloured, because there is no colour; boxed rather than merely
+uppercased, because these sit inline against figures that are also mono, and the
+rule is what separates a qualifier from a value.
+
+**Never a headline.** A tag qualifies what it sits next to and is read second,
+so it never begins a line and takes no space when absent. `quiet` drops it a
+step of ink, for a tag that classifies rather than reports: `TO FAILURE` is
+something you did, `ONE-OFF` is only what kind of row this is.
+
+### 6.10 The Set Line
+
+`1  31s · 12 reps  [TO FAILURE]`, with anything written about the set beneath it
+in prose.
+
+The index sits in a fixed column so the figures align down a common edge
+whatever the digit count, for the reason §6.7 fixes a label column. It is
+`text-5`, the quietest ink in the system — it is a position, not a measurement.
+
+Values are `metricXs`, the token named for dense numeric lists, which is what
+this is.
+
+### 6.11 Set Marks
+
+One small rectangle per set on the session screen: filled `text` for done,
+outlined `mark` for still to do.
+
+**The thing read from the floor.** Mid-session the question is what is left, and
+a row of marks answers it without reading a number — which matters because the
+counter beside it is small and the phone is at arm's length.
+
+Filled versus outlined, never two tones of the same shape: §9 forbids state
+carried by colour alone, and there is no second colour to carry it with anyway.
+
+**Absent entirely where there is no target.** A plan may ask for "as many as you
+do" (`FEATURES.md` §5.1), and outlines drawn against a number nobody chose would
+invent a shortfall. Exceeding a target adds filled marks rather than overflowing
+— §6.5 says exceeding is fine.
+
+`mark` is its own token because it inverts relative to `border` between themes:
+lighter than a control edge on paper, brighter than one in the dark.
+
+**The document specifies 17px here and this reads smaller on purpose.** Geist
+Mono carries a far larger x-height than the IBM Plex Mono the document assumed,
+so 16px mono sat almost level with the 19px exercise name above it and the two
+competed. Nominal size is not what the eye measures; a mono figure holds its
+own about two steps below the sans beside it.
+
+### 6.12 Day Grid
+
+Seven rows by thirteen columns on Look back: one square per day, filled `text`
+where anything was logged, outlined `mark` where nothing was (`FEATURES.md`
+§11.3).
+
+**The same two marks as §6.11, at a different scale.** A filled square is
+something you did and an outlined one is something you did not — one vocabulary
+across the application, so the grid needs no key.
+
+**A day outside the record is drawn as nothing at all.** There is no third mark
+and there must not be one: the outline means *skipped*, and neither a Thursday
+that has not arrived nor a Tuesday before the app was keeping count has been
+skipped. A fainter outline was tried and fails on its own terms — the step
+below `mark` is invisible on paper and near-black in the dark, so the
+distinction would exist only in the token file. Blank is the one treatment that
+is neither *did* nor *did not*, and it holds both ragged ends of the picture:
+the first column is short at the top, the last is short at the bottom.
+
+**Binary, never shaded.** An intensity ramp would rank days by volume, and
+`FEATURES.md` §11.1 rules out a combined figure across a pull-up and a hold —
+so the ramp would be shading by a number that had to be invented first. §9 gets
+there independently: state is never carried by colour alone.
+
+Columns are `flex-1` with `gap-xs` over a **fixed thirteen**, and the fixed part
+is what makes `flex-1` safe. `flex-1` over however many columns the history
+happened to fill is what shipped first, and it sized the square by how new the
+user was: two weeks in, the grid was two squares the width of a thumb. Thirteen
+always; the columns before the first session hold their width and draw nothing.
+
+The weekday axis is one mono `label` character in a `w-lg` column. The month
+axis is laid out in **spans** rather than a label per column, because `MAY` is
+wider than a square and each month has four or five of them to sit in — and it
+begins with a matching blank span over the undrawn columns, since there is no
+month to name there and any mismatch walks every later label off its month.
+
+### 6.13 Count Pair
+
+Two figures side by side, each `metric` in mono over a `caption` in `text-3`:
+
+```
+11                      4
+sessions,               quick logs,
+last 28 days            last 28 days
+```
+
+**The caption is not decoration.** `11` alone is not a fact, and the two halves
+of the caption do different jobs — the noun says what was counted and the window
+says over what, which is the part that changes as history grows (`FEATURES.md`
+§11.3).
+
+Equal weight, side by side, never one above the other. They are two measurements
+of the same month, and stacking them would make the upper one a headline and the
+lower one a footnote — which is exactly the reading §11.5 exists to prevent.
+
 ---
 
 ## 7. Motion
@@ -331,7 +457,8 @@ Respect `prefers-reduced-motion`; fall back to instant.
 `text-2`. Sparse — an icon appears only where a word would be slower to read.
 
 Tab bar icons are the primary exception and use `text` when active, `text-3`
-when inactive. **Not the accent.**
+when inactive — carried by ink depth and label weight together, never by one
+alone (§9).
 
 **No illustration in v1.** Per-exercise doodles were considered and are cut, not
 deferred. Reintroducing them would be a design decision requiring an amendment
@@ -342,11 +469,12 @@ here, not a backlog item.
 ## 9. Accessibility
 
 - Minimum touch target **48×48**. This exceeds the platform 44pt minimum
-  deliberately — the app is used with tired hands.
-- Body text contrast at least 4.5:1; `text-3` on `bg` is used only for
-  non-essential labels.
-- No information conveyed by colour alone. The seven-day row uses filled versus
-  hollow dots, not two colours.
+  deliberately — the app is used with tired hands. Named controls go larger
+  still: 56 for a secondary button, 62 for the primary.
+- Body text contrast at least 4.5:1; `text-4` and `text-5` are used only for
+  labels, set indices and axis marks, never for anything that must be read.
+- **No information is conveyed by colour, because there is none.** Every state
+  in the system is filled versus outline, or one weight against another.
 - Respect system font scaling up to 200%. The `metric` styles may cap earlier to
   preserve numeric alignment.
 
@@ -356,8 +484,13 @@ here, not a backlog item.
 
 1. **One `display` element per screen.** Two large numbers competing means
    neither is the answer.
+
+   §6.13's pair is not an exception to this. Both figures are `metric` rather
+   than `display`, and they do not compete because neither is the answer on its
+   own — `11 sessions` and `4 quick logs` are two measurements of one month, and
+   the whole point of the pair is that reading either alone is the mistake.
 2. **One `primary` button per screen.**
-3. **Section = label + content.** An 11px uppercase `text-3` label above; the
+3. **Section = label + content.** An 11px uppercase `text-4` label above; the
    content below at its natural size.
 4. **The active session screen carries the least chrome of any screen.** No
    header actions, no tab bar, no decorative elements. The exercise list and the
@@ -418,3 +551,6 @@ component contains a conditional.
 | Date | Change |
 |---|---|
 | Aug 2026 | Created. Direction: quiet editorial. Geist + Geist Mono. Moss accent. Full token set defined. Per-exercise doodles cut. |
+| Aug 2026 | Phase 8b, from the second design run (`zoomies_screen.pdf`). **The accent is deleted.** All three of its sanctioned uses read better as ink, and a coloured record marker argued against `FEATURES.md` §15's "stated, not congratulated" while claiming to honour it. `danger` survives as the only hue and reaches two acts. The neutral ramp goes from seven steps to eleven — `text-4`, `text-5`, `rule` and `rule-2` — so a section label, a set index and a list rule stop borrowing tokens meant for something else. Spacing becomes `4 · 6 · 10 · 14 · 18 · 24 · 34`, which moves the screen gutter from `xl` to `2xl`; the names stayed ordinal so the swap was mechanical. Type: `display` 32→27, `heading` 18→19, label tracking 0.08em→0.14em. Radii tighten to 10 / 12 / 22. The primary button becomes solid `text` with a `bg` label, which inverts between themes with no conditional. Geist stays — the document specifies Libre Franklin and IBM Plex Mono, and the difference at these sizes did not justify two font packages and a re-check that no frame renders in a fallback face. |
+| Aug 2026 | Phase 9. Two components added: **§6.12 Day Grid** and **§6.13 Count Pair**. The grid reuses §6.11's two marks at a different scale, which is why it needs no key — one vocabulary across the application. It adds no third mark for a day that has not happened yet: the outline means *skipped*, a Thursday that has not arrived has not been skipped, and a fainter outline fails on its own terms because the step below `mark` is invisible on paper and near-black in the dark. Composition rule 1 gains a note that §6.13's pair is not an exception — both figures are `metric`, and neither is the answer alone. Rule 3 corrected from `text-3` to `text-4`, which the Phase 8b ramp moved and this line did not follow. |
+| Aug 2026 | Phase 9 fix. **§6.12's columns are a fixed thirteen.** `flex-1` over a variable column count sized the square by how long the app had been in use, which was never the intent and read as a broken layout at two weeks in. The undrawn leading columns hold their width, and the month axis gains a matching blank span over them — a span mismatch there walks every later label off the month it names, the same failure the axis gap caused. The third-mark ruling widens: blank now covers a day before the record began as well as a day still to come. |

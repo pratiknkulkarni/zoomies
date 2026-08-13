@@ -39,11 +39,16 @@ export function TargetRow({
         accessibilityRole="button"
         accessibilityLabel="Change target for this session"
         onPress={() => setEditing(true)}
-        className="min-h-touch flex-row items-center gap-md active:bg-muted"
+        className="min-h-touch flex-1 justify-center active:bg-muted"
       >
-        <Text className="w-label text-caption text-text-3">Target</Text>
-        <Text className="flex-1 text-body text-text">
-          {formatTarget(entry, targetMetric)}
+        {/*
+          `Target today`, not `Target`. Tapping it changes the figure for this
+          session and nothing else (§7.4), and the word is what says so before
+          the tap rather than after it — the same job `target that day` does
+          when the session is read back.
+        */}
+        <Text className="text-bodySm text-text-3">
+          Target today · {formatTarget(entry, targetMetric)}
         </Text>
       </Pressable>
     );
@@ -159,7 +164,7 @@ export function EntryNotes({ entry }: { entry: ExerciseEntry }) {
   };
 
   return (
-    <View className="gap-xs px-xl pt-2xl">
+    <View className="gap-xs px-2xl pt-xl">
       <SectionLabel>Notes</SectionLabel>
       <Input
         value={notes}

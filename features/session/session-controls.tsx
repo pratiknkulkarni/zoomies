@@ -87,7 +87,17 @@ export function ResumePrompt({ session }: { session: Session }) {
 }
 
 /**
- * What a session offers while it is open: pausing, and finishing.
+ * The two things a session offers while it is open, side by side under its
+ * clock: pausing, and ending.
+ *
+ * **At the top, not the bottom.** They belong to the session rather than to the
+ * list of exercises, and a plan of eight would otherwise put End below eight
+ * rows of scrolling — the same mistake `Done` made on the add-exercise screen.
+ *
+ * **Neither is filled.** DESIGN.md §10.2 allows one solid block per screen and
+ * this screen spends it on nothing: mid-session the exercise rows are what the
+ * eye should land on, and a black End button at the top of a screen you scroll
+ * with chalky hands is a hazard rather than an affordance.
  *
  * **Pausing is explicit and never automatic** (§6.2). Leaving the application
  * is not pausing — session state lives in SQLite, so switching apps changes
@@ -97,21 +107,41 @@ export function SessionControls({ session }: { session: Session }) {
   const paused = session.pausedAt !== null;
 
   return (
-    <View className="gap-md px-xl pt-2xl">
-      <Button
-        variant="secondary"
-        className="w-full"
-        onPress={() =>
-          void (paused ? resumeSession(session.id) : pauseSession(session.id))
-        }
-      >
-        <Text>{paused ? 'Resume training' : 'Pause'}</Text>
-      </Button>
+    <View className="flex-row gap-md px-2xl pt-lg">
+      <View className="flex-1">
+        <Button
+          variant="secondary"
+          className="w-full"
+          onPress={() =>
+            void (paused ? resumeSession(session.id) : pauseSession(session.id))
+          }
+        >
+          <Text>{paused ? 'Resume training' : 'Pause'}</Text>
+        </Button>
+      </View>
+      <View className="flex-1">
+        <Button
+          variant="secondary"
+          className="w-full"
+          onPress={() => review(session)}
+        >
+          <Text>End session</Text>
+        </Button>
+      </View>
+    </View>
+  );
+}
 
-      <Button variant="primary" onPress={() => review(session)}>
-        <Text>Finish session</Text>
-      </Button>
-
+/**
+ * Discarding, kept away from the controls above.
+ *
+ * It is the one genuine delete in the application, and it sat between Pause and
+ * Finish where a mis-tap costs a whole session. At the foot of the list it is
+ * still one tap from anywhere, behind the confirmation §6.3 requires.
+ */
+export function DiscardSession({ session }: { session: Session }) {
+  return (
+    <View className="px-2xl pt-2xl">
       <Button
         variant="danger"
         className="w-full"

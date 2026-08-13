@@ -37,7 +37,7 @@ function ListRow({
   const body = (
     <View
       className={cn(
-        'min-h-row flex-row items-center gap-md px-xl py-md',
+        'min-h-row flex-row items-center gap-md px-2xl py-md',
         className,
       )}
     >

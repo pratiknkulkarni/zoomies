@@ -17,9 +17,9 @@ type TabBarProps = Parameters<
  * The default bar paints its own colours, which would ignore the token set and
  * render light chrome in dark mode. This one is built from tokens instead.
  *
- * Active state is carried by weight *and* colour, never colour alone
- * (DESIGN.md §9). The accent does not appear here — §3.3 and §8 both rule it
- * out for tabs.
+ * Active state is carried by weight *and* ink depth, never one alone
+ * (DESIGN.md §9). There is no accent in the system to reach for here, and an
+ * inactive tab sits at `text-3` with the rest of the metadata.
  *
  * Insets come from props, not `useSafeAreaInsets`: the navigator calls this as
  * a plain function inside a context consumer, so a hook here is an invalid hook

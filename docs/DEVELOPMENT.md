@@ -1193,3 +1193,193 @@ with `Not trained` where an exercise has none.
 code. Criterion 1's dash needs a set with one metric recorded and one not;
 criterion 2 needs a nonzero pause. Neither exists on the device, and creating
 them means driving the UI through the dev menu described above.
+
+Both criteria closed on 10 Aug 2026 once the two missing rows were created by
+hand: a set with one metric recorded and one not reads back `10 reps · —`, and
+a paused session reports a duration excluding the pause. `SMOKE_TEST.md` U and
+V were run at the same time and pass, reported rather than written into the
+file.
+
+---
+
+## Phase 8 — Exercise Details & Records
+
+Branch `phase-8-records`. Closes **DoD 10**. The payoff for making Exercise
+permanent rather than a line in a template: one movement across every session
+it ever appeared in, quick logs included.
+
+### The database-under-test question dissolved
+
+`PLAN.md` §4.3 had been open since Phase 1 and expected the answer to be
+`better-sqlite3` — a native devDependency, a migration-apply harness, and a way
+to swap the module-level `db` singleton under test.
+
+It was the wrong shape of answer, because it assumed the ranking would live
+inside a query. **Nothing that decides anything belongs in a query.** The
+queries fetch rows; `lib/records.ts` folds them; every rule that could be wrong
+is in the fold, where a fixture is three lines and no native module is
+installed. The exit criterion asked for ties and nulls under test and got
+eighteen tests.
+
+This is the third time the same split has been reached for the same reason —
+`lib/timers.ts`, `lib/completion.ts`, `lib/history.ts`, now `lib/records.ts` —
+so it is a rule rather than a coincidence: **`db/` is where rows come from, and
+`lib/` is where they are turned into answers.**
+
+The honest cost: the queries' own `isNull(deleted_at)` predicates are untested.
+A forgotten one would surface a deleted set as a personal record and nothing
+would catch it. Recorded in the module, not buried.
+
+### Four ways to get a record wrong
+
+Written as rules before the code, each with a test:
+
+1. **A `notes` metric has no record.** The longest note is not an achievement.
+2. **Null is never a candidate; zero always is.** Invariant 2 from both sides —
+   a set where Reps went unrecorded did not score zero, and a set where someone
+   entered `0` did.
+3. **A tie keeps the earlier holder.** §6.6 already decided this for the raise
+   prompt. A record that jumped to the newest set every time it was equalled
+   would report a date that means nothing.
+4. **Only completed sessions rank.** A record claimed mid-session would vanish
+   if that session were then discarded.
+
+The fold is order-independent, and ties on both value and timestamp fall back to
+the id — which for UUID v7 is the same "older wins" rule one line up. That
+exists so no caller has to know what its rows were sorted by.
+
+### Records rank against current metrics
+
+A metric removed from an exercise keeps every value it ever recorded — that is
+precisely what `set_metric_values` is for — but stops holding a record. The
+exercise no longer claims to measure that thing, so it no longer has a best at
+it. History still reads correctly; only the ranking narrows.
+
+### Three roots, and one that was checked rather than assumed
+
+`sessions` moves on rename, delete and completion; `sets` on logging and
+deleting; `set_metric_values` on a correction from history. A single joined
+query would answer all three questions and react to none of them, because
+`useLiveQuery` subscribes to the root alone.
+
+`exercise_entries` gets no root, and that needed checking rather than assuming:
+`grep` over every `deletedAt:` write in `db/mutations/` shows nothing
+soft-deletes an entry. `deleteSession` marks only the session. If that ever
+changes, this screen needs a fourth query.
+
+### The accent, spent once
+
+`DESIGN.md` §3.3 allows the accent in exactly three places and one of them is
+the new-record marker. The `Records` section does **not** use it — records are
+stated, not congratulated (§10.5), and a heading, a figure and a date are a
+statement. The accent goes on the word `Record` beside the set in the list,
+which is the thing you are actually scanning for.
+
+A word rather than a fill or a glyph: §3.3 permits one accent-*filled* element
+on screen, and a lifetime list can hold several marks, one per metric.
+
+### The trend was the first thing to want a chart
+
+§10 lists best-set trend in v1. `victory-native` needs Skia, which no document
+justifies. Drawing a sparkline by hand in `react-native-svg` — already present
+transitively — was available and was declined: it would have set the project's
+charting precedent inside an exercise screen, three weeks before the dashboard
+has to decide the same thing properly.
+
+Moved to Phase 9, recorded in `FEATURES.md` §10.2. §11.7 agrees from the data's
+side: a trend says nothing before twelve weeks of it exist.
+
+### `db/queries/aggregate.ts` was not created
+
+`PLAN.md` listed it. The reads it was going to hold are three rooted queries in
+`records.ts`, and the only thing that aggregates is a fold in `lib/`. A second
+file would have been a name with nothing behind it.
+
+### Verification standing
+
+`tsc`, lint, 111 unit tests — 18 of them new and all over the ranking rules.
+**Unrun on hardware.** `SMOKE_TEST.md` W carries the device pass, and W3 (a tie
+does not move the record's date) and W6 (a correction reaches the record) are
+the two that would expose a wrong fold.
+
+## Phase 8a — Reading a Set Back
+
+Section W passed. Every check on the ranking held, including the two that would
+have exposed a wrong fold: a tie left the record's date where it was, and a
+correction to an old set moved the record. The exit criteria were met.
+
+The screen was still unreadable.
+
+```
+21 20 · —
+```
+
+That is a value of **21** against a metric someone had named `20`, followed by
+Reps unrecorded. `formatMeasure` was `` `${value} ${unit ?? name.toLowerCase()}` ``,
+which is right for `12 reps` and `30 s` and produces two numerals with a space
+between them for a metric whose name is a number.
+
+The metric name was silly test data. Three faults it exposed were not.
+
+**The records row printed the name twice.** The label column names the metric,
+and then the figure named it again — `Reps · 12 reps · Tue 11 Aug`, and here
+`20 · 21 20 · Tue 11 Aug`. `formatMeasure` takes a `bare` option now, for
+callers that have already said which metric this is. The unit survives being
+bare, because the label does not carry it: `42` alone does not say seconds.
+
+**The dash never said what was missing.** `21 · —` is honest — something was not
+recorded — but working out *which* thing meant counting positions against the
+metric list further up the screen, and that is not something anyone does. It was
+the right answer to invariant 2 and a bad answer to the person reading it. So
+`missing` became a mode: `omit` during training, where dropping the metric keeps
+rows scannable; `dash` where space is tight; and `name` on the two reading
+surfaces, which now say `reps not recorded`.
+
+**A set that measured nothing read `— · —`.** `formatSetValues` already had the
+right answer — `'Recorded'`, because a set with no values still happened — and
+it had quietly become unreachable. The fallback fired when the parts array was
+empty, and passing a `missing` string meant the array was never empty. A correct
+line of code, dead since the day the option was added.
+
+### The bug underneath the bug
+
+Naming the missing metric is where this stopped being cosmetic.
+
+A note is stored in `value_text`. Every caller builds its map from `value_num`.
+So a note has *always* looked unrecorded on these screens, whether or not one
+was written — and nobody noticed, because the two modes that existed either
+dropped it silently or drew a dash that was ambiguous anyway.
+
+The moment the dash became a sentence, that ambiguity became a lie: a set
+carrying `grip went first` would have rendered `8 reps · notes not recorded`.
+
+The fix is not to pipe the text into the value line. A note is prose and the
+values are figures, and `31 s · 12 reps · grip went first` reads as three
+measurements, one of which is a sentence. `formatSetValues` no longer speaks for
+a notes metric at all, and `formatSetNote` puts the note on its own line
+underneath. Unwritten, it renders nothing — not a dash, because the line above
+has already accounted for everything that was measured.
+
+Worth stating plainly: **a display change is what surfaced a data-shape bug that
+had been there since Phase 7.** The dash was hiding it.
+
+### What was left alone
+
+`formatMetricDetail` renders `Logged first · a count`, which reads oddly above a
+metric named `20`. The name is what is odd. The wording was chosen over
+`Primary · Duration · s` deliberately — it states the consequence rather than
+the jargon — and its docstring says so. Changing it would have been undoing
+considered work on the strength of a misread screenshot.
+
+### Save set 4
+
+One idea taken from the second design experiment, and the cheapest thing in this
+phase.
+
+The button said `Save set`. It now says `Save set 4`, naming the effort it is
+about to write. The counter at the top of the screen already answers *was that
+my second or third* — the question `FEATURES.md` opens with — but it answers it
+somewhere else on the screen, and this answers it under the thumb that is already
+moving. The number comes from the caller, which reads the sets live; counting
+them again inside the button would have been a second source of truth for a
+figure the screen already holds.

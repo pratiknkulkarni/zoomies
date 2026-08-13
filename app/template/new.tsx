@@ -39,11 +39,11 @@ export default function NewTemplateScreen() {
       >
         <BackButton />
 
-        <Text className="px-xl pt-sm font-sans-semibold text-display text-text">
+        <Text className="px-2xl pt-sm font-sans-semibold text-display text-text">
           New template
         </Text>
 
-        <View className="gap-xl px-xl pt-xl">
+        <View className="gap-2xl px-2xl pt-2xl">
           <View className="gap-xs">
             <SectionLabel>Name</SectionLabel>
             <Input

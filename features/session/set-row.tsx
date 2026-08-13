@@ -7,6 +7,7 @@ import { Chip } from '@/components/ui/chip';
 import { iconWithClassName } from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
 import { NumericField } from '@/components/ui/numeric-field';
+import { Tag } from '@/components/ui/tag';
 import { Text } from '@/components/ui/text';
 import {
   deleteSet,
@@ -16,7 +17,7 @@ import {
 } from '@/db/mutations/sets';
 import type { ExerciseMetric } from '@/db/queries/exercises';
 import type { LoggedSet, SetMetricValue } from '@/db/queries/sessions';
-import { formatSetValues } from '@/lib/format';
+import { formatSetNote, formatSetValues } from '@/lib/format';
 import { fromNullableNumber, toNullableFloat } from '@/lib/parse';
 
 const DeleteIcon = iconWithClassName(Trash2);
@@ -45,23 +46,37 @@ export function SetRow({
     values.map((value) => [value.exerciseMetricId, value.valueNum]),
   );
 
+  const note = formatSetNote(
+    metrics,
+    new Map(values.map((value) => [value.exerciseMetricId, value.valueText])),
+  );
+
   if (!editing) {
     return (
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Edit set ${set.setIndex + 1}`}
         onPress={() => setEditing(true)}
-        className="min-h-row flex-row items-center gap-md px-xl py-md active:bg-muted"
+        className="min-h-touch flex-row gap-md border-b border-rule-2 px-2xl py-sm active:bg-muted"
       >
-        <Text className="w-field font-mono text-metricSm text-text-3">
+        {/* The index sits in a fixed column so the figures beside it align down
+            a common edge however many digits they carry (DESIGN.md §6.10). */}
+        <Text className="w-2xl font-mono text-metricXs text-text-5">
           {set.setIndex + 1}
         </Text>
-        <Text className="flex-1 text-body text-text">
-          {formatSetValues(metrics, byMetric)}
-        </Text>
-        {set.toFailure ? (
-          <Text className="text-caption text-text-2">to failure</Text>
-        ) : null}
+
+        <View className="flex-1 gap-xs">
+          <View className="flex-row flex-wrap items-center gap-sm">
+            <Text className="font-mono text-metricSm text-text">
+              {formatSetValues(metrics, byMetric)}
+            </Text>
+            {set.toFailure ? <Tag>To failure</Tag> : null}
+          </View>
+
+          {note ? (
+            <Text className="text-bodySm text-text-2">{note}</Text>
+          ) : null}
+        </View>
       </Pressable>
     );
   }
@@ -145,7 +160,7 @@ function Editor({
   };
 
   return (
-    <View className="gap-md bg-surface px-xl py-lg">
+    <View className="gap-md bg-surface px-2xl py-lg">
       <View className="flex-row items-center justify-between">
         <Text className="font-mono text-metricSm text-text-2">
           Set {set.setIndex + 1}

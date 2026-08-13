@@ -809,12 +809,21 @@ Expect: the set reads `10 reps · —`, not `10 reps`. The dash is the differenc
 between a value you left out and one you never had.
 
 **Observed:**
+Reported as failing, but observed on the History **timeline** rather than on a
+session opened from it — the timeline row says `Quick log · 1 exercise` by
+design and never shows a set. The dash was working: `w1.jpeg` shows `21 20 · —`
+on the exercise screen, and both renderers passed `missing: '—'`.
+
+**Superseded by Phase 8a.** The dash said something was missing without saying
+what, so both reading surfaces now name it — `10 reps · hold not recorded`.
+Re-run against that wording, on a session opened from the timeline.
 
 **T2.** Compare a session in History against what you remember logging. Sets in
 order, correct values, `to failure` where you marked it, per-exercise notes
 present.
 
 **Observed:**
+- This is fine, working
 
 **T3 — exit criterion 2.** Start a session, log a set, **pause it for a minute
 or two**, resume, log another set, finish. Open it from History.
@@ -823,6 +832,7 @@ Expect: the duration excludes the pause. A session you spent 5 minutes in with 2
 of those paused reads about `3m`, not `5m`.
 
 **Observed:**
+This is fine as well
 
 ## U. Editing and deleting
 
@@ -831,6 +841,7 @@ of those paused reads about `3m`, not `5m`.
 Expect: the §18 prompt — Save, Discard, Cancel.
 
 **Observed:**
+This is fine as well
 
 **U2.** Tap an exercise inside a completed session.
 
@@ -839,12 +850,14 @@ Expect: its sets, editable and deletable — **and no logging UI at all.** No
 to one.
 
 **Observed:**
+This is fine as well
 
 **U3.** Correct a set from there, go back.
 
 Expect: the session detail shows the corrected value.
 
 **Observed:**
+This is fine as well
 
 **U4.** Delete a session from its detail screen.
 
@@ -853,12 +866,14 @@ tab still lists everything it used, and that another session containing the same
 exercise is untouched.
 
 **Observed:**
+This is fine as well
 
 **U5.** A quick log opened from History.
 
 Expect: no Name field — it never had one — but the note and delete still work.
 
 **Observed:**
+This is fine as well
 
 ## V. What history must not do
 
@@ -868,10 +883,533 @@ sitting for a couple of minutes without touching it.
 Expect: the display times out normally. Keep-awake is for training, not reading.
 
 **Observed:**
+This is fine as well
+
 
 **V2.** Anything in History that reads as zero where nothing was recorded?
 
 Expect: nothing. `—` for a missing value, `Not trained` for an exercise with no
 sets. Never `0`.
+
+**Observed:**
+This is fine as well
+
+## W. One exercise, across everything
+
+**W1 — exit criterion 1, DoD 10.** Exercises → an exercise you have actually
+trained, say Pull-Up.
+
+Expect: `Records`, then `Metrics`, then `History` — every set ever logged,
+newest session first, each session headed by its date and name. Sets within a
+session read in the order you did them.
+
+**Observed:**
+Pass — but the line was unreadable, and three defects were behind it.
+
+`21 20 · —` was a value of **21** against a metric **named `20`**, then Reps
+unrecorded. `formatMeasure` appended `unit ?? name`, so a numeric metric name
+came out as a second numeral. Fixed in Phase 8a:
+
+1. The records row printed the metric name twice — once as its label, once
+   inside the figure. It takes a bare value now.
+2. The dash never said which metric it stood for. Both reading surfaces name it.
+3. A set that measured nothing read `— · —` rather than saying an effort
+   happened; the `Recorded` fallback had become unreachable.
+
+A fourth, older one surfaced while fixing the third: a note lives in
+`value_text` and every caller built its map from `value_num`, so a written note
+always looked unrecorded here. Notes now render on their own line.
+
+**W2 — the record marker.** Find the best set in the History list.
+
+Expect: it says `Record`, in the accent colour, and the same figure appears in
+the `Records` section above with that session's date. One record per metric —
+a Reps record and a Hold record are separate and may sit in different sessions.
+
+**Observed:**
+- This is fine
+
+**W3 — ties.** Log a set equalling your best for that exercise, then reopen the
+screen.
+
+Expect: the record's **date does not move**. Matching your best is not beating
+it, and the marker stays on the older set.
+
+**Observed:**
+- This is fine
+
+**W4 — nulls.** An exercise with two metrics where you filled only one.
+
+Expect: `10 reps · —` in the History list, and no record at all for the metric
+you left empty. Never a record of `0`.
+
+**Observed:**
+Pass, once decoded — Reps held no values and so held no record, which is exactly
+what this checks. No record of `0` anywhere. The confusion was the presentation,
+recorded under W1 and fixed in Phase 8a.
+
+**W5 — quick logs count.** Quick-log an exercise, then open it from Exercises.
+
+Expect: the quick log appears in History headed `Quick log`, and it can hold a
+record. §11.5 keeps quick logs out of the *sessions* figure on the dashboard,
+not out of the record.
+
+**Observed:**
+- This is fine.
+
+**W6 — a correction reaches the record.** From the exercise's History, tap a
+session header, open the exercise inside it, and edit the set holding the
+record downward. Go back twice.
+
+Expect: the record has moved to whatever is now the best set. Nothing is stored,
+so nothing can be stale.
+
+**Observed:**
+Fine
+
+**W7 — an exercise never trained.** Open one from the Suggested list.
+
+Expect: `Nothing logged yet`, no `Records` section at all, and the metric
+configuration still shown. No zeros anywhere.
+
+**Observed:**
+Fine
+
+**W8 — the list is long.** Scroll an exercise with a lot of history.
+
+Expect: smooth. The list is virtualized; the name, records and metrics scroll
+away with it rather than sitting fixed.
+
+**Observed:**
+Fine
+
+## X. Reading a set back, after Phase 8a
+
+Everything here is presentation. W already proved the ranking is right; this
+proves you can tell what it is saying.
+
+**X1 — the name, once.** Open the exercise whose metric is named `20`.
+
+Expect: `Records` reads `20 · 21 · Tue 11 Aug`. The name appears in the label
+column and nowhere else. An exercise recording seconds reads `Hold · 42 s`,
+keeping the unit — the label does not carry it.
+
+**Observed:**
+Fine
+
+**X2 — the missing metric is named.** An exercise with two measured metrics
+where you filled only one, in both the exercise screen's History and a session
+opened from the timeline.
+
+Expect: `21 · reps not recorded`, in both places, worded identically. Never a
+bare dash, never `0`.
+
+**Observed:**
+Fine
+
+**X3 — a set that measured nothing.** Find the set that read `— · —` under
+`Pull Day`, or mark one to failure with every field empty.
+
+Expect: `Recorded`. It happened; nothing was measured; that is the whole
+statement.
+
+**Observed:**
+Fine
+
+**X4 — a note is not a missing measurement.** Log a set with a note against an
+exercise that records one, then read it back from both surfaces.
+
+Expect: the figures on one line, the note beneath in smaller grey type. **Never
+`notes not recorded` on a set that has one** — that was the trap in naming the
+missing metric, since notes are stored in a different column from every figure.
+
+**Observed:**
+Fine — the bug this was written to catch is not present.
+
+**X5 — a note that was never written.** The same exercise, a set with no note.
+
+Expect: no second line at all. Not a dash — the value line above already
+accounts for everything measured.
+
+**Observed:**
+Fine
+
+**X6 — the button names the set.** Start a session, open an exercise with three
+sets logged.
+
+Expect: `Save set 4`. Log it and it reads `Save set 5`. Delete a set from the
+list and it counts back down. It must never name a set number that already
+exists.
+
+**Observed:**
+Fine — counts up on log and back down on delete.
+
+**X7 — the button under a timer.** An exercise measured in seconds.
+
+Expect: the hold timer is still the only action, with no second button beside
+it. §7 gives the timer the write.
+
+**Observed:**
+Fine
+
+## Y. One session, read back — after the Phase 8b refit
+
+The first screen rebuilt to the design document (`zoomies_screen.pdf`, screen
+8). Everything here is presentation over data Phase 8a already proved correct,
+so a failure is a layout or a wording defect, not a fold.
+
+Run every item **in both themes**. The document's claim is that light and dark
+are the same design at two levels of ground — nothing moves and nothing is
+recoloured — so anything that shifts between them is a defect.
+
+**Y1 — the identity line.** History → a completed session with a name.
+
+Expect: the **name** is the screen title, with `14 Aug · 18:42–19:30 · 48 min`
+beneath it in mono. The date is no longer the title. A session that ran past
+midnight still reads its two clock times correctly.
+
+**Observed:**
+
+**Y2 — a quick log.** Open one from the timeline.
+
+Expect: the exercise's name as the title, a `ONE-OFF` tag beside it, and the
+date alone on the metadata line — no time range and no duration. No Name field
+anywhere on the screen.
+
+**Observed:**
+
+**Y3 — the target that day.** An exercise logged against a target.
+
+Expect: `target that day · 4 × 9 reps`, right-aligned on the exercise's row.
+Now **edit that template's target** and reopen the session: the line must not
+move. This is invariant 5, and the wording is what makes it visible.
+
+**Observed:**
+
+**Y4 — an exercise that was planned and skipped.** A session where one exercise
+logged nothing.
+
+Expect: the name in lighter ink, and `Not trained · planned 3 × 12` beside it.
+Never `0`, never an empty row.
+
+**Observed:**
+
+**Y5 — the set line.** A set carrying two values and a note.
+
+Expect: `1` in a fixed column, then `31s · 12 reps` in mono, then the note
+beneath it in prose. The indices count `1 2 3` — they are stored from zero, so
+a set reading `0` is a defect. A set with ten or more still aligns.
+
+**Observed:**
+
+**Y6 — the two things a set can be missing.** A set with one metric unfilled,
+and a set with nothing measured at all.
+
+Expect: `42s · reps not recorded`, and `Recorded` for the second. Never a bare
+dash, never a note reading as unrecorded.
+
+**Observed:**
+
+**Y7 — to failure.** A set marked to failure.
+
+Expect: a bordered `TO FAILURE` tag after the figures, not the words trailing
+the line as prose. It sits inline and wraps with the figures rather than pushing
+them off the row.
+
+**Observed:**
+
+**Y8 — the foot.** Scroll to the bottom.
+
+Expect: `Tap any set to correct it` on the left and a **bordered** `Delete` with
+a red label on the right — no pink fill. Delete still confirms, still removes
+the session from the timeline, and the exercise screen's record still updates.
+
+**Observed:**
+
+**Y9 — still a draft.** Type in the name, then press the Android system back.
+
+Expect: the same Save · Discard · Cancel prompt as before, with Save disabled
+until something changes. The refit did not touch §18; if this behaves
+differently, the layout work reached something it should not have.
+
+**Observed:**
+
+**Y10 — the primary button, everywhere.** Any screen with one — Home, a
+template, the completion review.
+
+Expect: a solid black block with paper-coloured text in light, and a paper
+block with dark text in dark. No moss anywhere in the application. The gutter
+is the same 24 on every screen, and section gaps are visibly tighter than
+before.
+
+**Observed:**
+
+## Z. The training screens, after the Phase 8b refit
+
+The last group refit, and the only one holding invariant 1. **Nothing in the
+write path changed** — `logSet`, `quickLog` and the hold timer are untouched —
+so the point of this section is to prove that by exercising them, not to admire
+the layout.
+
+Run in **both themes**, and run Z1 before anything else.
+
+**Z1 — a set still cannot be lost.** Log a set and force-stop the app from the
+recents switcher as fast as you can, several times at different speeds. Relaunch.
+
+Expect: every set is there. This is smoke test K2 repeated because the screen
+around the button was rebuilt; the button's own code was not.
+
+**Observed:**
+
+**Z2 — the marks say what is left.** Open a session with a plan.
+
+Expect: a filled mark per set done, an outline per set still to do. An exercise
+with no target sets shows **no marks at all** — outlines against a number
+nobody chose would invent a shortfall. Exceeding a target adds filled marks
+rather than overflowing.
+
+**Observed:**
+
+**Z3 — the live row.** Look at which exercise is lifted onto the pale panel.
+
+Expect: the first one still short of its target, held in **plan order** — it
+must not jump to the top. Log its last set and the lift moves to the next
+unfinished exercise. With the whole plan done, no row is lifted.
+
+**Observed:**
+
+**Z4 — the clock is wall time.** Note the elapsed figure, background the app for
+about two minutes, come back.
+
+Expect: it advanced by the real two minutes. Now **Pause**: the figure stops and
+the line beneath says `paused`. Wait a minute, resume — the paused minute is not
+counted. This is invariant 4 and the arithmetic is unit tested; what needs a
+thumb is that the interval stops when paused.
+
+**Observed:**
+
+**Z5 — recording a set is still two taps.** Open a counted exercise from the
+session.
+
+Expect: the fields sit in a bar pinned to the bottom edge, above the keyboard
+when one is up. `Record set 4` names the right set, counts up as you log and
+back down if you delete one. The list above scrolls under it.
+
+**Observed:**
+
+**Z6 — a hold is not pinned.** Open a duration exercise.
+
+Expect: the clock is in the body of the screen, large, with its one button — not
+squeezed into a bottom bar. It still counts down from a target, still records at
+zero, still survives locking the phone.
+
+**Observed:**
+
+**Z7 — the target still overrides for this session only.** Tap `Target today`,
+change it, save.
+
+Expect: the entry's figure changes; the plan does not. Go back to the plan
+screen and confirm its target is untouched (§7.4).
+
+**Observed:**
+
+**Z8 — a logged set reads back.** Log one with two values and a note.
+
+Expect: `1  31 s · 12 reps` with the note beneath, and a bordered `TO FAILURE`
+tag where it applies. Tap it — the editor still opens, still saves, still
+deletes.
+
+**Observed:**
+
+**Z9 — nothing offers to log a finished session.** From History, open a session
+and tap into an exercise.
+
+Expect: the set list and its editors, and **no logging bar and no clock**. §7.3
+grants correcting a set after a session, not adding to one.
+
+**Observed:**
+
+**Z10 — the way out.** From a running session.
+
+Expect: `Pause` and `End session` side by side under the clock, neither of them
+filled. `Discard session` is at the foot of the list, far from both, and still
+asks twice.
+
+**Observed:**
+
+---
+
+## AA. Look back — Phase 9
+
+The dashboard. Nothing here writes, so nothing here can lose a set — the risk is
+the opposite one, that a figure is confidently wrong. Every check below is a
+statement that could be false without looking false.
+
+Run in **both themes**.
+
+**AA1 — the way in.** Open History.
+
+Expect: `Look back ›` beside the title, opening the dashboard. It is **not** a
+fourth tab and it is **not** on Home — §11.3 keeps a review of the last quarter
+away from the Start button. On a fresh install with nothing trained, the link is
+absent entirely.
+
+**Observed:**
+
+**AA2 — the grid is a quarter wide and draws from your first session.** Read the
+label, then look at the squares.
+
+Expect: `DAYS TRAINED · <first day> – <today>`. The squares are small — thirteen
+columns' worth — **whatever the history**, and they end flush with the right
+gutter. Everything before your first logged day is blank: no outline, no fill,
+just held-open space. This is the two-week case that shipped broken, with two
+columns of squares the width of a thumb.
+
+Once history runs past thirteen weeks nothing is blank on the left, and the
+label starts at the first column drawn rather than at the first session ever.
+
+**Observed:**
+
+**AA2b — the month axis sits under its own months.** Read the axis, on a fresh
+install and again with a few weeks of history.
+
+Expect: the first label sits at the left edge of the month it names, and no
+label appears over the blank leading columns. A blank span that does not match
+the grid's walks every later label off by a column.
+
+**Observed:**
+
+**AA3 — a square is a day, not a session.** Find a day you trained twice, or
+trained and also quick-logged.
+
+Expect: one filled square, no darker than any other. There is no intensity
+ramp — §11.1 rules out the combined volume figure one would have to be shaded
+by.
+
+**Observed:**
+
+**AA4 — a day outside the record is blank, at both ends.** Look at the last
+column, unless today is Sunday; then look at the first column drawn, unless you
+first trained on a Monday.
+
+Expect: every day from your first logged day to today carries a mark — filled or
+outlined — and nothing else does. The last column is short at the bottom and the
+first is short at the top. An outline at either end would say *skipped*, and
+neither a Thursday that has not arrived nor a Tuesday before the app knew you
+has been skipped.
+
+**Observed:**
+
+**AA5 — no streak anywhere.** Read the whole block.
+
+Expect: no number attached to the grid, no highlighted current run, no marker
+where a run broke, no flame, and nothing that changes when you miss a day beyond
+that day's square being an outline. §11.6.
+
+**Observed:**
+
+**AA6 — a quick log is not a session.** Note both counts, then quick-log
+something and come back.
+
+Expect: the **quick logs** figure went up by one and the **sessions** figure did
+not move. §11.5. Now finish an ad-hoc session with no plan: that one *does*
+count as a session.
+
+**Observed:**
+
+**AA7 — the window tells the truth about young history.** On a fresh install
+with a few days of training.
+
+Expect: the captions read `since <date>`, not `last 28 days` — the app did not
+exist for the other twenty-four days and must not report them as nothing. With
+more than 28 days of history they read `last 28 days`.
+
+**Observed:**
+
+**AA8 — the neglect list is a fact, not a debt.** Read it.
+
+Expect: longest gap first, each row `<name>` on the left and `6 May · 101 days`
+on the right — the date is there so a movement you deliberately stopped reads as
+something you decided. Nothing trained inside the last week appears at all. An
+exercise you have **never** trained does not appear either: it has no last date,
+and a number invented from when it was added would be a figure about the library
+(invariant 2). Tapping a row opens that exercise.
+
+**Observed:**
+
+**AA9 — a record is something you beat.** Read the records block.
+
+Expect: each row states the figure and, beneath it, `up from <previous> · <date>`
+— the second line is what makes the first mean anything. The **first set of an
+exercise never appears**: it is a baseline, not a record. Equalling a best does
+not appear either, and the same rule §10.1 applies elsewhere holds here — the
+earlier set keeps it.
+
+**Observed:**
+
+**AA10 — a correction reaches all four blocks.** From History, open an old
+session and correct a set upward past its old best; go back to Look back.
+
+Expect: the record appears or moves. Now delete every set of a day: that day's
+square empties, the counts drop, and the exercise's gap in the neglect list
+grows. Nothing on this screen is stored (invariant 3), and this is what that
+means in practice.
+
+**Observed:**
+
+**AA11 — the empty states say what is missing.** On a fresh install, and again
+on one with a week of training.
+
+Expect: with nothing trained, one empty state and no grid — never an empty
+quarter of outlines. With everything trained inside the last week, the neglect
+list says so in a sentence rather than rendering as a blank space. With nothing
+beaten yet, the records block says so and explains that a first set is a
+starting point.
+
+**Observed:**
+
+**AA12 — nothing is celebrated and nothing moves.** Watch the screen open.
+
+Expect: no confetti, no counting-up figures, no animated reveal, no exclamation
+mark anywhere. Records are stated. §11.6, `DESIGN.md` §8.
+
+**Observed:**
+
+---
+
+## AB. The timeline, ruled
+
+Run in **both themes**. History tab, with at least a dozen entries in it,
+including quick logs, multi-exercise sessions and a break of two or more days.
+
+**AB1 — every row is separated.** Scroll the list.
+
+Expect: a hairline under every row, at `rule-2` weight — light enough that a
+dozen of them do not read as a grid. A rule under the `History` header too, at
+the heavier `rule`.
+
+**Observed:**
+
+**AB2 — the rule stands down where something else already separates.** Find a
+break with a `8–11 Aug · no training` rule in it, and scroll to the very bottom.
+
+Expect: no row rule immediately above a gap rule, and none under the last row in
+the list. A hairline directly above the gap's own two is a third line saying the
+same thing; a hairline under the last row is a line in open space.
+
+**Observed:**
+
+**AB3 — no row wraps.** Find the session with the most exercises in it.
+
+Expect: exactly two lines. The exercise names truncate with an ellipsis and the
+set count stays visible at the end of the line — the total is the fact that must
+survive, the names are the detail. Every quick log is exactly one line.
+
+**Observed:**
+
+**AB4 — the rules survive the dark.** Switch themes and read the list again.
+
+Expect: the hairlines are visible but not bright. `rule-2` in dark is barely
+above the ground on purpose; if the rows look boxed, it is the wrong token.
 
 **Observed:**

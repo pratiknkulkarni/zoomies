@@ -82,7 +82,7 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <StatusBar style="auto" />
         <Screen>
-          <Text className="pt-xl text-title font-sans-semibold text-text">
+          <Text className="pt-2xl text-title font-sans-semibold text-text">
             The database did not open
           </Text>
           <Text className="pt-sm text-bodySm font-sans text-text-2">

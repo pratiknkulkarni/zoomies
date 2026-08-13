@@ -153,7 +153,7 @@ export function HoldTimer({
         disabled={disabled}
         onPress={press}
         className={cn(
-          'items-center justify-center gap-sm rounded-card bg-muted py-2xl active:bg-surface',
+          'items-center justify-center gap-sm rounded-card bg-muted py-xl active:bg-surface',
           disabled && 'opacity-50',
         )}
       >

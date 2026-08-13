@@ -179,13 +179,15 @@ docs/                   Source-of-truth documents
 - Every value comes from a token in `docs/DESIGN.md`. Both of these are wrong:
   `style={{ color: '#1A1A17' }}` and `className="text-[#1A1A17]"`.
   Correct: `className="text-text"`.
-- Spacing uses only 4 / 8 / 12 / 16 / 24 / 32 / 48. Never an arbitrary value.
+- Spacing uses only 4 / 6 / 10 / 14 / 18 / 24 / 34. Never an arbitrary value.
+  **The screen gutter is `2xl` (24), not `xl`** — the names are ordinal and the
+  roles are not.
 - Two font weights only: 400 and 600.
 - All numeric display uses Geist Mono, not the sans.
-- The accent colour appears in exactly three places application-wide: the
-  primary action button, the new-record marker, and filled dots in the seven-day
-  row. Do not use it anywhere else — not headings, not icons, not active tabs,
-  not chart bars.
+- **There is no accent colour.** Emphasis is weight, rule and solid ink; the
+  primary button is filled with `text` and inverts between themes on its own.
+  `danger` is the only hue in the system and reaches delete and discard alone.
+  Adding a colour requires amending `DESIGN.md` §3.
 - No shadows, gradients, blur or elevation. Depth is `surface` against `bg`.
 - Dark and light themes; follow system by default. Every token has a dark value,
   so no component contains a theme conditional.
