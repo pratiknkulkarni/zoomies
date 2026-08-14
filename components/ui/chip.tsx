@@ -26,14 +26,22 @@ export function Chip({
    * `radio` for one of several, `switch` for a flag that stands alone —
    * `to_failure` is the latter, and the two announce differently to a screen
    * reader even though they look identical.
+   *
+   * `button` is neither: it goes somewhere rather than setting something, so it
+   * announces no selected state at all. A screen reader saying "All time, not
+   * selected" would describe a choice that is not being offered.
    */
-  role?: 'radio' | 'switch';
+  role?: 'radio' | 'switch' | 'button';
 }) {
   return (
     <Pressable
       accessibilityRole={role}
       accessibilityState={
-        role === 'switch' ? { checked: selected } : { selected }
+        role === 'button'
+          ? undefined
+          : role === 'switch'
+            ? { checked: selected }
+            : { selected }
       }
       accessibilityLabel={label}
       onPress={onPress}

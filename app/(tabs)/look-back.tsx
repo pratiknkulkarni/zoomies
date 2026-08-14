@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
-import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Screen } from '@/components/ui/screen';
 import { SectionLabel } from '@/components/ui/section-label';
@@ -203,27 +203,31 @@ export default function LookBackScreen() {
 
         {grid ? (
           <View className="gap-md px-2xl pt-xl">
-            <SectionLabel>
-              {`Days trained · ${formatDayRange(grid.fromMs, grid.toMs)}`}
-            </SectionLabel>
-            <DayGrid grid={grid} />
             {/*
-              A quarter is what this grid can draw in a frame — nineteen years
-              of squares is 7,000 `View`s and blocked the main thread for over
-              two seconds. The rest is not gone, it is one tap away on a screen
-              where the wait is asked for.
+              The window is named on the left and widened on the right, in one
+              row that already existed. A full-width button sat between the grid
+              and the counts and read as an interruption — 56px of bordered
+              control on a screen that is otherwise quiet type, announcing
+              itself louder than the four figures it sits among.
 
-              A button rather than a text link: the objection to `Look back ›`
-              was a navigation vocabulary of one word in one corner, and the
-              answer is not to reintroduce it two screens later. This is a
-              control, sitting under the thing it expands.
+              A chip because that is the vocabulary already in use for a small
+              choice beside its subject (§6.14's metric picker), and because it
+              costs no vertical space here: the label row has to exist anyway.
             */}
-            <Button
-              variant="secondary"
-              onPress={() => router.push('/days-trained')}
-            >
-              <Text>Every week</Text>
-            </Button>
+            <View className="flex-row items-center justify-between gap-md">
+              <View className="flex-1">
+                <SectionLabel>
+                  {`Days trained · ${formatDayRange(grid.fromMs, grid.toMs)}`}
+                </SectionLabel>
+              </View>
+              <Chip
+                label="All time"
+                selected={false}
+                role="button"
+                onPress={() => router.push('/days-trained')}
+              />
+            </View>
+            <DayGrid grid={grid} />
           </View>
         ) : settled ? (
           <View className="px-2xl">
