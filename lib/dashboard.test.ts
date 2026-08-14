@@ -23,18 +23,40 @@ describe('daysTrainedGrid', () => {
     expect(daysTrainedGrid([], NOW)).toBeNull();
   });
 
-  it('is thirteen columns wide whatever the history', () => {
+  it('is thirteen columns wide while the history is narrower', () => {
     const week = daysTrainedGrid([at(2026, 8, 12)], NOW);
-    const years = daysTrainedGrid([at(2024, 1, 1), at(2026, 8, 12)], NOW);
 
-    // The geometry never depends on how long the app has been in use. It did,
+    // The *column* never depends on how long the app has been in use. It did,
     // and week two got two columns to fill a phone with.
     expect(week?.rows).toHaveLength(7);
     expect(week?.rows[0]).toHaveLength(13);
-    expect(years?.rows[0]).toHaveLength(13);
 
     expect(week?.fromMs).toBe(at(2026, 8, 12, 0));
     expect(week?.toMs).toBe(at(2026, 8, 15, 0));
+  });
+
+  it('grows a column a week past the floor, rather than forgetting', () => {
+    const years = daysTrainedGrid([at(2024, 1, 1), at(2026, 8, 12)], NOW);
+
+    // 1 Jan 2024 is a Monday, 136 weeks before the week of 10 Aug 2026 — so
+    // 137 columns, both ends included. Thirteen was a cap until Phase 11 and
+    // everything before this column was simply unreachable.
+    expect(years?.rows[0]).toHaveLength(137);
+    expect(years?.leading).toBe(0);
+    expect(years?.rows[0]?.[0]?.state).toBe('trained');
+  });
+
+  it('meets the floor and the span at the same column', () => {
+    // The week of 18 May 2026 is the thirteenth column back from the week of
+    // 10 Aug. One more week of history is one more column, not a scroll into
+    // held-open blank.
+    const thirteen = daysTrainedGrid([at(2026, 5, 18)], NOW);
+    const fourteen = daysTrainedGrid([at(2026, 5, 11)], NOW);
+
+    expect(thirteen?.rows[0]).toHaveLength(13);
+    expect(thirteen?.leading).toBe(0);
+    expect(fourteen?.rows[0]).toHaveLength(14);
+    expect(fourteen?.leading).toBe(0);
   });
 
   it('draws nothing before the first session, and says how much', () => {
@@ -64,20 +86,22 @@ describe('daysTrainedGrid', () => {
     expect(grid?.leading).toBe(10);
   });
 
-  it('stops at the cap rather than growing without limit', () => {
+  it('holds no blank column once the history is wider than the floor', () => {
     const grid = daysTrainedGrid([at(2024, 1, 1), at(2026, 8, 12)], NOW);
 
+    // `leading` pads a young grid out to a screen's width and then stops
+    // mattering, which is what lets one number serve both cases.
     expect(grid?.leading).toBe(0);
     expect(grid?.rows[0]?.[0]?.state).not.toBe('before');
   });
 
-  it('labels the range by what is drawn, not by what exists', () => {
+  it('labels the range by the first session, all of which is now drawn', () => {
     const grid = daysTrainedGrid([at(2024, 1, 1), at(2026, 8, 12)], NOW);
 
-    // 13 columns ending on the week of 10 Aug starts on 18 May 2026. The 2024
-    // session is outside the picture, so naming it would describe squares that
-    // are not there.
-    expect(grid?.fromMs).toBe(at(2026, 5, 18, 0));
+    // This used to name the left edge of the cap rather than the first session,
+    // because everything earlier was unreachable. Nothing is unreachable now,
+    // so the honest label and the drawn one are the same date.
+    expect(grid?.fromMs).toBe(at(2024, 1, 1, 0));
   });
 
   it('fills the day a set was performed and only that day', () => {
@@ -301,6 +325,84 @@ describe('longestSinceTrained', () => {
   });
 });
 
+describe('recentRecords, seeded with what came before', () => {
+  const row = (
+    setId: string,
+    value: number,
+    performedAt: number,
+    metricId = 'hold',
+    exerciseId = 'rsh',
+  ): RankedRow => ({ exerciseId, metricId, setId, value, performedAt });
+
+  const bar = (best: number) => new Map([['rsh hold', best]]);
+
+  /*
+    The caller used to hand over every measurement ever so this could find the
+    bar by walking history. The bar is one number per exercise and metric, so it
+    is now read in SQL and passed in — which is what lets the rows be only the
+    window. These say the seeded number means exactly what the walk meant.
+  */
+
+  it('measures against the seeded bar, not only against the window', () => {
+    // 40 is lower than the 44 reached before the window opened, so nothing was
+    // beaten — where an empty seed would call it a record.
+    expect(
+      recentRecords([row('1', 40, at(2026, 8, 9))], bar(44), NOW),
+    ).toEqual([]);
+  });
+
+  it('reports a record against a bar it never saw a row for', () => {
+    const result = recentRecords([row('1', 46, at(2026, 8, 9))], bar(44), NOW);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.value).toBe(46);
+    expect(result[0]?.previous).toBe(44);
+  });
+
+  it('keeps a tie out, exactly as the walk did', () => {
+    expect(
+      recentRecords([row('1', 44, at(2026, 8, 9))], bar(44), NOW),
+    ).toEqual([]);
+  });
+
+  it('still treats a first-ever set as a baseline', () => {
+    // No seed for this pair means nothing came before it. An absent bar has to
+    // stay absent rather than defaulting to zero, or month one is a wall of
+    // records — the rule that made `previous` non-nullable in the first place.
+    expect(recentRecords([row('1', 12, at(2026, 8, 9))], new Map(), NOW)).toEqual(
+      [],
+    );
+  });
+
+  it('lets the window overtake the bar and then itself', () => {
+    const result = recentRecords(
+      [row('1', 46, at(2026, 8, 5)), row('2', 48, at(2026, 8, 9))],
+      bar(44),
+      NOW,
+    );
+
+    // One per exercise and metric, the most recent — three raises in a month is
+    // a good month, not three items.
+    expect(result).toHaveLength(1);
+    expect(result[0]?.value).toBe(48);
+    expect(result[0]?.previous).toBe(46);
+  });
+
+  it('seeds each exercise and metric separately', () => {
+    const result = recentRecords(
+      [
+        row('1', 20, at(2026, 8, 9), 'reps', 'pullup'),
+        row('2', 40, at(2026, 8, 9)),
+      ],
+      new Map([['pullup reps', 19]]),
+      NOW,
+    );
+
+    // The hold has no bar, so its 40 is a baseline; the pull-up beat 19.
+    expect(result.map((record) => record.exerciseId)).toEqual(['pullup']);
+  });
+});
+
 describe('recentRecords', () => {
   const row = (
     setId: string,
@@ -316,6 +418,7 @@ describe('recentRecords', () => {
         row('1', 38, at(2026, 7, 20)),
         row('2', 42, at(2026, 8, 9)),
       ],
+      new Map(),
       NOW,
     );
 
@@ -331,12 +434,13 @@ describe('recentRecords', () => {
   });
 
   it('does not call a first-ever set a record', () => {
-    expect(recentRecords([row('1', 42, at(2026, 8, 9))], NOW)).toEqual([]);
+    expect(recentRecords([row('1', 42, at(2026, 8, 9))], new Map(), NOW)).toEqual([]);
   });
 
   it('does not call an equalled best a record', () => {
     const result = recentRecords(
       [row('1', 42, at(2026, 7, 20)), row('2', 42, at(2026, 8, 9))],
+      new Map(),
       NOW,
     );
 
@@ -350,6 +454,7 @@ describe('recentRecords', () => {
         row('2', 42, at(2026, 8, 9, 18)),
         row('3', 40, at(2026, 8, 9, 19)),
       ],
+      new Map(),
       NOW,
     );
 
@@ -359,6 +464,7 @@ describe('recentRecords', () => {
   it('excludes a record set before the window', () => {
     const result = recentRecords(
       [row('1', 38, at(2026, 5, 1)), row('2', 42, at(2026, 6, 1))],
+      new Map(),
       NOW,
     );
 
@@ -372,6 +478,7 @@ describe('recentRecords', () => {
         row('2', 42, at(2026, 8, 9)),
         row('3', 31, at(2026, 8, 14)),
       ],
+      new Map(),
       NOW,
     );
 
@@ -386,6 +493,7 @@ describe('recentRecords', () => {
         row('2', 9, at(2026, 8, 3)),
         row('3', 10, at(2026, 8, 12)),
       ],
+      new Map(),
       NOW,
     );
 
@@ -401,6 +509,7 @@ describe('recentRecords', () => {
         row('3', 8, at(2026, 7, 20), 'reps'),
         row('4', 12, at(2026, 8, 12), 'reps'),
       ],
+      new Map(),
       NOW,
     );
 
@@ -414,6 +523,7 @@ describe('recentRecords', () => {
         row('2', 12, at(2026, 8, 12), 'reps', 'pull-up'),
         row('3', 20, at(2026, 8, 1), 'reps', 'push-up'),
       ],
+      new Map(),
       NOW,
     );
 
@@ -425,6 +535,7 @@ describe('recentRecords', () => {
     // is a record like any other.
     const result = recentRecords(
       [row('1', 0, at(2026, 7, 20)), row('2', 3, at(2026, 8, 9))],
+      new Map(),
       NOW,
     );
 
@@ -439,6 +550,7 @@ describe('recentRecords', () => {
         row('3', 20, at(2026, 7, 20), 'reps', 'b'),
         row('4', 25, at(2026, 8, 12), 'reps', 'b'),
       ],
+      new Map(),
       NOW,
     );
 
@@ -452,8 +564,8 @@ describe('recentRecords', () => {
       row('3', 40, at(2026, 8, 12)),
     ];
 
-    expect(recentRecords(rows, NOW)).toEqual(
-      recentRecords([...rows].reverse(), NOW),
+    expect(recentRecords(rows, new Map(), NOW)).toEqual(
+      recentRecords([...rows].reverse(), new Map(), NOW),
     );
   });
 });

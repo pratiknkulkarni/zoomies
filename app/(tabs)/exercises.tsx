@@ -19,7 +19,7 @@ import {
   suggestedExercises,
   type Exercise,
 } from '@/db/queries/exercises';
-import { lastTrainedByExercise, trainedAtRefs } from '@/db/queries/history';
+import { lastTrainedByExercise, lastTrainedPerExercise } from '@/db/queries/history';
 import { formatMeasures, formatSessionDate } from '@/lib/format';
 import { matchesQuery } from '@/lib/search';
 
@@ -53,7 +53,7 @@ export default function ExercisesScreen() {
   const { data: library } = useLiveQuery(activeExercises());
   const { data: suggestions } = useLiveQuery(suggestedExercises());
   const { data: metrics } = useLiveQuery(allMetrics());
-  const { data: trained } = useLiveQuery(trainedAtRefs());
+  const { data: trained } = useLiveQuery(lastTrainedPerExercise());
   // Read for its length alone: the way to the archive exists only while there
   // is something in it.
   const { data: archived } = useLiveQuery(archivedExercises());

@@ -343,8 +343,34 @@ describe('formatDayRange', () => {
   });
 
   it('names both months across a year, without stating the year', () => {
+    // Six days. Crossing a New Year does not make the year worth saying.
     expect(formatDayRange(day(11, 28), new Date(2027, 0, 3).getTime())).toBe(
       '28 Dec – 3 Jan',
+    );
+  });
+
+  it('states the year once the range is longer than one', () => {
+    /*
+      Found on a database holding nineteen years, where the grid's caption read
+      `18 Jun – 14 Aug` and the first of those dates was in 2007.
+    */
+    expect(
+      formatDayRange(new Date(2007, 5, 18).getTime(), day(7, 14)),
+    ).toBe('18 Jun 2007 – 14 Aug 2026');
+  });
+
+  it('leaves a long range inside one year alone', () => {
+    // 300 days, one year, unambiguous without it.
+    expect(formatDayRange(day(0, 6), day(10, 2))).toBe('6 Jan – 2 Nov');
+  });
+
+  it('states the year at the boundary, not a day before it', () => {
+    const from = new Date(2025, 7, 14).getTime();
+
+    // Exactly 365 days is still one year; 366 is more than one.
+    expect(formatDayRange(from, day(7, 14))).toBe('14 Aug – 14 Aug');
+    expect(formatDayRange(from, day(7, 15))).toBe(
+      '14 Aug 2025 – 15 Aug 2026',
     );
   });
 });

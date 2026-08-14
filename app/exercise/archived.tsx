@@ -14,7 +14,7 @@ import { archivedExercises, type Exercise } from '@/db/queries/exercises';
 import {
   lastTrainedByExercise,
   setCountByExercise,
-  trainedAtRefs,
+  lastTrainedPerExercise,
 } from '@/db/queries/history';
 import { formatSessionDate } from '@/lib/format';
 
@@ -32,7 +32,7 @@ import { formatSessionDate } from '@/lib/format';
  */
 export default function ArchivedExercisesScreen() {
   const { data: archived } = useLiveQuery(archivedExercises());
-  const { data: trained } = useLiveQuery(trainedAtRefs());
+  const { data: trained } = useLiveQuery(lastTrainedPerExercise());
 
   const setCounts = useMemo(() => setCountByExercise(trained), [trained]);
   const lastTrained = useMemo(() => lastTrainedByExercise(trained), [trained]);

@@ -1,24 +1,27 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { File, Paths } from 'expo-file-system';
+import { router } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { Check } from 'lucide-react-native';
 import { colorScheme } from 'nativewind';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 
-import { BackButton } from '@/components/ui/back-button';
 import { Button } from '@/components/ui/button';
 import { iconWithClassName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { SectionLabel } from '@/components/ui/section-label';
 import { Text } from '@/components/ui/text';
-import { setAppearance } from '@/db/mutations/settings';
+import { resetEverything } from '@/db/mutations/reset';
+import { recordExport, setAppearance } from '@/db/mutations/settings';
 import { readAllTables, schemaVersion } from '@/db/queries/export';
+import { lastExportAt, lossFromReset } from '@/db/queries/reset';
 import { appearanceRow } from '@/db/queries/settings';
 import {
   APPEARANCES,
   APPEARANCE_CAPTIONS,
   APPEARANCE_LABELS,
+  DEFAULT_APPEARANCE,
   parseAppearance,
   type Appearance,
 } from '@/lib/appearance';
@@ -28,6 +31,7 @@ import {
   exportFileName,
   serialiseExport,
 } from '@/lib/export';
+import { describeReset } from '@/lib/reset';
 
 const CheckIcon = iconWithClassName(Check);
 
@@ -64,12 +68,11 @@ export default function SettingsScreen() {
   return (
     <Screen bleed>
       <ScrollView contentContainerClassName="pb-3xl">
-        <View className="flex-row items-center gap-md pr-2xl">
-          <BackButton />
-          <Text className="flex-1 font-sans-semibold text-display text-text">
-            Settings
-          </Text>
-        </View>
+        {/* A tab, so there is nothing to go back to and no back button. The
+            title sits in the gutter like every other tab's. */}
+        <Text className="px-2xl font-sans-semibold text-display text-text">
+          Settings
+        </Text>
 
         <View className="pt-xl">
           <SectionLabel className="px-2xl pb-sm">Appearance</SectionLabel>
@@ -83,8 +86,95 @@ export default function SettingsScreen() {
         </View>
 
         <Backup />
+        <ResetEverything />
       </ScrollView>
     </Screen>
+  );
+}
+
+/**
+ * The factory reset (FEATURES.md §12.3).
+ *
+ * **Two steps, and the second one carries the numbers.** A single confirmation
+ * naming no figure is a dialog people learn to dismiss; the second states how
+ * many sessions and sets are about to go and whether a copy of them exists
+ * anywhere. Those sentences are the safety mechanism, which is why they live in
+ * `lib/reset.ts` and are tested rather than written inline here.
+ *
+ * **Read at the moment of asking**, not subscribed to. The counts are answered
+ * once, when the first button is pressed.
+ *
+ * Last on the screen, beneath the backup, in that order deliberately: the thing
+ * that makes a reset survivable is directly above the reset.
+ */
+function ResetEverything() {
+  const [working, setWorking] = useState(false);
+
+  const run = async () => {
+    setWorking(true);
+
+    try {
+      await resetEverything();
+
+      // The stored preference went with everything else, so the live theme has
+      // to follow it back. Without this the application keeps the appearance of
+      // a database that no longer records one, until the next launch.
+      colorScheme.set(DEFAULT_APPEARANCE);
+
+      // Home, because every other tab is now describing a database that no
+      // longer has anything in it, and Home is the one that reads correctly
+      // empty rather than merely blank.
+      router.navigate('/');
+    } catch (cause: unknown) {
+      Alert.alert(
+        'Reset failed',
+        cause instanceof Error ? cause.message : String(cause),
+      );
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const confirm = () => {
+    // Read here rather than on render: nothing on this screen should recount
+    // every set in the database until someone asks for the number.
+    const message = describeReset(lossFromReset(), lastExportAt(), Date.now());
+
+    Alert.alert(
+      'Reset everything?',
+      'This puts the application back to how it was on the day you installed it.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Continue',
+          style: 'destructive',
+          onPress: () =>
+            Alert.alert('Delete all training?', message, [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Erase everything',
+                style: 'destructive',
+                onPress: () => void run(),
+              },
+            ]),
+        },
+      ],
+    );
+  };
+
+  return (
+    <View className="gap-md px-2xl pt-2xl">
+      <SectionLabel>Reset</SectionLabel>
+
+      <Text className="text-bodySm text-text-2">
+        Deletes every session, set, exercise and template, and puts the built-in
+        exercises back as they were on the first launch. There is no undo.
+      </Text>
+
+      <Button variant="danger" disabled={working} onPress={confirm}>
+        <Text>{working ? 'Resetting…' : 'Reset application'}</Text>
+      </Button>
+    </View>
   );
 }
 
@@ -167,6 +257,14 @@ function Backup() {
       );
 
       const summary = describeExport(tables);
+
+      /*
+        After the file is written and before it is shared, because this is the
+        moment a copy provably exists — sharing can be cancelled, and a copy in
+        the cache directory is still a copy. It is read by the reset's second
+        confirmation (§12.3), which has to say whether any backup exists.
+      */
+      await recordExport(now);
 
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(file.uri, {

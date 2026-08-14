@@ -239,12 +239,21 @@ Where a genuinely hard primitive is needed beyond the library:
 
 - `@gorhom/bottom-sheet` — bottom sheets
 - `react-native-gesture-handler` + `react-native-reanimated` — gestures, animation
-- `victory-native` — charts, when analytics ships
+
+**No charting library, and there will not be one.** Both charts in the
+application — §11.3's days-trained grid and §10.2's best-set trend — are built
+from `View`s. `DESIGN.md` §7 forbids axes, gridlines, tooltips, gestures and
+animation, which is every feature such a library sells, so `victory-native` and
+its `@shopify/react-native-skia` requirement would have installed three packages
+to position forty views. `react-native-svg` arrives as a peer of the icons and
+is deliberately never imported from a screen. `PLAN.md` §4.4 has the history.
 
 ### 6.4 Visual Design
 
 **Direction: quiet editorial.** Near-monochrome warm neutrals, hierarchy from
-type scale, rounded geometry, one muted accent.
+type scale, and **no accent colour at all** — Phase 8b removed the last of it.
+Emphasis is weight, rule and solid ink; `danger` is the only hue in the system.
+`DESIGN.md` §3 is authoritative.
 
 `DESIGN.md` is authoritative for every colour, spacing, radius, type and motion
 value. Tokens live as CSS variables in `global.css`, mapped in

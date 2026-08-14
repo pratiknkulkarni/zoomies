@@ -145,6 +145,10 @@ module.exports = {
         // height rather than a border width, because the track is a filled
         // element and not an edge.
         hairline: '1px',
+        // §6.14 — the best-set trend's plot. Tall enough that a session's dot
+        // clears the one below it, short enough that `Every set` still starts
+        // on the first screen.
+        chart: '96px',
       },
       width: {
         // §6.2 — a stepper is square against the field it flanks. Larger than

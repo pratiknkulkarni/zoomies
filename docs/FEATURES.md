@@ -560,6 +560,16 @@ days that exist and said nothing about the ones that do not; a rule reading
 `8–11 Aug · no training` costs one hairline and says the thing a missing heading
 could not.
 
+**A heading per month, and it is not the grouping above that was rejected.**
+`AUG 2026`, `JUL 2026`, in §2.4's label treatment on the gutter. The objection
+to a heading per day was that it states the days that exist and says nothing
+about the ones that do not; a month heading makes no claim about any day. It is
+a ruler down the side of a list that is long enough to get lost in, which at two
+hundred sessions it is — and the year is always carried, because `Aug` alone
+halfway down a scroll is only unambiguous to someone who already knows how far
+they have come. The gap rules are unaffected and still do the work of saying
+what did not happen.
+
 **Every row is ruled and no row wraps.** A session is two lines and a quick log
 is one, so a screen of them separated by whitespace alone reads as a column of
 loose text rather than as a list of things — the eye cannot find where one entry
@@ -608,7 +618,7 @@ screen. This is the payoff for making Exercise permanent.
 **v1:**
 - Every set ever logged, newest first, with its session and date
 - Personal records per metric — most reps, longest hold
-- Best-set trend over time — **deferred to Phase 9**, see §10.2
+- Best-set trend over time — one dot per session, see §10.2
 - Which sessions it appeared in
 - Its metric configuration
 
@@ -640,23 +650,48 @@ Nothing is stored. A record is a fold over sets every time it is read
 (invariant 3). There is no `personal_best` column and there must not be one: it
 would be a second source of truth that a corrected set could not reach.
 
-### 10.2 Why the Trend Is Not Here Yet
+### 10.2 The Trend, and How It Is Drawn
 
-`victory-native` v41+ requires `@shopify/react-native-skia`, which no document
-justifies yet (`PLAN.md` §4.4). Rather than install a charting stack for one
-sparkline, the trend waited for Phase 9, where the dashboard was expected to
-need charts anyway and one decision would cover both.
+**Dots, never a line.** One dot per session, at the best set of that session.
+A line joining two sessions three weeks apart draws training that did not
+happen, and the whole argument for the shape is that it refuses to.
 
-**Phase 9 shipped without one.** §11.3's grid replaced the 12-week bar chart, so
-the dashboard needs no plotting at all — which leaves this trend as the sole
-thing in the application that would justify the dependency, and one sparkline is
-the case that was already refused. It stays outstanding rather than being cut:
-§11.4 is still the right place for it, and the decision is now purely about what
-one screen is worth.
+**Positioned by date, not by index.** This follows from the rule above and is
+the easy way to lose it: dots spaced one per session would make a three-week
+gap look exactly like three consecutive days, which is the lie the dots were
+chosen to avoid. Horizontal position is time.
 
-§11.7 makes the same argument from the data's side: a trend says nothing before
-roughly twelve weeks of it exist. The set list, newest first, already shows
-where a movement is going for anyone reading down it.
+**Two y labels only** — the all-time minimum and maximum, at `text-5`, **fixed
+to the whole history**. An axis that rescaled as the chart scrolled would mean
+the same dot height was 6 reps in one window and 11 in the next, so two
+identical-looking stretches of chart would say different things. Fixed, the
+chart reads as progress across the whole span, which is what §10 means by *the
+lifetime view of one movement*. No gridlines and no axis rules.
+
+**The metric is named in the section label** — `BEST SET EACH SESSION · REPS` —
+rather than in a control. A picker appears only when an exercise has more than
+one rankable metric; most have one, and a picker over a list of one is
+furniture. §10.1's rules apply unchanged, so a `notes` metric is not offered.
+
+**Drawn by hand, with no charting stack.** Absolutely-positioned `View`s in a
+fixed-height container, `left` and `bottom` as percentages computed from the
+data. `DESIGN.md` §7 forbids axes, gridlines, tooltips, gestures and animation,
+which is every feature a chart library sells — so `victory-native` and its Skia
+requirement would install three packages to position forty views. This is the
+same move §11.3 made when the grid replaced the bar chart. `react-native-svg` is
+present as a peer of the icons and is deliberately not imported from a screen,
+which would make it a direct dependency in everything but the manifest. It stays
+the fallback if forty positioned views read badly on device, and that decision
+would be one component wide.
+
+Those percentages are the one place inline style is correct: a ratio derived
+from data is not a design value, and no token can express it. `DayGrid` already
+takes the same exemption for `flex: month.columns`.
+
+§11.7 makes the argument from the data's side, and it still holds: a trend says
+little before roughly twelve weeks of it exist. The set list, newest first,
+already shows where a movement is going for anyone reading down it — which is
+why this was the last thing built rather than the first.
 
 ---
 
@@ -681,8 +716,13 @@ sets, days). This rules out most vanity metrics automatically.
 ### 11.3 Dashboard Blocks
 
 Four blocks, in order. Nothing else. The screen is titled **Look back** and is
-reached from History, not from Home — what you want at 18:39 in a garage is a
-Start button, not a review of the last quarter.
+**a tab, never Home** — what you want at 18:39 in a garage is a Start button,
+not a review of the last quarter, and that reasoning is untouched by giving it
+a tab. It was reached from a `Look back ›` link on History's title row; that
+stopped being defensible when Settings left the identical treatment on Home,
+leaving one text link in one corner of one screen — a navigation vocabulary of
+a single word, which is the objection this project already raises against an
+icon used once.
 
 **Days trained** — one square per day, filled where anything was logged. Seven
 rows, Monday first, by thirteen week columns.
@@ -776,7 +816,8 @@ two that had to work from week two, and both do — the first from the second
 week, the second from the first time anything is beaten.
 
 There is no chart left to hold. §11.4's trend is the only one in the
-application, and it is the last thing outstanding here.
+application, and it shipped last, in Phase 11 — by which point it needed no
+dependency either (§10.2).
 
 ---
 
@@ -834,12 +875,63 @@ history.
 
 ### 12.2 Where It Lives
 
-Settings, reached from Home. Not a fourth tab, and not buried: a backup nobody
-can find is not a backup, and Home is the screen that gets opened.
+**Settings is a tab.** It was a `Settings ›` link on Home's title row, on the
+grounds that a backup nobody can find is not a backup and Home is the screen
+that gets opened. A tab does that job better and costs Home's title row nothing
+— that screen's subject is the training below it, not the application.
 
-Settings holds this and §13's appearance override. Nothing else. It is a
-**Pattern B** screen (§18) — both choices commit as they are made, so there is
-nothing on it to leave unsaved.
+Settings holds this, §13's appearance override and §12.3's reset. Nothing else.
+It is a **Pattern B** screen (§18) — every choice on it commits as it is made,
+so there is nothing to leave unsaved.
+
+### 12.3 Factory Reset
+
+Puts the application back to the state of its first launch: every session, set,
+exercise, template and preference gone, and the built-in catalogue planted
+again.
+
+**This was cut before it was built, and then built anyway.** The original
+reasoning still holds and is worth keeping: Android already has this — *Clear
+storage* does exactly it, while *Clear cache* does nothing at all, because the
+database is in the files directory. What the reasoning missed is that a
+platform setting three levels into system preferences is not a feature of this
+application, and that iOS has no equivalent at all, so *delete the app* was the
+only answer on half the target platforms.
+
+**Two confirmations, and the second one carries the numbers.** A single dialog
+naming no figure is one people learn to dismiss. The second states how many
+sessions and sets are about to go, and **whether a copy of them exists** — which
+is why the export records `export.last_at` in `meta` on success. Never having
+exported is stated first and stated plainly, because it is the only case where
+the right answer is probably to cancel.
+
+The counted figures exclude soft-deleted rows even though the reset destroys
+those too. The sentence exists to be checked against what the person believes
+they have, and History has never shown them a deleted session.
+
+**Rows are deleted, never the file.** `db` is a module-level singleton opened
+once at startup, so removing `zoomies.db` underneath it leaves every screen
+holding a handle to nothing until the application is relaunched. Clearing the
+tables leaves the same open database, empty.
+
+Two properties make that safe, and both are borrowed from §12.1:
+
+- **The table list is discovered from the schema**, so a table added later is
+  cleared by existing. A reset that leaves rows behind is worse than an
+  incomplete backup — the user is told the application is factory-fresh, and
+  what survived is invisible.
+- **Foreign keys are deferred to commit**, so the order the schema enumerates
+  its tables in cannot matter. They are still enforced, against an empty
+  database, where they hold trivially.
+
+Clearing `meta` is what re-arms the seed, so the catalogue returns on its own.
+The appearance preference lives there too and is meant to go: a factory reset
+means the application you first opened, and that one followed the system.
+
+The seed runs in **its own transaction afterwards**. It is idempotent and
+guarded by the flag just cleared, so being killed in between leaves an empty
+database that re-seeds on the next launch — the ordinary first-launch path, not
+a broken state.
 
 ---
 
@@ -905,6 +997,7 @@ Not built in v1. Recorded so the schema does not preclude them.
 | Fatigue / tendon load index | §4.5 | Prescribes rather than records; edges into medical claims; an invented risk number is worse than body signal |
 | **Added load** | Seeded from the start, cut Aug 2026 | This is a bodyweight app. A weighted variant is its own exercise, which is already how progressions are modelled (§3.1), so the metric earned its place only by habit. Removing it also removes the last fractional value and the last unit that was not seconds. Migration 0004 **soft-deletes** the metrics and clears any target pointing at one; `set_metric_values` rows are untouched, so restoring it later is one preset entry and clearing `deleted_at`, not a reconstruction |
 | **Rest timer** | Considered Aug 2026, cut before Phase 5 | A countdown that pushes you back to the bar works against the way this app is actually used — an unhurried two-hour session, one exercise at a time, at your own pace. Removed `expo-notifications` with it, and with that the scheduling, cancelling and deliver-to-a-killed-app machinery that was the largest part of the phase. `rest_seconds` dropped from `template_slots` by migration 0003 |
+| ~~Factory reset~~ | Cut in Phase 11, **built in Phase 11** | The cut held for one afternoon. The reasoning was that Android already has this — *Clear storage* does exactly it, and *Clear cache* does nothing at all because the database is in the files directory. What it missed: a platform setting three levels into system preferences is not a feature of this application, and **iOS has no equivalent**, so *delete the app* was the only answer on half the target platforms. Specified in §12.3 and built as described there, two-step confirmation and all |
 | Rating metric type | `reuirements_two.md` §8.6 | Removed by decision |
 | Selection metric type | §8.6 | No remaining use case once progressions are names |
 | Per-exercise doodles | Considered Aug 2026 | Twenty illustrations that must look like one hand drew them, for no functional gain. Reintroducing requires amending `DESIGN.md` |
@@ -951,6 +1044,7 @@ Without reading documentation.
 | Aug 2026 | Phase 9 amendments. §11.3 goes from five blocks to four. The **days-trained grid** replaces both *Last 7 days* and the 12-week *Sessions per week* bar chart — it answers the week and the quarter in one object made of `View`s, and with the chart went the only reason the dashboard needed a plotting stack. The streak objection was settled deliberately rather than assumed: a filled-square calendar is the most streak-coded object in software, and the three mechanisms that make it one are a count, an intensity ramp and a fixed grid of blank past. None is present, and §11.1 already forbade the second. *This week* became **28 days** — a week holds nought to four sessions and says nothing either way — and its *sets* figure became **quick logs**, because the grid above already draws this week and §11.5's exclusion was the thing worth making visible rather than silent. *Not trained recently* is now sorted by the gap **with the date beside it**, so a movement deliberately stopped reads as a fact rather than a debt, and excludes never-trained and anything under a week. *Recent records* now requires a set to have **beaten** something: a first-ever set is a baseline, and without the rule month one is a wall of records. §10.2 records that the trend is now the sole justification left for `victory-native`. |
 | Aug 2026 | Phase 9 fixes, from the first run on device. The **days-trained grid** was sized by how new the user is: `flex-1` over however many columns the history filled gave week two two columns and squares the width of a thumb. §11.3 now separates the two rules that were tangled into one — the grid is **always thirteen columns wide**, and it **draws from the first logged day**, holding the earlier columns open and blank. Blank now means *outside the record* at either end rather than *not yet happened*, so the first column is ragged at the top exactly as the last is ragged at the bottom. §9 gains the timeline's row rules and its one-line rule, and loses two stale sentences: it has not been grouped by day since Phase 8b, and a quick log carries a `ONE-OFF` tag rather than the words `Quick log`. |
 | Aug 2026 | Phase 10. §12 gains **§12.1**, which states what the file says and why: every table discovered from the schema, every column via `SELECT *`, soft-deleted rows kept, nothing aggregated or renamed. The first three all guard the same failure — a list kept by hand works until someone adds to the schema, and then every backup taken before anyone notices is quietly incomplete. `version` and `schemaVersion` are two numbers because the envelope and the rows change independently, and the second release cannot add a version to files already written. **§12.2** puts it in Settings, reached from Home — a backup nobody can find is not one. §13 gains the three choices and how the override is applied: at module scope before the first frame, because an effect runs after a render and would flash the wrong theme on every launch, and falling back to System on anything unreadable because a preference must never cost a launch. §13 also lost its accent — the text still described moss in three places, deleted in Phase 8b. |
+| Aug 2026 | Phase 11, the last phase. **§10.2 is rewritten from why the trend is absent to how it is drawn**: dots never a line, positioned by date rather than one per session — the second follows from the first, and dropping it would make a three-week gap look like three consecutive days. Y labels fixed to the all-time low and high and pinned outside the scroll, because an axis that rescaled with the visible window would make one dot height mean two numbers. The window ends on the last session rather than on today, unlike §11.3's grid: the grid asks whether you are showing up, so empty columns are its answer, and this asks whether a movement is going anywhere. **§15 gains the factory reset**, cut because Android already has one — *Clear storage* works and *Clear cache* does nothing at all, the database being in the files directory — with iOS having no equivalent recorded as the condition that reopens it, and the shape it would take written down so the decision is not made twice. §11.3's grid stops being capped at thirteen columns and starts scrolling instead: the cap became a floor, which made every earlier week reachable and cost one sign in one comparison. |
 
 ---
 

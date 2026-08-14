@@ -1,4 +1,12 @@
-import { addDays, daysBetween, startOfDay, startOfMonth, startOfWeek } from './days';
+import {
+  addDays,
+  daysBetween,
+  monthSpans,
+  startOfDay,
+  weekWindow,
+  WINDOW_WEEKS,
+  type MonthSpan,
+} from './days';
 
 /**
  * The figures behind Look back (FEATURES.md §11), folded from rows.
@@ -22,8 +30,15 @@ import { addDays, daysBetween, startOfDay, startOfMonth, startOfWeek } from './d
 // Days trained
 // ---------------------------------------------------------------------------
 
-/** Thirteen weeks: a quarter, and as many columns as fit a phone at this size. */
-export const GRID_WEEKS = 13;
+/**
+ * The grid's floor, which is the shared one — see `WINDOW_WEEKS`.
+ *
+ * It was a cap until Phase 11, which is why the grid could not be scrolled back
+ * past a quarter and why nothing here had to think about what a fourteenth
+ * column would mean. Re-exported under the grid's own name because that is what
+ * this module's callers and tests have always called it.
+ */
+export const GRID_WEEKS = WINDOW_WEEKS;
 
 /**
  * What one square says.
@@ -44,19 +59,26 @@ export type DayState = 'trained' | 'rest' | 'before' | 'future';
 
 export type GridDay = { dayMs: number; state: DayState };
 
-/** A run of consecutive columns belonging to one month, for the axis. */
-export type MonthSpan = { monthMs: number; columns: number };
+export type { MonthSpan };
 
 export type DaysGrid = {
-  /** Seven rows, Monday first, each `GRID_WEEKS` entries wide. */
+  /**
+   * Seven rows, Monday first, each `weeks` entries wide — at least `GRID_WEEKS`
+   * and as many more as the history spans. The renderer scrolls what does not
+   * fit rather than resizing to it.
+   */
   rows: GridDay[][];
   months: MonthSpan[];
   /**
    * How many leading columns are entirely `before` — undrawn, but occupying
    * their width so the squares never resize. The month axis skips them.
+   *
+   * Zero once history is longer than `GRID_WEEKS`, which is the whole reason
+   * this can stay a single number: it pads a young grid out to a screen's width
+   * and then stops mattering, without either case being special-cased.
    */
   leading: number;
-  /** The first day the grid can show training on, for the range label. */
+  /** The first day training is drawn on, for the range label. */
   fromMs: number;
   /** Today. */
   toMs: number;
@@ -71,15 +93,18 @@ export type DaysGrid = {
  * which a single figure cannot answer honestly because the shape of a month is
  * the whole content of it.
  *
- * **It is always thirteen columns wide and starts drawing at your first
- * session.** Those are two different things and the difference is the whole of
- * this function. A grid that also *narrowed* to the weeks it had would give
- * week two two columns to fill the screen with, and a square sized by how new
- * you are is a square the width of a thumb — which is what shipped, and what
- * this fixes. So the geometry is fixed at a quarter and the leading columns are
- * simply not drawn: the width is constant, today's column sits at the right
- * edge for good, and nobody is shown a quarter of blank past they never had the
- * chance to fill.
+ * **A column is a fixed width and the grid is at least thirteen of them.** Those
+ * are two different things and the difference is the whole of this function. A
+ * grid that *narrowed* to the weeks it had would give week two two columns to
+ * fill the screen with, and a square sized by how new you are is a square the
+ * width of a thumb — which is what shipped once, and what the leading columns
+ * fix: they hold their width and draw nothing.
+ *
+ * **Past thirteen weeks it grows rather than forgetting.** `minWeeks` is a
+ * floor, not a cap, so a year of training is fifty-three columns and the
+ * renderer scrolls them. This costs nothing here — `leading` falls to zero on
+ * its own once the history is wider than the floor, so the young grid and the
+ * long one are the same arithmetic rather than two cases.
  *
  * Binary, never shaded by volume. §11.1 rules out a combined volume figure
  * across a pull-up and a hold, so an intensity ramp would have to invent the
@@ -91,7 +116,7 @@ export type DaysGrid = {
 export function daysTrainedGrid(
   performedAt: number[],
   now: number,
-  weeks: number = GRID_WEEKS,
+  minWeeks: number = GRID_WEEKS,
 ): DaysGrid | null {
   if (performedAt.length === 0) {
     return null;
@@ -102,22 +127,24 @@ export function daysTrainedGrid(
 
   const earliest = performedAt.reduce((low, at) => Math.min(low, at), Infinity);
 
-  const lastColumn = startOfWeek(today);
-  // Where the grid's width begins, always. Everything left of `firstColumn` is
-  // held open and left undrawn.
-  const gridStart = addDays(lastColumn, -(weeks - 1) * 7);
-  // Where it begins to say anything: the week of the first session, or the far
-  // edge once history is longer than the window.
-  const firstColumn = Math.max(startOfWeek(earliest), gridStart);
-
-  const leading = Math.floor(daysBetween(gridStart, firstColumn) / 7);
+  // The columns, ending on this week. `startMs` is at or before the week of the
+  // first session by construction, which is what removed the clamps this
+  // function used to need: history can no longer run off the left edge, because
+  // the edge moves.
+  const {
+    startMs: gridStart,
+    weeks,
+    leading,
+    spanned,
+    firstMs: firstColumn,
+  } = weekWindow(earliest, today, minWeeks);
 
   // The first day drawn, to the day rather than to the week. Starting a Thursday
   // first-timer's grid on the Monday would draw three squares saying they
   // skipped three days they had not yet installed the app for. It leaves the
   // first column ragged at the top, which mirrors the last column being ragged
   // at the bottom for the days still to come.
-  const began = Math.max(startOfDay(earliest), gridStart);
+  const began = startOfDay(earliest);
 
   return {
     rows: Array.from({ length: 7 }, (_, row) =>
@@ -137,42 +164,11 @@ export function daysTrainedGrid(
         };
       }),
     ),
-    months: monthSpans(firstColumn, weeks - leading),
+    months: monthSpans(firstColumn, spanned),
     leading,
-    // The label states what is drawn, not what exists. Where history runs past
-    // the cap the grid begins at the cap, and a range naming a first session
-    // outside the picture would be describing squares that are not there.
-    fromMs: Math.max(firstColumn, startOfDay(earliest)),
+    fromMs: began,
     toMs: today,
   };
-}
-
-/**
- * Which months the columns fall in, as spans rather than per-column labels.
- *
- * A week is attributed to its Monday's month, so a week straddling the first
- * belongs to the month it started in — one rule, applied once, rather than a
- * boundary drawn through the middle of a column.
- *
- * Spans rather than a label per column because `MAY` is wider than a square:
- * given the run it covers, the axis can lay each label out in the space its own
- * month occupies.
- */
-function monthSpans(firstColumn: number, columns: number): MonthSpan[] {
-  const spans: MonthSpan[] = [];
-
-  for (let column = 0; column < columns; column += 1) {
-    const monthMs = startOfMonth(addDays(firstColumn, column * 7));
-    const open = spans.at(-1);
-
-    if (open && open.monthMs === monthMs) {
-      open.columns += 1;
-    } else {
-      spans.push({ monthMs, columns: 1 });
-    }
-  }
-
-  return spans;
 }
 
 // ---------------------------------------------------------------------------
@@ -349,6 +345,7 @@ export type RecentRecord = {
  */
 export function recentRecords(
   rows: RankedRow[],
+  priorBest: Map<string, number>,
   now: number,
   options?: { windowDays?: number; limit?: number },
 ): RecentRecord[] {
@@ -359,7 +356,7 @@ export function recentRecords(
   const groups = new Map<string, RankedRow[]>();
 
   for (const row of rows) {
-    const key = `${row.exerciseId} ${row.metricId}`;
+    const key = `${row.exerciseId} ${row.metricId}`;
     const held = groups.get(key);
 
     if (held) {
@@ -371,7 +368,7 @@ export function recentRecords(
 
   const found: RecentRecord[] = [];
 
-  for (const group of groups.values()) {
+  for (const [key, group] of groups) {
     // Ordered by when it happened, with the set id as the last tiebreak so two
     // sets sharing a timestamp cannot make the answer depend on row order —
     // ids are UUID v7, so the smaller one is the older one.
@@ -380,7 +377,16 @@ export function recentRecords(
         a.performedAt - b.performedAt || (a.setId < b.setId ? -1 : 1),
     );
 
-    let best: number | undefined;
+    /*
+      Seeded with what this exercise and metric had already reached before the
+      window, rather than starting empty and rediscovering it from the rows.
+
+      That is the whole reason `rows` can be just the window now: the caller
+      used to hand over every measurement ever so this loop could find the bar,
+      and the bar is one number. Undefined still means *nothing before this*,
+      which is what makes a first-ever set a baseline rather than a record.
+    */
+    let best = priorBest.get(key);
     let latest: RecentRecord | undefined;
 
     for (const row of ordered) {

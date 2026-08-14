@@ -21,7 +21,7 @@ import {
   metricsForExercise,
   type Exercise,
 } from '@/db/queries/exercises';
-import { trainedAtRefs } from '@/db/queries/history';
+import { lastTrainedPerExercise } from '@/db/queries/history';
 import { formatMeasures } from '@/lib/format';
 import { tapSaved } from '@/lib/haptics';
 import { toNullableFloat } from '@/lib/parse';
@@ -52,23 +52,26 @@ import { useDraftExit } from '@/lib/use-draft-exit';
  */
 export default function QuickLogScreen() {
   const { data: library } = useLiveQuery(activeExercises());
-  const { data: trained } = useLiveQuery(trainedAtRefs());
+  const { data: trained } = useLiveQuery(lastTrainedPerExercise());
 
   const [picked, setPicked] = useState<string | null>(null);
   const [choosing, setChoosing] = useState(false);
 
   /**
-   * The exercises done most recently, newest first. Folded from the same rows
-   * the library reads for its `last trained` column rather than a query of its
-   * own.
+   * The exercises done most recently, newest first. The same read the library
+   * uses for its `last trained` column rather than a query of its own.
+   *
+   * The maximum per exercise arrives already folded — it used to be found here,
+   * by walking every set ever logged, which is a walk that grows for the life of
+   * the application to produce one date per movement.
    */
   const recent = useMemo(() => {
     const latest = new Map<string, number>();
 
     for (const row of trained) {
-      const held = latest.get(row.exerciseId);
-      if (held === undefined || row.performedAt > held) {
-        latest.set(row.exerciseId, row.performedAt);
+      // `MAX` over an empty group is null, and null is not a date (invariant 2).
+      if (row.lastTrainedAt !== null) {
+        latest.set(row.exerciseId, row.lastTrainedAt);
       }
     }
 

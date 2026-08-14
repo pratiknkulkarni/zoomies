@@ -43,6 +43,13 @@
       "when": 1786078521929,
       "tag": "0005_entry_slot_link",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1786704841860,
+      "tag": "0006_performed_at_index",
+      "breakpoints": true
     }
   ]
 }
