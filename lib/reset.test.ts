@@ -1,11 +1,70 @@
 import { describe, expect, it } from 'vitest';
 
-import { describeLastExport, describeLoss, describeReset } from './reset';
+/*
+  Relative, and it has to be — the runner has no `@/` alias. Same reason
+  `export.test.ts` reaches for it this way: the assertion below is only worth
+  anything if it runs against the real schema rather than a copy.
+*/
+import * as schema from '../db/schema';
+import { exportedTableNames } from './export';
+import {
+  describeLastExport,
+  describeLoss,
+  describeReset,
+  RESET_ORDER,
+} from './reset';
 
 const at = (year: number, month: number, day: number, hour = 12): number =>
   new Date(year, month - 1, day, hour).getTime();
 
 const NOW = at(2026, 8, 14, 10);
+
+describe('RESET_ORDER', () => {
+  it('covers every table in the schema', () => {
+    // The property the discovered version had for free and this one has to be
+    // told: a table added to `db/schema.ts` and not placed here would survive a
+    // reset, invisibly, while the user is told the app is factory-fresh.
+    expect([...RESET_ORDER].sort()).toEqual(exportedTableNames(schema));
+  });
+
+  it('names each table once', () => {
+    expect(new Set(RESET_ORDER).size).toBe(RESET_ORDER.length);
+  });
+
+  it('deletes a child before whatever it points at', () => {
+    /*
+      The dependencies that matter, read off `db/schema.ts`. This is the rule
+      the first implementation tried to get from `PRAGMA defer_foreign_keys` —
+      the pragma did nothing inside Drizzle's transaction, and the reset failed
+      on `DELETE FROM exercise_metrics` with `set_metric_values` still pointing
+      at it.
+    */
+    const references: Record<string, string[]> = {
+      set_metric_values: ['sets', 'exercise_metrics'],
+      sets: ['exercise_entries'],
+      exercise_entries: [
+        'sessions',
+        'exercises',
+        'template_slots',
+        'exercise_metrics',
+      ],
+      sessions: ['templates'],
+      template_slots: ['templates', 'exercises', 'exercise_metrics'],
+      exercise_metrics: ['exercises'],
+    };
+
+    const position = (table: string) => RESET_ORDER.indexOf(table as never);
+
+    for (const [child, parents] of Object.entries(references)) {
+      for (const parent of parents) {
+        expect(
+          position(child),
+          `${child} must be emptied before ${parent}`,
+        ).toBeLessThan(position(parent));
+      }
+    }
+  });
+});
 
 describe('describeLoss', () => {
   it('counts rather than rounds', () => {

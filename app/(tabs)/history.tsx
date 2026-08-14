@@ -5,6 +5,7 @@ import { FlatList, Pressable, View } from 'react-native';
 
 import { EmptyState } from '@/components/ui/empty-state';
 import { Screen } from '@/components/ui/screen';
+import { SectionLabel } from '@/components/ui/section-label';
 import { Tag } from '@/components/ui/tag';
 import { Text } from '@/components/ui/text';
 import { allLiveExercises, indexExercisesById } from '@/db/queries/exercises';
@@ -19,9 +20,15 @@ import type { Session } from '@/db/queries/sessions';
 import {
   formatDayRange,
   formatDuration,
+  formatMonthYear,
   formatSessionDate,
 } from '@/lib/format';
-import { gapsAfter, sessionLengthMs, type TrainingGap } from '@/lib/history';
+import {
+  gapsAfter,
+  monthHeadings,
+  sessionLengthMs,
+  type TrainingGap,
+} from '@/lib/history';
 import { cn } from '@/lib/utils';
 
 /**
@@ -59,13 +66,13 @@ export default function HistoryScreen() {
     [exercises],
   );
 
-  const gaps = useMemo(
-    () =>
-      gapsAfter(
-        history.map((session) => session.completedAt ?? session.startedAt),
-      ),
+  const when = useMemo(
+    () => history.map((session) => session.completedAt ?? session.startedAt),
     [history],
   );
+
+  const gaps = useMemo(() => gapsAfter(when), [when]);
+  const months = useMemo(() => monthHeadings(when), [when]);
 
   // `data` starts empty, so "nothing trained yet" and "not read yet" look
   // identical until `updatedAt` lands.
@@ -76,36 +83,20 @@ export default function HistoryScreen() {
       <FlatList
         data={history}
         keyExtractor={(session) => session.id}
+        /*
+          Look back moved to a tab of its own; the rule stays, because it is
+          what separates the title from the first session under it.
+        */
         ListHeaderComponent={
-          <View className="flex-row items-baseline justify-between gap-lg border-b border-rule px-2xl pb-md pt-2xl">
+          <View className="border-b border-rule px-2xl pb-md pt-2xl">
             <Text className="font-sans-semibold text-display text-text">
               History
             </Text>
-            {/*
-              Look back is not a fourth tab. It is the same material as this
-              screen read at a distance — the timeline says what happened, the
-              dashboard says what it adds up to — and a tab would put a review
-              of the last quarter one tap from the Start button, which §11.3
-              keeps off Home for exactly that reason.
-
-              Hidden until something has been trained: an empty timeline has
-              nothing to look back on, and offering the trip would be offering
-              a blank screen.
-            */}
-            {history.length > 0 ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Look back"
-                onPress={() => router.push('/look-back')}
-                className="min-h-touch justify-center active:bg-muted"
-              >
-                <Text className="text-body text-text-2">Look back ›</Text>
-              </Pressable>
-            ) : null}
           </View>
         }
         renderItem={({ item, index }) => (
           <>
+            <MonthHeading monthMs={months.get(index)} first={index === 0} />
             <Row
               session={item}
               exercises={(entriesBySession.get(item.id) ?? []).map(
@@ -247,6 +238,38 @@ function Row({
  * anything on that edge is read as another row. It is the only thing in the
  * list that is not something you did.
  */
+/**
+ * `AUG 2026` — where one month of the timeline gives way to the next.
+ *
+ * **Left-aligned on the gutter, unlike `GapRule`**, and the difference is the
+ * point. A gap is centred between two rules because it is the one thing in the
+ * list that is *not* something you did; a month heading is a place, and places
+ * belong on the edge you read down. It is §2.4's label treatment, which is what
+ * every other section of the application uses to name what follows it.
+ *
+ * No rule of its own. The row beneath a heading keeps its own hairline and the
+ * space above does the separating — DESIGN.md §1.2 rule 4, whitespace before
+ * borders, and a heading boxed in by rules would read as heavier than the
+ * sessions it labels.
+ */
+function MonthHeading({
+  monthMs,
+  first,
+}: {
+  monthMs: number | undefined;
+  first: boolean;
+}) {
+  if (monthMs === undefined) {
+    return null;
+  }
+
+  return (
+    <SectionLabel className={first ? 'px-2xl pb-sm pt-lg' : 'px-2xl pb-sm pt-2xl'}>
+      {formatMonthYear(monthMs)}
+    </SectionLabel>
+  );
+}
+
 function GapRule({ gap }: { gap: TrainingGap | undefined }) {
   if (!gap) {
     return null;

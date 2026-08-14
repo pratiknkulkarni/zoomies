@@ -107,7 +107,7 @@ export function SessionControls({ session }: { session: Session }) {
   const paused = session.pausedAt !== null;
 
   return (
-    <View className="flex-row gap-md px-2xl pt-lg">
+    <View className="flex-row gap-md px-2xl pb-xl pt-lg">
       <View className="flex-1">
         <Button
           variant="secondary"

@@ -1,5 +1,11 @@
 import { Tabs } from 'expo-router';
-import { Dumbbell, House, ScrollText } from 'lucide-react-native';
+import {
+  CalendarRange,
+  Dumbbell,
+  House,
+  ScrollText,
+  SlidersHorizontal,
+} from 'lucide-react-native';
 import type { ComponentProps } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -8,6 +14,23 @@ import { iconWithClassName } from '@/components/ui/icon';
 const HomeIcon = iconWithClassName(House);
 const HistoryIcon = iconWithClassName(ScrollText);
 const ExercisesIcon = iconWithClassName(Dumbbell);
+
+/**
+ * Sliders rather than a gear.
+ *
+ * A gear is the icon for a settings screen that has grown a hundred switches.
+ * This one has three appearance rows, a backup and a reset, and §8 says an icon
+ * appears only where a word would be slower to read — the sliders say *a few
+ * things you can set* where a cog says *configuration*.
+ */
+const SettingsIcon = iconWithClassName(SlidersHorizontal);
+
+/**
+ * A span of dates, which is what the screen is: thirteen weeks of squares and
+ * three figures about the same stretch. Not a single calendar page — nothing on
+ * Look back is about one day.
+ */
+const LookBackIcon = iconWithClassName(CalendarRange);
 
 type TabBarProps = Parameters<
   NonNullable<ComponentProps<typeof Tabs>['tabBar']>
@@ -45,7 +68,11 @@ function TabBar({ state, descriptors, navigation, insets }: TabBarProps) {
             ? HomeIcon
             : route.name === 'history'
               ? HistoryIcon
-              : ExercisesIcon;
+              : route.name === 'look-back'
+                ? LookBackIcon
+                : route.name === 'exercises'
+                  ? ExercisesIcon
+                  : SettingsIcon;
 
         const onPress = () => {
           const event = navigation.emit({
@@ -92,9 +119,15 @@ function TabBar({ state, descriptors, navigation, insets }: TabBarProps) {
 export default function TabsLayout() {
   return (
     <Tabs screenOptions={{ headerShown: false }} tabBar={TabBar}>
+      {/*
+        Ordered as the application is used, left to right: train, read what
+        happened, read what it adds up to, tend the library, set the thing up.
+      */}
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
       <Tabs.Screen name="history" options={{ title: 'History' }} />
+      <Tabs.Screen name="look-back" options={{ title: 'Look back' }} />
       <Tabs.Screen name="exercises" options={{ title: 'Exercises' }} />
+      <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
     </Tabs>
   );
 }

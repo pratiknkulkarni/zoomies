@@ -7,7 +7,6 @@ import { colorScheme } from 'nativewind';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 
-import { BackButton } from '@/components/ui/back-button';
 import { Button } from '@/components/ui/button';
 import { iconWithClassName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
@@ -69,12 +68,11 @@ export default function SettingsScreen() {
   return (
     <Screen bleed>
       <ScrollView contentContainerClassName="pb-3xl">
-        <View className="flex-row items-center gap-md pr-2xl">
-          <BackButton />
-          <Text className="flex-1 font-sans-semibold text-display text-text">
-            Settings
-          </Text>
-        </View>
+        {/* A tab, so there is nothing to go back to and no back button. The
+            title sits in the gutter like every other tab's. */}
+        <Text className="px-2xl font-sans-semibold text-display text-text">
+          Settings
+        </Text>
 
         <View className="pt-xl">
           <SectionLabel className="px-2xl pb-sm">Appearance</SectionLabel>
@@ -123,10 +121,10 @@ function ResetEverything() {
       // a database that no longer records one, until the next launch.
       colorScheme.set(DEFAULT_APPEARANCE);
 
-      // Home, because the screen behind this one is describing a database that
-      // is now empty. `dismissTo` rather than `replace`: Settings was pushed
-      // from Home, and this returns to it rather than stacking a second copy.
-      router.dismissTo('/');
+      // Home, because every other tab is now describing a database that no
+      // longer has anything in it, and Home is the one that reads correctly
+      // empty rather than merely blank.
+      router.navigate('/');
     } catch (cause: unknown) {
       Alert.alert(
         'Reset failed',

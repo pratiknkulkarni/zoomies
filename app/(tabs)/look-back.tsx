@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
-import { BackButton } from '@/components/ui/back-button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Screen } from '@/components/ui/screen';
 import { SectionLabel } from '@/components/ui/section-label';
@@ -83,9 +82,13 @@ const RECORD_DAYS = 30;
  * moves the grid, the counts, the neglect list and the records together,
  * because none of the four is stored (invariant 3).
  *
- * **Not on Home.** What you want at 18:39 in a garage is a Start button, not a
- * review of the last twelve weeks — so this is reached from History, which is
- * already the screen you are on when you are reading rather than training.
+ * **Not on Home**, and now a tab of its own. What you want at 18:39 in a garage
+ * is a Start button, not a review of the last twelve weeks — which is why this
+ * is not on Home, and that reasoning is untouched by the move. It was reached
+ * from a `Look back ›` link on History's title row, and that stopped being
+ * defensible when Settings left the same treatment on Home: one text link in
+ * one corner of one screen is a navigation vocabulary of a single word, which
+ * is the objection the codebase already raises against an icon used once.
  */
 export default function LookBackScreen() {
   const { data: trained, updatedAt } = useLiveQuery(trainedAtRefs());
@@ -170,12 +173,10 @@ export default function LookBackScreen() {
   return (
     <Screen bleed>
       <ScrollView contentContainerClassName="pb-3xl">
-        <View className="flex-row items-center gap-md pr-2xl">
-          <BackButton />
-          <Text className="flex-1 font-sans-semibold text-display text-text">
-            Look back
-          </Text>
-        </View>
+        {/* A tab now, so there is nothing to go back to. */}
+        <Text className="px-2xl font-sans-semibold text-display text-text">
+          Look back
+        </Text>
 
         {grid ? (
           <View className="gap-md px-2xl pt-xl">

@@ -1,9 +1,8 @@
 import { sql } from 'drizzle-orm';
 
 import { db } from '../client';
-import * as schema from '../schema';
 import { seedIfNeeded } from '../seed';
-import { exportedTableNames } from '@/lib/export';
+import { RESET_ORDER } from '@/lib/reset';
 
 /**
  * The factory reset (FEATURES.md §12.3).
@@ -18,17 +17,13 @@ import { exportedTableNames } from '@/lib/export';
 /**
  * Empty every table, then let the catalogue come back.
  *
- * **The table list is discovered from the schema**, exactly as the export's is
- * and for the same reason: a list kept by hand works until someone adds a
- * table, and then the reset quietly stops being one. A reset that leaves rows
- * behind is worse than the export's equivalent failure — the user is told the
- * application is factory-fresh, and the leftovers are invisible.
- *
- * **`PRAGMA defer_foreign_keys` is what makes discovery safe.** `db/client.ts`
- * turns foreign keys on, so deleting `exercises` before the metrics pointing at
- * it would fail; deferring the checks to commit means the order the schema
- * happens to enumerate its tables in cannot matter. The constraints are still
- * enforced — at commit, against an empty database, where they hold trivially.
+ * **Children before parents, in the order `RESET_ORDER` states.** `db/client.ts`
+ * turns foreign keys on, so emptying `exercise_metrics` while `set_metric_values`
+ * still points at it fails — which is exactly what shipped and what the user hit.
+ * That first version discovered the tables from the schema alphabetically and
+ * relied on `PRAGMA defer_foreign_keys` to make the order irrelevant; the pragma
+ * did nothing through Drizzle's transaction and the whole reset failed on the
+ * second table. `lib/reset.ts` carries the ordering and a test keeps it complete.
  *
  * **`meta` goes with everything else**, which is what re-arms the seed: the
  * flag `seedIfNeeded` guards on is a row in it. The appearance preference is in
@@ -42,11 +37,9 @@ import { exportedTableNames } from '@/lib/export';
  */
 export async function resetEverything(): Promise<void> {
   await db.transaction(async (tx) => {
-    await tx.run(sql`PRAGMA defer_foreign_keys = ON`);
-
-    for (const table of exportedTableNames(schema)) {
-      // The name comes from the schema and never from input; quoted so a table
-      // called `sets` cannot collide with a keyword.
+    for (const table of RESET_ORDER) {
+      // The name comes from a literal in `lib/reset.ts`, never from input;
+      // quoted so a table called `sets` cannot collide with a keyword.
       await tx.run(sql.raw(`DELETE FROM "${table}"`));
     }
   });

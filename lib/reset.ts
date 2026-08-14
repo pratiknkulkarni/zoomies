@@ -15,6 +15,41 @@ import { formatShortDate } from './format';
 export type Loss = { sessions: number; sets: number };
 
 /**
+ * The order the tables are emptied in: **children before the rows they point
+ * at.**
+ *
+ * Written out rather than discovered, which is the opposite of the choice
+ * `lib/export.ts` makes and is the right one here. The export only has to name
+ * every table; this has to name them in an order foreign keys allow, and
+ * nothing in a Drizzle schema states which table depends on which in a form
+ * that can be sorted.
+ *
+ * The first attempt did discover them, alphabetically, and deferred the
+ * constraint checks to commit with `PRAGMA defer_foreign_keys`. **The pragma
+ * silently did nothing** through Drizzle's transaction, and the reset failed on
+ * `DELETE FROM exercise_metrics` — second alphabetically, and still pointed at
+ * by every row in `set_metric_values`. An order that does not need a pragma
+ * cannot be defeated by one not taking effect.
+ *
+ * Completeness is kept by a test rather than by construction: the sorted
+ * contents of this list must equal `exportedTableNames`, so a table added to
+ * `db/schema.ts` fails the suite until it is placed here deliberately. That is
+ * the property worth protecting — a reset that leaves rows behind tells the user
+ * the application is factory-fresh while something invisible survived.
+ */
+export const RESET_ORDER = [
+  'set_metric_values',
+  'sets',
+  'exercise_entries',
+  'sessions',
+  'template_slots',
+  'templates',
+  'exercise_metrics',
+  'exercises',
+  'meta',
+] as const;
+
+/**
  * `139 sessions and 1,827 sets`.
  *
  * **Counted, never rounded.** `a lot of training` is not a number anyone can

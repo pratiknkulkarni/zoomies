@@ -75,29 +75,16 @@ export default function HomeScreen() {
         keyExtractor={(template) => template.id}
         ListHeaderComponent={
           <View>
-            <View className="flex-row items-baseline justify-between gap-lg px-2xl pt-2xl">
-              <Text className="font-sans-semibold text-display text-text">
-                Zoomies
-              </Text>
-              {/*
-                Settings is here rather than on a fourth tab, and here rather
-                than anywhere else, because of what is on it: the export is the
-                only backup (§12), and a backup nobody can find is not one.
-                Home is the screen that gets opened.
-
-                Text, not a gear. The system has no icon vocabulary for
-                navigation — History's `Look back ›` is the same shape — and one
-                icon used once would be a vocabulary of one.
-              */}
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Settings"
-                onPress={() => router.push('/settings')}
-                className="min-h-touch justify-center active:bg-muted"
-              >
-                <Text className="text-body text-text-2">Settings ›</Text>
-              </Pressable>
-            </View>
+            {/*
+              Settings moved to a tab. It sat here because the export is the
+              only backup (§12) and a backup nobody can find is not one — Home
+              being the screen that gets opened. A tab is simply better at that
+              same job, and it frees the title row of a screen whose subject is
+              the training below it, not the application.
+            */}
+            <Text className="px-2xl pt-2xl font-sans-semibold text-display text-text">
+              Zoomies
+            </Text>
 
             {/* What the app knows about you, in one line. Absent before there
                 is anything to say — an empty app should not open on a report of

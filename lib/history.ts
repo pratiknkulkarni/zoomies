@@ -1,4 +1,4 @@
-import { addDays, startOfDay } from './days';
+import { addDays, startOfDay, startOfMonth } from './days';
 
 /**
  * Figures derived from a session, computed at read time (FEATURES.md §9).
@@ -64,6 +64,44 @@ export function elapsedSessionMs(
 
 /** A stretch of days between two sessions on which nothing was trained. */
 export type TrainingGap = { fromMs: number; toMs: number };
+
+/**
+ * Where a new month begins, keyed by the row it sits **above**.
+ *
+ * The timeline is newest first, so a heading belongs above row `i` when row `i`
+ * fell in a different month from row `i - 1`. Row zero always gets one — the
+ * top of the list is the start of a month as much as any boundary inside it,
+ * and a list whose first heading appears halfway down reads as though the rows
+ * above it belong to nothing.
+ *
+ * **This is not the grouping `gapsAfter` argues against.** That reasoning holds
+ * and is the reason the timeline is still a flat list: a heading per *day*
+ * states the days that exist while saying nothing about the ones that do not,
+ * and the breaks are the part of the record worth drawing. A month heading
+ * makes no claim about any day — it is a ruler down the side of a list long
+ * enough to get lost in, which at two hundred sessions it now is.
+ *
+ * A map rather than an interleaved list, for the reason `gapsAfter` returns
+ * one: the caller keeps a flat array of sessions and asks about headings while
+ * rendering, so no `keyExtractor` has to test what kind of thing it was handed.
+ */
+export function monthHeadings(
+  timestampsNewestFirst: number[],
+): Map<number, number> {
+  const headings = new Map<number, number>();
+  let open: number | undefined;
+
+  for (const [index, at] of timestampsNewestFirst.entries()) {
+    const month = startOfMonth(at);
+
+    if (month !== open) {
+      headings.set(index, month);
+      open = month;
+    }
+  }
+
+  return headings;
+}
 
 /**
  * The untrained stretches inside a timeline, keyed by the row they follow.

@@ -560,6 +560,16 @@ days that exist and said nothing about the ones that do not; a rule reading
 `8–11 Aug · no training` costs one hairline and says the thing a missing heading
 could not.
 
+**A heading per month, and it is not the grouping above that was rejected.**
+`AUG 2026`, `JUL 2026`, in §2.4's label treatment on the gutter. The objection
+to a heading per day was that it states the days that exist and says nothing
+about the ones that do not; a month heading makes no claim about any day. It is
+a ruler down the side of a list that is long enough to get lost in, which at two
+hundred sessions it is — and the year is always carried, because `Aug` alone
+halfway down a scroll is only unambiguous to someone who already knows how far
+they have come. The gap rules are unaffected and still do the work of saying
+what did not happen.
+
 **Every row is ruled and no row wraps.** A session is two lines and a quick log
 is one, so a screen of them separated by whitespace alone reads as a column of
 loose text rather than as a list of things — the eye cannot find where one entry
@@ -706,8 +716,13 @@ sets, days). This rules out most vanity metrics automatically.
 ### 11.3 Dashboard Blocks
 
 Four blocks, in order. Nothing else. The screen is titled **Look back** and is
-reached from History, not from Home — what you want at 18:39 in a garage is a
-Start button, not a review of the last quarter.
+**a tab, never Home** — what you want at 18:39 in a garage is a Start button,
+not a review of the last quarter, and that reasoning is untouched by giving it
+a tab. It was reached from a `Look back ›` link on History's title row; that
+stopped being defensible when Settings left the identical treatment on Home,
+leaving one text link in one corner of one screen — a navigation vocabulary of
+a single word, which is the objection this project already raises against an
+icon used once.
 
 **Days trained** — one square per day, filled where anything was logged. Seven
 rows, Monday first, by thirteen week columns.
@@ -860,8 +875,10 @@ history.
 
 ### 12.2 Where It Lives
 
-Settings, reached from Home. Not a fourth tab, and not buried: a backup nobody
-can find is not a backup, and Home is the screen that gets opened.
+**Settings is a tab.** It was a `Settings ›` link on Home's title row, on the
+grounds that a backup nobody can find is not a backup and Home is the screen
+that gets opened. A tab does that job better and costs Home's title row nothing
+— that screen's subject is the training below it, not the application.
 
 Settings holds this, §13's appearance override and §12.3's reset. Nothing else.
 It is a **Pattern B** screen (§18) — every choice on it commits as it is made,

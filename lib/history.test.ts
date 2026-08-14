@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { elapsedSessionMs, gapsAfter, sessionLengthMs } from './history';
+import {
+  elapsedSessionMs,
+  gapsAfter,
+  monthHeadings,
+  sessionLengthMs,
+} from './history';
 
 describe('sessionLengthMs', () => {
   const minute = 60_000;
@@ -184,5 +189,75 @@ describe('gapsAfter', () => {
       fromMs: new Date(2026, 9, 25, 0).getTime(),
       toMs: new Date(2026, 9, 26, 0).getTime(),
     });
+  });
+});
+
+describe('monthHeadings', () => {
+  const on = (year: number, month: number, day: number, hour = 18) =>
+    new Date(year, month - 1, day, hour).getTime();
+
+  const first = (year: number, month: number) =>
+    new Date(year, month - 1, 1).getTime();
+
+  it('heads the top of the list, not only the boundaries inside it', () => {
+    const headings = monthHeadings([on(2026, 8, 14), on(2026, 8, 3)]);
+
+    // A list whose first heading appears halfway down reads as though the rows
+    // above it belong to nothing.
+    expect(headings.get(0)).toBe(first(2026, 8));
+    expect(headings.size).toBe(1);
+  });
+
+  it('keys a heading to the row it sits above, newest first', () => {
+    const headings = monthHeadings([
+      on(2026, 8, 14),
+      on(2026, 8, 3),
+      on(2026, 7, 29),
+      on(2026, 7, 2),
+      on(2026, 6, 30),
+    ]);
+
+    expect([...headings]).toEqual([
+      [0, first(2026, 8)],
+      [2, first(2026, 7)],
+      [4, first(2026, 6)],
+    ]);
+  });
+
+  it('separates the same month in two different years', () => {
+    // The reason `formatMonthYear` always carries the year: these two are
+    // eleven months apart and both read `Aug`.
+    const headings = monthHeadings([on(2026, 8, 2), on(2025, 8, 30)]);
+
+    expect([...headings]).toEqual([
+      [0, first(2026, 8)],
+      [1, first(2025, 8)],
+    ]);
+  });
+
+  it('gives one heading to a month trained on many days', () => {
+    const headings = monthHeadings([
+      on(2026, 8, 14),
+      on(2026, 8, 12),
+      on(2026, 8, 10),
+      on(2026, 8, 7),
+    ]);
+
+    expect(headings.size).toBe(1);
+  });
+
+  it('is empty for an empty timeline', () => {
+    expect(monthHeadings([])).toEqual(new Map());
+  });
+
+  it('reads a session by its local day, not by UTC', () => {
+    // 1 Aug at 00:30 local is August. Anything dividing by 86,400,000 would
+    // put it in July for anyone east of Greenwich.
+    const headings = monthHeadings([on(2026, 8, 1, 0), on(2026, 7, 31, 23)]);
+
+    expect([...headings]).toEqual([
+      [0, first(2026, 8)],
+      [1, first(2026, 7)],
+    ]);
   });
 });

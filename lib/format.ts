@@ -288,6 +288,21 @@ export function formatShortDate(epochMs: number): string {
  * Rendered uppercase by the label treatment (DESIGN.md §2.4), not here — the
  * source stays sentence case (§2.5) so nothing downstream has to undo it.
  */
+/**
+ * `Aug 2026` — the heading a month of the timeline sits under.
+ *
+ * The year is always present, never dropped for the current one. A list this
+ * long is read by scrolling into the past, and `Aug` alone at the top of a
+ * screen is only unambiguous to someone who already knows how far down they
+ * are — which is the thing the heading exists to tell them.
+ */
+export function formatMonthYear(epochMs: number): string {
+  return new Date(epochMs).toLocaleDateString('en-GB', {
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
 export function formatMonth(epochMs: number): string {
   return new Date(epochMs).toLocaleDateString('en-GB', { month: 'short' });
 }
