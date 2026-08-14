@@ -153,7 +153,13 @@ export function BestSetTrend({
           className="flex-1"
         >
           <View style={{ width: contentWidth }} className="gap-sm">
-            <View className="h-chart">
+            {/*
+              `overflow-hidden` for the single frame before `onLayout` reports a
+              width, when the plot is zero wide and every dot would sit outside
+              it. Nothing is clipped afterwards — the positions are already inset
+              by a dot at both ends.
+            */}
+            <View className="h-chart overflow-hidden">
               {trend.points.map((point) => (
                 <View
                   key={point.sessionId}
