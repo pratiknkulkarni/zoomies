@@ -40,6 +40,17 @@ export const EXPORT_FORMAT = 'zoomies-export';
 export const EXPORT_VERSION = 1;
 
 /**
+ * When an export last succeeded, kept in `meta`.
+ *
+ * The one thing the export records about itself, and it exists for the factory
+ * reset (§12.3) rather than for this feature: the second confirmation has to
+ * say whether a copy of the training exists anywhere, and nothing else in the
+ * database knows. Written only on success — a failed export has produced no
+ * copy, and a timestamp claiming otherwise would be the one lie that matters.
+ */
+export const LAST_EXPORT_KEY = 'export.last_at';
+
+/**
  * Which tables an export covers, discovered from the schema module.
  *
  * **A table added to `db/schema.ts` joins the export by existing.** A list kept

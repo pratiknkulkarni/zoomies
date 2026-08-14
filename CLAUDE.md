@@ -221,8 +221,35 @@ npx tsc --noEmit               # Typecheck
 npm run lint
 npm test                       # Unit tests
 
+npm run deploy                 # Build the debug apk and install it on the device
+npm run deploy:release         # The same, release-signed
+npm run device                 # Which phone adb is talking to
+
 eas build --profile preview --platform android --local
 ```
+
+### `android/` is generated, and it is **not** disposable
+
+`npm run apk`, `deploy` and `deploy:release` invoke `android/gradlew` directly,
+so the native project has to exist on disk. It is in `.gitignore` — which makes
+it look like scratch output, and it is not. **Never `rm -rf android`.**
+
+If it is missing or broken, rebuild it:
+
+```bash
+npx expo prebuild --platform android --no-install
+printf 'sdk.dir=%s/Android/Sdk\n' "$HOME" > android/local.properties
+```
+
+**Both lines.** `prebuild` writes everything except `local.properties`, which is
+machine-specific and is the one file it will not recreate — without it Gradle
+fails with *SDK location not found* rather than anything mentioning the file.
+
+Use `--clean` only to discard hand-edits to the native project. It deletes
+`local.properties` with everything else, so the second line always follows it.
+Native changes belong in `app.json` or a config plugin, so there should be
+nothing in there to preserve — but the deletion is silent either way, and the
+next Gradle run is a full recompile because the build cache goes too.
 
 After any change to `db/schema.ts`, run `drizzle-kit generate` and commit the
 generated migration in the same commit.

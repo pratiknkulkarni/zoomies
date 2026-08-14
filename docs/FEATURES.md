@@ -863,9 +863,58 @@ history.
 Settings, reached from Home. Not a fourth tab, and not buried: a backup nobody
 can find is not a backup, and Home is the screen that gets opened.
 
-Settings holds this and §13's appearance override. Nothing else. It is a
-**Pattern B** screen (§18) — both choices commit as they are made, so there is
-nothing on it to leave unsaved.
+Settings holds this, §13's appearance override and §12.3's reset. Nothing else.
+It is a **Pattern B** screen (§18) — every choice on it commits as it is made,
+so there is nothing to leave unsaved.
+
+### 12.3 Factory Reset
+
+Puts the application back to the state of its first launch: every session, set,
+exercise, template and preference gone, and the built-in catalogue planted
+again.
+
+**This was cut before it was built, and then built anyway.** The original
+reasoning still holds and is worth keeping: Android already has this — *Clear
+storage* does exactly it, while *Clear cache* does nothing at all, because the
+database is in the files directory. What the reasoning missed is that a
+platform setting three levels into system preferences is not a feature of this
+application, and that iOS has no equivalent at all, so *delete the app* was the
+only answer on half the target platforms.
+
+**Two confirmations, and the second one carries the numbers.** A single dialog
+naming no figure is one people learn to dismiss. The second states how many
+sessions and sets are about to go, and **whether a copy of them exists** — which
+is why the export records `export.last_at` in `meta` on success. Never having
+exported is stated first and stated plainly, because it is the only case where
+the right answer is probably to cancel.
+
+The counted figures exclude soft-deleted rows even though the reset destroys
+those too. The sentence exists to be checked against what the person believes
+they have, and History has never shown them a deleted session.
+
+**Rows are deleted, never the file.** `db` is a module-level singleton opened
+once at startup, so removing `zoomies.db` underneath it leaves every screen
+holding a handle to nothing until the application is relaunched. Clearing the
+tables leaves the same open database, empty.
+
+Two properties make that safe, and both are borrowed from §12.1:
+
+- **The table list is discovered from the schema**, so a table added later is
+  cleared by existing. A reset that leaves rows behind is worse than an
+  incomplete backup — the user is told the application is factory-fresh, and
+  what survived is invisible.
+- **Foreign keys are deferred to commit**, so the order the schema enumerates
+  its tables in cannot matter. They are still enforced, against an empty
+  database, where they hold trivially.
+
+Clearing `meta` is what re-arms the seed, so the catalogue returns on its own.
+The appearance preference lives there too and is meant to go: a factory reset
+means the application you first opened, and that one followed the system.
+
+The seed runs in **its own transaction afterwards**. It is idempotent and
+guarded by the flag just cleared, so being killed in between leaves an empty
+database that re-seeds on the next launch — the ordinary first-launch path, not
+a broken state.
 
 ---
 
@@ -931,7 +980,7 @@ Not built in v1. Recorded so the schema does not preclude them.
 | Fatigue / tendon load index | §4.5 | Prescribes rather than records; edges into medical claims; an invented risk number is worse than body signal |
 | **Added load** | Seeded from the start, cut Aug 2026 | This is a bodyweight app. A weighted variant is its own exercise, which is already how progressions are modelled (§3.1), so the metric earned its place only by habit. Removing it also removes the last fractional value and the last unit that was not seconds. Migration 0004 **soft-deletes** the metrics and clears any target pointing at one; `set_metric_values` rows are untouched, so restoring it later is one preset entry and clearing `deleted_at`, not a reconstruction |
 | **Rest timer** | Considered Aug 2026, cut before Phase 5 | A countdown that pushes you back to the bar works against the way this app is actually used — an unhurried two-hour session, one exercise at a time, at your own pace. Removed `expo-notifications` with it, and with that the scheduling, cancelling and deliver-to-a-killed-app machinery that was the largest part of the phase. `rest_seconds` dropped from `template_slots` by migration 0003 |
-| **Factory reset** | Considered Aug 2026, cut in Phase 11 | **Android already has this, and it is not the button anyone reaches for.** *Clear cache* empties the cache directory and leaves `zoomies.db` untouched — it does nothing at all, which is the trap. *Clear storage* deletes the whole data directory and is a true reset. **iOS has no per-app equivalent**, so deleting the application is the only route there; shipping on iOS is the condition that reopens this, stated rather than implied. **The shape it would take**, recorded so the decision is not made twice: two-step confirmation, the second step naming what is lost (`12 sessions, 41 sets`) and whether anything has ever been exported — which would mean recording `last_export_at` in `meta` on a successful export. Appearance is reset with it, because a factory reset means the application you first opened, and that one followed the system. **The mechanism** would be deleting rows in one transaction rather than deleting the file: `db` is a module-level singleton, so reopening it would need a relaunch. Clearing `meta` re-arms `seedIfNeeded`, so the catalogue returns on its own. There is no `stores/` and no Zustand in this project, so there would be no in-memory state to clear — only rows, and the screen you are standing on |
+| ~~Factory reset~~ | Cut in Phase 11, **built in Phase 11** | The cut held for one afternoon. The reasoning was that Android already has this — *Clear storage* does exactly it, and *Clear cache* does nothing at all because the database is in the files directory. What it missed: a platform setting three levels into system preferences is not a feature of this application, and **iOS has no equivalent**, so *delete the app* was the only answer on half the target platforms. Specified in §12.3 and built as described there, two-step confirmation and all |
 | Rating metric type | `reuirements_two.md` §8.6 | Removed by decision |
 | Selection metric type | §8.6 | No remaining use case once progressions are names |
 | Per-exercise doodles | Considered Aug 2026 | Twenty illustrations that must look like one hand drew them, for no functional gain. Reintroducing requires amending `DESIGN.md` |
