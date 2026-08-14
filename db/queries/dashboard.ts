@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, isNull } from 'drizzle-orm';
+import { and, eq, gte, isNotNull, isNull, lt, max } from 'drizzle-orm';
 
 import { db } from '../client';
 import { exerciseEntries, sessions, setMetricValues, sets } from '../schema';
@@ -28,13 +28,17 @@ import { exerciseEntries, sessions, setMetricValues, sets } from '../schema';
  * that session were discarded, and the same line is drawn by
  * `db/queries/records.ts` and by History (§9).
  *
- * Five columns for every measurement ever, which grows with training history.
- * The same trade `liveSetRefs` makes and for the same reason: at this volume it
- * is cheaper than a query per exercise, and it is honest about what it costs.
+ * **The window can be pushed into the query after all.** The note above is the
+ * one this replaces, and it was wrong in an interesting way: beating something
+ * does mean comparing against everything before it, but *everything before it*
+ * collapses to one number per exercise and metric. So this returns only the
+ * window, `bestBeforePerMetric` returns the bar each one has to clear, and the
+ * 54,642 rows that used to cross the bridge to answer this became a few dozen.
+ *
  * `notes` metrics contribute nothing — a note stores `value_text` and leaves
  * `value_num` null, so the predicate below drops them before they are read.
  */
-export function rankableValues() {
+export function valuesSince(sinceMs: number) {
   return db
     .select({
       exerciseId: exerciseEntries.exerciseId,
@@ -55,6 +59,43 @@ export function rankableValues() {
         isNull(exerciseEntries.deletedAt),
         isNull(sessions.deletedAt),
         isNotNull(sessions.completedAt),
+        gte(sets.performedAt, sinceMs),
       ),
     );
+}
+
+/**
+ * The best each exercise and metric had reached **before** the window.
+ *
+ * The other half of the same answer. `recentRecords` needs to know what a set
+ * in the window beat, and that is one number per exercise and metric rather
+ * than every set that ever preceded it — so `MAX` in SQL returns eleven-ish rows
+ * where the full history returned 54,642.
+ *
+ * Rooted at `set_metric_values`, like the query above, so a correction to an old
+ * set moves what today's set is measured against.
+ */
+export function bestBeforePerMetric(sinceMs: number) {
+  return db
+    .select({
+      exerciseId: exerciseEntries.exerciseId,
+      metricId: setMetricValues.exerciseMetricId,
+      best: max(setMetricValues.valueNum),
+    })
+    .from(setMetricValues)
+    .innerJoin(sets, eq(sets.id, setMetricValues.setId))
+    .innerJoin(exerciseEntries, eq(exerciseEntries.id, sets.exerciseEntryId))
+    .innerJoin(sessions, eq(sessions.id, exerciseEntries.sessionId))
+    .where(
+      and(
+        isNotNull(setMetricValues.valueNum),
+        isNull(setMetricValues.deletedAt),
+        isNull(sets.deletedAt),
+        isNull(exerciseEntries.deletedAt),
+        isNull(sessions.deletedAt),
+        isNotNull(sessions.completedAt),
+        lt(sets.performedAt, sinceMs),
+      ),
+    )
+    .groupBy(exerciseEntries.exerciseId, setMetricValues.exerciseMetricId);
 }

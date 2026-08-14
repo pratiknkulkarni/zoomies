@@ -345,6 +345,7 @@ export type RecentRecord = {
  */
 export function recentRecords(
   rows: RankedRow[],
+  priorBest: Map<string, number>,
   now: number,
   options?: { windowDays?: number; limit?: number },
 ): RecentRecord[] {
@@ -355,7 +356,7 @@ export function recentRecords(
   const groups = new Map<string, RankedRow[]>();
 
   for (const row of rows) {
-    const key = `${row.exerciseId} ${row.metricId}`;
+    const key = `${row.exerciseId} ${row.metricId}`;
     const held = groups.get(key);
 
     if (held) {
@@ -367,7 +368,7 @@ export function recentRecords(
 
   const found: RecentRecord[] = [];
 
-  for (const group of groups.values()) {
+  for (const [key, group] of groups) {
     // Ordered by when it happened, with the set id as the last tiebreak so two
     // sets sharing a timestamp cannot make the answer depend on row order —
     // ids are UUID v7, so the smaller one is the older one.
@@ -376,7 +377,16 @@ export function recentRecords(
         a.performedAt - b.performedAt || (a.setId < b.setId ? -1 : 1),
     );
 
-    let best: number | undefined;
+    /*
+      Seeded with what this exercise and metric had already reached before the
+      window, rather than starting empty and rediscovering it from the rows.
+
+      That is the whole reason `rows` can be just the window now: the caller
+      used to hand over every measurement ever so this loop could find the bar,
+      and the bar is one number. Undefined still means *nothing before this*,
+      which is what makes a first-ever set a baseline rather than a record.
+    */
+    let best = priorBest.get(key);
     let latest: RecentRecord | undefined;
 
     for (const row of ordered) {

@@ -14,7 +14,7 @@ import {
   countBySession,
   indexEntriesBySession,
   liveEntryRefs,
-  liveSetRefs,
+  setCountsBySession,
 } from '@/db/queries/history';
 import type { Session } from '@/db/queries/sessions';
 import {
@@ -53,7 +53,7 @@ import { cn } from '@/lib/utils';
 export default function HistoryScreen() {
   const { data: history, updatedAt } = useLiveQuery(completedSessions());
   const { data: entryRefs } = useLiveQuery(liveEntryRefs());
-  const { data: setRefs } = useLiveQuery(liveSetRefs());
+  const { data: setRefs } = useLiveQuery(setCountsBySession());
   const { data: exercises } = useLiveQuery(allLiveExercises());
 
   const entriesBySession = useMemo(

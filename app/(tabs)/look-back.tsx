@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Screen } from '@/components/ui/screen';
 import { SectionLabel } from '@/components/ui/section-label';
 import { Text } from '@/components/ui/text';
-import { rankableValues } from '@/db/queries/dashboard';
+import { bestBeforePerMetric, valuesSince } from '@/db/queries/dashboard';
 import {
   activeExercises,
   allLiveExercises,
@@ -18,7 +18,8 @@ import {
 import {
   completedSessions,
   lastTrainedByExercise,
-  trainedAtRefs,
+  lastTrainedPerExercise,
+  trainedDaysSince,
 } from '@/db/queries/history';
 import { DayGrid } from '@/features/dashboard/day-grid';
 import {
@@ -29,6 +30,7 @@ import {
   type Neglected,
   type RecentRecord,
 } from '@/lib/dashboard';
+import { addDays, startOfDay, startOfWeek, WINDOW_WEEKS } from '@/lib/days';
 import {
   formatDayRange,
   formatLastTrained,
@@ -91,12 +93,42 @@ const RECORD_DAYS = 30;
  * is the objection the codebase already raises against an icon used once.
  */
 export default function LookBackScreen() {
-  const { data: trained, updatedAt } = useLiveQuery(trainedAtRefs());
+  /*
+    The clock, read once when the screen opens rather than on every render.
+
+    Now load-bearing twice over. It still keeps the four folds agreeing about
+    what day it is — a render straddling midnight would otherwise put today in
+    the grid and not in the counts. And it is what makes the two windowed
+    queries below stable: `useLiveQuery` tears down and rebuilds its
+    subscription whenever its deps change, so a bound computed from
+    `Date.now()` on every render would resubscribe on every render.
+  */
+  const [now] = useState(() => Date.now());
+
+  /** The first day the default grid draws, and the floor for its query. */
+  const gridFromMs = useMemo(
+    () => addDays(startOfWeek(startOfDay(now)), -(WINDOW_WEEKS - 1) * 7),
+    [now],
+  );
+
+  /** The records window, and the line `bestBeforePerMetric` looks behind. */
+  const recordsFromMs = useMemo(
+    () => addDays(startOfDay(now), -(RECORD_DAYS - 1)),
+    [now],
+  );
+
+  const { data: trained, updatedAt } = useLiveQuery(lastTrainedPerExercise());
   const { data: history } = useLiveQuery(completedSessions());
   const { data: active } = useLiveQuery(activeExercises());
   const { data: exercises } = useLiveQuery(allLiveExercises());
   const { data: metrics } = useLiveQuery(allMetrics());
-  const { data: values } = useLiveQuery(rankableValues());
+  const { data: days } = useLiveQuery(trainedDaysSince(gridFromMs), [gridFromMs]);
+  const { data: values } = useLiveQuery(valuesSince(recordsFromMs), [
+    recordsFromMs,
+  ]);
+  const { data: priorBest } = useLiveQuery(bestBeforePerMetric(recordsFromMs), [
+    recordsFromMs,
+  ]);
 
   const exercisesById = useMemo(
     () => indexExercisesById(exercises),
@@ -104,24 +136,8 @@ export default function LookBackScreen() {
   );
   const metricsById = useMemo(() => indexMetricsById(metrics), [metrics]);
 
-  /*
-    The clock, read once when the screen opens rather than on every render.
-
-    Four folds below need to know what day it is, and reading it four times
-    would let a render that straddled midnight put today in the grid and not in
-    the counts. Fixing it at mount also means a set logged elsewhere refreshes
-    the figures without moving the day underneath them — which is what a screen
-    about the past should do. Every visit pushes a fresh instance, so it is
-    never stale for longer than one reading.
-
-    None of the four folds is memoised, and deliberately: this screen holds no
-    other state, so it renders only when one of the six queries moves, which is
-    exactly when all four would have to be recomputed anyway.
-  */
-  const [now] = useState(() => Date.now());
-
   const grid = daysTrainedGrid(
-    trained.map((row) => row.performedAt),
+    days.map((row) => row.performedAt),
     now,
   );
 
@@ -149,6 +165,12 @@ export default function LookBackScreen() {
         ? [{ ...row, value: row.value }]
         : [];
     }),
+    // The bar each one has to clear, keyed the way `recentRecords` groups.
+    new Map(
+      priorBest.flatMap((row) =>
+        row.best === null ? [] : [[`${row.exerciseId} ${row.metricId}`, row.best]],
+      ),
+    ),
     now,
     { windowDays: RECORD_DAYS },
   );

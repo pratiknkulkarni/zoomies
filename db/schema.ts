@@ -239,7 +239,21 @@ export const sets = sqliteTable(
     performedAt: integer('performed_at').notNull(),
     ...lifecycle,
   },
-  (t) => [index('sets_exercise_entry_id_idx').on(t.exerciseEntryId)],
+  (t) => [
+    index('sets_exercise_entry_id_idx').on(t.exerciseEntryId),
+    /*
+      Every windowed read filters on this: the grid asks for a quarter, the
+      records block asks for thirty days. Without it SQLite scans every set ever
+      to find them, which on nineteen years of training took `valuesSince` 48ms
+      and takes 0.8ms with it.
+
+      It does nothing for `bestBeforePerMetric`, which asks for everything
+      *before* a window and therefore reads almost the whole table however it is
+      indexed. That query is slow for a reason no index can fix, and 175ms once
+      per screen is the right place to stop.
+    */
+    index('sets_performed_at_idx').on(t.performedAt),
+  ],
 );
 
 /**
