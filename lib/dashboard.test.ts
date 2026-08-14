@@ -23,18 +23,40 @@ describe('daysTrainedGrid', () => {
     expect(daysTrainedGrid([], NOW)).toBeNull();
   });
 
-  it('is thirteen columns wide whatever the history', () => {
+  it('is thirteen columns wide while the history is narrower', () => {
     const week = daysTrainedGrid([at(2026, 8, 12)], NOW);
-    const years = daysTrainedGrid([at(2024, 1, 1), at(2026, 8, 12)], NOW);
 
-    // The geometry never depends on how long the app has been in use. It did,
+    // The *column* never depends on how long the app has been in use. It did,
     // and week two got two columns to fill a phone with.
     expect(week?.rows).toHaveLength(7);
     expect(week?.rows[0]).toHaveLength(13);
-    expect(years?.rows[0]).toHaveLength(13);
 
     expect(week?.fromMs).toBe(at(2026, 8, 12, 0));
     expect(week?.toMs).toBe(at(2026, 8, 15, 0));
+  });
+
+  it('grows a column a week past the floor, rather than forgetting', () => {
+    const years = daysTrainedGrid([at(2024, 1, 1), at(2026, 8, 12)], NOW);
+
+    // 1 Jan 2024 is a Monday, 136 weeks before the week of 10 Aug 2026 — so
+    // 137 columns, both ends included. Thirteen was a cap until Phase 11 and
+    // everything before this column was simply unreachable.
+    expect(years?.rows[0]).toHaveLength(137);
+    expect(years?.leading).toBe(0);
+    expect(years?.rows[0]?.[0]?.state).toBe('trained');
+  });
+
+  it('meets the floor and the span at the same column', () => {
+    // The week of 18 May 2026 is the thirteenth column back from the week of
+    // 10 Aug. One more week of history is one more column, not a scroll into
+    // held-open blank.
+    const thirteen = daysTrainedGrid([at(2026, 5, 18)], NOW);
+    const fourteen = daysTrainedGrid([at(2026, 5, 11)], NOW);
+
+    expect(thirteen?.rows[0]).toHaveLength(13);
+    expect(thirteen?.leading).toBe(0);
+    expect(fourteen?.rows[0]).toHaveLength(14);
+    expect(fourteen?.leading).toBe(0);
   });
 
   it('draws nothing before the first session, and says how much', () => {
@@ -64,20 +86,22 @@ describe('daysTrainedGrid', () => {
     expect(grid?.leading).toBe(10);
   });
 
-  it('stops at the cap rather than growing without limit', () => {
+  it('holds no blank column once the history is wider than the floor', () => {
     const grid = daysTrainedGrid([at(2024, 1, 1), at(2026, 8, 12)], NOW);
 
+    // `leading` pads a young grid out to a screen's width and then stops
+    // mattering, which is what lets one number serve both cases.
     expect(grid?.leading).toBe(0);
     expect(grid?.rows[0]?.[0]?.state).not.toBe('before');
   });
 
-  it('labels the range by what is drawn, not by what exists', () => {
+  it('labels the range by the first session, all of which is now drawn', () => {
     const grid = daysTrainedGrid([at(2024, 1, 1), at(2026, 8, 12)], NOW);
 
-    // 13 columns ending on the week of 10 Aug starts on 18 May 2026. The 2024
-    // session is outside the picture, so naming it would describe squares that
-    // are not there.
-    expect(grid?.fromMs).toBe(at(2026, 5, 18, 0));
+    // This used to name the left edge of the cap rather than the first session,
+    // because everything earlier was unreachable. Nothing is unreachable now,
+    // so the honest label and the drawn one are the same date.
+    expect(grid?.fromMs).toBe(at(2024, 1, 1, 0));
   });
 
   it('fills the day a set was performed and only that day', () => {

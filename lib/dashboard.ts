@@ -22,7 +22,15 @@ import { addDays, daysBetween, startOfDay, startOfMonth, startOfWeek } from './d
 // Days trained
 // ---------------------------------------------------------------------------
 
-/** Thirteen weeks: a quarter, and as many columns as fit a phone at this size. */
+/**
+ * Thirteen weeks: a quarter, and as many columns as fit a phone at this size.
+ *
+ * A **minimum**, not a cap. It sets the width of one column — thirteen of them
+ * span the screen — and history longer than a quarter adds columns of that same
+ * width and scrolls. It was a cap until Phase 11, which is why the grid could
+ * not be scrolled back past a quarter and why nothing here had to think about
+ * what a fourteenth column would mean.
+ */
 export const GRID_WEEKS = 13;
 
 /**
@@ -48,15 +56,23 @@ export type GridDay = { dayMs: number; state: DayState };
 export type MonthSpan = { monthMs: number; columns: number };
 
 export type DaysGrid = {
-  /** Seven rows, Monday first, each `GRID_WEEKS` entries wide. */
+  /**
+   * Seven rows, Monday first, each `weeks` entries wide — at least `GRID_WEEKS`
+   * and as many more as the history spans. The renderer scrolls what does not
+   * fit rather than resizing to it.
+   */
   rows: GridDay[][];
   months: MonthSpan[];
   /**
    * How many leading columns are entirely `before` — undrawn, but occupying
    * their width so the squares never resize. The month axis skips them.
+   *
+   * Zero once history is longer than `GRID_WEEKS`, which is the whole reason
+   * this can stay a single number: it pads a young grid out to a screen's width
+   * and then stops mattering, without either case being special-cased.
    */
   leading: number;
-  /** The first day the grid can show training on, for the range label. */
+  /** The first day training is drawn on, for the range label. */
   fromMs: number;
   /** Today. */
   toMs: number;
@@ -71,15 +87,18 @@ export type DaysGrid = {
  * which a single figure cannot answer honestly because the shape of a month is
  * the whole content of it.
  *
- * **It is always thirteen columns wide and starts drawing at your first
- * session.** Those are two different things and the difference is the whole of
- * this function. A grid that also *narrowed* to the weeks it had would give
- * week two two columns to fill the screen with, and a square sized by how new
- * you are is a square the width of a thumb — which is what shipped, and what
- * this fixes. So the geometry is fixed at a quarter and the leading columns are
- * simply not drawn: the width is constant, today's column sits at the right
- * edge for good, and nobody is shown a quarter of blank past they never had the
- * chance to fill.
+ * **A column is a fixed width and the grid is at least thirteen of them.** Those
+ * are two different things and the difference is the whole of this function. A
+ * grid that *narrowed* to the weeks it had would give week two two columns to
+ * fill the screen with, and a square sized by how new you are is a square the
+ * width of a thumb — which is what shipped once, and what the leading columns
+ * fix: they hold their width and draw nothing.
+ *
+ * **Past thirteen weeks it grows rather than forgetting.** `minWeeks` is a
+ * floor, not a cap, so a year of training is fifty-three columns and the
+ * renderer scrolls them. This costs nothing here — `leading` falls to zero on
+ * its own once the history is wider than the floor, so the young grid and the
+ * long one are the same arithmetic rather than two cases.
  *
  * Binary, never shaded by volume. §11.1 rules out a combined volume figure
  * across a pull-up and a hold, so an intensity ramp would have to invent the
@@ -91,7 +110,7 @@ export type DaysGrid = {
 export function daysTrainedGrid(
   performedAt: number[],
   now: number,
-  weeks: number = GRID_WEEKS,
+  minWeeks: number = GRID_WEEKS,
 ): DaysGrid | null {
   if (performedAt.length === 0) {
     return null;
@@ -103,21 +122,25 @@ export function daysTrainedGrid(
   const earliest = performedAt.reduce((low, at) => Math.min(low, at), Infinity);
 
   const lastColumn = startOfWeek(today);
-  // Where the grid's width begins, always. Everything left of `firstColumn` is
-  // held open and left undrawn.
-  const gridStart = addDays(lastColumn, -(weeks - 1) * 7);
-  // Where it begins to say anything: the week of the first session, or the far
-  // edge once history is longer than the window.
-  const firstColumn = Math.max(startOfWeek(earliest), gridStart);
+  const firstColumn = startOfWeek(earliest);
 
-  const leading = Math.floor(daysBetween(gridStart, firstColumn) / 7);
+  // Columns the history actually spans, both ends included — one week of
+  // training is one column, not nought.
+  const spanned = Math.round(daysBetween(firstColumn, lastColumn) / 7) + 1;
+  const weeks = Math.max(minWeeks, spanned);
+
+  // Where the grid's width begins. At or before `firstColumn` by construction,
+  // which is what removed the clamps this function used to need: history can no
+  // longer run off the left edge, because the edge moves.
+  const gridStart = addDays(lastColumn, -(weeks - 1) * 7);
+  const leading = Math.round(daysBetween(gridStart, firstColumn) / 7);
 
   // The first day drawn, to the day rather than to the week. Starting a Thursday
   // first-timer's grid on the Monday would draw three squares saying they
   // skipped three days they had not yet installed the app for. It leaves the
   // first column ragged at the top, which mirrors the last column being ragged
   // at the bottom for the days still to come.
-  const began = Math.max(startOfDay(earliest), gridStart);
+  const began = startOfDay(earliest);
 
   return {
     rows: Array.from({ length: 7 }, (_, row) =>
@@ -137,12 +160,9 @@ export function daysTrainedGrid(
         };
       }),
     ),
-    months: monthSpans(firstColumn, weeks - leading),
+    months: monthSpans(firstColumn, spanned),
     leading,
-    // The label states what is drawn, not what exists. Where history runs past
-    // the cap the grid begins at the cap, and a range naming a first session
-    // outside the picture would be describing squares that are not there.
-    fromMs: Math.max(firstColumn, startOfDay(earliest)),
+    fromMs: began,
     toMs: today,
   };
 }
