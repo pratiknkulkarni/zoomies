@@ -39,7 +39,7 @@ If a request conflicts with those documents, say so before implementing.
 | Fonts | Geist + Geist Mono, bundled via `expo-font` |
 | Icons | `lucide-react-native` |
 | State | Zustand, ephemeral only |
-| Charts | `victory-native`, when analytics ships |
+| Charts | None. Both charts are built from `View`s — `TECH_STACK.md` §6.3 |
 | Tests | Unit only — Vitest/Jest |
 
 **Not used:** Supabase, any backend, TanStack Query, Redux, Docker, shadcn/ui

@@ -1179,7 +1179,20 @@ record and no unit test would catch it. Recorded in `lib/records.ts` rather than
 glossed over, and cheap to revisit if it ever bites — the fold does not change
 if a driver arrives later.
 
-### 4.4 Dependencies not yet justified in `TECH_STACK.md` — Phases 9 and 10
+### 4.4 Dependencies not yet justified in `TECH_STACK.md` — settled
+
+**Settled in Phase 11: nothing was installed, and the section closes having
+dissolved rather than been decided.** Both halves named a package; neither
+package exists in the tree. The trend is drawn with absolutely-positioned
+`View`s, exactly as §11.3's grid is, and `FEATURES.md` §10.2 now records how and
+why. The reasoning that survived three phases of deferral is short enough to
+keep: `DESIGN.md` §7 forbids axes, gridlines, tooltips, gestures and animation,
+so there was no chart-library feature left to buy — `victory-native` plus Skia
+would have installed three packages to position forty views. `react-native-svg`
+remains a peer of the icons and remains unimported, which is the difference
+between a transitive dependency and a decision.
+
+The rest of this section is the record of how it got there.
 
 - `victory-native` v41+ requires `@shopify/react-native-skia`, plus reanimated
   and gesture-handler. §6.3 lists the latter two; Skia is unlisted.
@@ -1199,6 +1212,8 @@ if a driver arrives later.
   of the icons. So the question is no longer "chart library or not" but whether
   one screen justifies drawing forty dots by hand. Decide it against that
   screen; there is nothing else in the application waiting on the answer.
+
+  **Decided against that screen, in Phase 11: by hand.** See the heading above.
 - ~~The appearance override needs persistent local storage.~~ **Settled: it does
   not need a new one.** The preference is one row in the `meta` table §4.5
   already created for the seed flag. AsyncStorage's only advantage over a SQLite

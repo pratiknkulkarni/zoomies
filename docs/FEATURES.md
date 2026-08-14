@@ -608,7 +608,7 @@ screen. This is the payoff for making Exercise permanent.
 **v1:**
 - Every set ever logged, newest first, with its session and date
 - Personal records per metric — most reps, longest hold
-- Best-set trend over time — **deferred to Phase 9**, see §10.2
+- Best-set trend over time — one dot per session, see §10.2
 - Which sessions it appeared in
 - Its metric configuration
 
@@ -640,23 +640,48 @@ Nothing is stored. A record is a fold over sets every time it is read
 (invariant 3). There is no `personal_best` column and there must not be one: it
 would be a second source of truth that a corrected set could not reach.
 
-### 10.2 Why the Trend Is Not Here Yet
+### 10.2 The Trend, and How It Is Drawn
 
-`victory-native` v41+ requires `@shopify/react-native-skia`, which no document
-justifies yet (`PLAN.md` §4.4). Rather than install a charting stack for one
-sparkline, the trend waited for Phase 9, where the dashboard was expected to
-need charts anyway and one decision would cover both.
+**Dots, never a line.** One dot per session, at the best set of that session.
+A line joining two sessions three weeks apart draws training that did not
+happen, and the whole argument for the shape is that it refuses to.
 
-**Phase 9 shipped without one.** §11.3's grid replaced the 12-week bar chart, so
-the dashboard needs no plotting at all — which leaves this trend as the sole
-thing in the application that would justify the dependency, and one sparkline is
-the case that was already refused. It stays outstanding rather than being cut:
-§11.4 is still the right place for it, and the decision is now purely about what
-one screen is worth.
+**Positioned by date, not by index.** This follows from the rule above and is
+the easy way to lose it: dots spaced one per session would make a three-week
+gap look exactly like three consecutive days, which is the lie the dots were
+chosen to avoid. Horizontal position is time.
 
-§11.7 makes the same argument from the data's side: a trend says nothing before
-roughly twelve weeks of it exist. The set list, newest first, already shows
-where a movement is going for anyone reading down it.
+**Two y labels only** — the all-time minimum and maximum, at `text-5`, **fixed
+to the whole history**. An axis that rescaled as the chart scrolled would mean
+the same dot height was 6 reps in one window and 11 in the next, so two
+identical-looking stretches of chart would say different things. Fixed, the
+chart reads as progress across the whole span, which is what §10 means by *the
+lifetime view of one movement*. No gridlines and no axis rules.
+
+**The metric is named in the section label** — `BEST SET EACH SESSION · REPS` —
+rather than in a control. A picker appears only when an exercise has more than
+one rankable metric; most have one, and a picker over a list of one is
+furniture. §10.1's rules apply unchanged, so a `notes` metric is not offered.
+
+**Drawn by hand, with no charting stack.** Absolutely-positioned `View`s in a
+fixed-height container, `left` and `bottom` as percentages computed from the
+data. `DESIGN.md` §7 forbids axes, gridlines, tooltips, gestures and animation,
+which is every feature a chart library sells — so `victory-native` and its Skia
+requirement would install three packages to position forty views. This is the
+same move §11.3 made when the grid replaced the bar chart. `react-native-svg` is
+present as a peer of the icons and is deliberately not imported from a screen,
+which would make it a direct dependency in everything but the manifest. It stays
+the fallback if forty positioned views read badly on device, and that decision
+would be one component wide.
+
+Those percentages are the one place inline style is correct: a ratio derived
+from data is not a design value, and no token can express it. `DayGrid` already
+takes the same exemption for `flex: month.columns`.
+
+§11.7 makes the argument from the data's side, and it still holds: a trend says
+little before roughly twelve weeks of it exist. The set list, newest first,
+already shows where a movement is going for anyone reading down it — which is
+why this was the last thing built rather than the first.
 
 ---
 
@@ -776,7 +801,8 @@ two that had to work from week two, and both do — the first from the second
 week, the second from the first time anything is beaten.
 
 There is no chart left to hold. §11.4's trend is the only one in the
-application, and it is the last thing outstanding here.
+application, and it shipped last, in Phase 11 — by which point it needed no
+dependency either (§10.2).
 
 ---
 
@@ -905,6 +931,7 @@ Not built in v1. Recorded so the schema does not preclude them.
 | Fatigue / tendon load index | §4.5 | Prescribes rather than records; edges into medical claims; an invented risk number is worse than body signal |
 | **Added load** | Seeded from the start, cut Aug 2026 | This is a bodyweight app. A weighted variant is its own exercise, which is already how progressions are modelled (§3.1), so the metric earned its place only by habit. Removing it also removes the last fractional value and the last unit that was not seconds. Migration 0004 **soft-deletes** the metrics and clears any target pointing at one; `set_metric_values` rows are untouched, so restoring it later is one preset entry and clearing `deleted_at`, not a reconstruction |
 | **Rest timer** | Considered Aug 2026, cut before Phase 5 | A countdown that pushes you back to the bar works against the way this app is actually used — an unhurried two-hour session, one exercise at a time, at your own pace. Removed `expo-notifications` with it, and with that the scheduling, cancelling and deliver-to-a-killed-app machinery that was the largest part of the phase. `rest_seconds` dropped from `template_slots` by migration 0003 |
+| **Factory reset** | Considered Aug 2026, cut in Phase 11 | **Android already has this, and it is not the button anyone reaches for.** *Clear cache* empties the cache directory and leaves `zoomies.db` untouched — it does nothing at all, which is the trap. *Clear storage* deletes the whole data directory and is a true reset. **iOS has no per-app equivalent**, so deleting the application is the only route there; shipping on iOS is the condition that reopens this, stated rather than implied. **The shape it would take**, recorded so the decision is not made twice: two-step confirmation, the second step naming what is lost (`12 sessions, 41 sets`) and whether anything has ever been exported — which would mean recording `last_export_at` in `meta` on a successful export. Appearance is reset with it, because a factory reset means the application you first opened, and that one followed the system. **The mechanism** would be deleting rows in one transaction rather than deleting the file: `db` is a module-level singleton, so reopening it would need a relaunch. Clearing `meta` re-arms `seedIfNeeded`, so the catalogue returns on its own. There is no `stores/` and no Zustand in this project, so there would be no in-memory state to clear — only rows, and the screen you are standing on |
 | Rating metric type | `reuirements_two.md` §8.6 | Removed by decision |
 | Selection metric type | §8.6 | No remaining use case once progressions are names |
 | Per-exercise doodles | Considered Aug 2026 | Twenty illustrations that must look like one hand drew them, for no functional gain. Reintroducing requires amending `DESIGN.md` |
