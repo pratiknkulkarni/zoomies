@@ -918,20 +918,40 @@ The counted figures exclude soft-deleted rows even though the reset destroys
 those too. The sentence exists to be checked against what the person believes
 they have, and History has never shown them a deleted session.
 
-**Rows are deleted, never the file.** `db` is a module-level singleton opened
-once at startup, so removing `zoomies.db` underneath it leaves every screen
-holding a handle to nothing until the application is relaunched. Clearing the
-tables leaves the same open database, empty.
+**The schema is dropped and rebuilt, not emptied.** That is not a preference —
+`DELETE` crashed the application natively, every time, and the reason is worth
+knowing because it constrains anything else that ever deletes in bulk.
 
-Two properties make that safe, and both are borrowed from §12.1:
+The database is opened with `enableChangeListener: true`, which registers
+SQLite's update hook, and `expo-sqlite` emits one event **per row changed**.
+Each crosses JNI and takes a global reference; the table holds 51,200. A reset
+on a long history deletes about 126,000 rows, so it aborted around 40% of the
+way through with `global reference table overflow` — a native abort, which no
+`catch` in JavaScript can see. Nor was the row count the real ceiling: those
+same events drive every live query, so a history small enough to survive would
+still have re-run every mounted read tens of thousands of times.
 
-- **The table list is discovered from the schema**, so a table added later is
-  cleared by existing. A reset that leaves rows behind is worse than an
-  incomplete backup — the user is told the application is factory-fresh, and
-  what survived is invisible.
-- **Foreign keys are deferred to commit**, so the order the schema enumerates
-  its tables in cannot matter. They are still enforced, against an empty
-  database, where they hold trivially.
+`DROP TABLE` is DDL. It removes rows without visiting them, so no events fire
+at all. Foreign keys are switched **off first and outside the transaction** —
+with them on, `DROP TABLE` performs the row-by-row delete being avoided, and
+the pragma is a no-op inside a transaction anyway. The drops are still atomic,
+because DDL is transactional in SQLite.
+
+`__drizzle_migrations` is dropped with everything else, which lets `migrate`
+rebuild the schema on the connection that is already open. No reopening, no
+relaunch, and no window where a screen holds a handle to a file that is gone —
+which is what kept the file itself from being deleted instead.
+
+**Emitting nothing has a cost, and it has to be paid explicitly.** Those change
+events are also every screen's only reason to re-read, so after a reset the rows
+were gone while Home still listed three plans. The reset therefore announces
+itself directly (`lib/restart.ts`) and the navigator is remounted, which makes
+each live query run again on mount. The one thing a reset cannot say through the
+database, it says around it.
+
+The table list is still **checked against the schema by a test**, so a table
+added later cannot quietly survive a reset — the user is told the application is
+factory-fresh, and anything left behind is invisible.
 
 Clearing `meta` is what re-arms the seed, so the catalogue returns on its own.
 The appearance preference lives there too and is meant to go: a factory reset

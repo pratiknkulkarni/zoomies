@@ -1678,3 +1678,28 @@ Expect: it scrolls smoothly once drawn, with the weekday letters pinned. The
 cost is paid on arrival, not per gesture.
 
 **Observed:**
+
+**AD18 — the reset, on a database worth resetting.** With a long history loaded,
+Settings → Reset application → Continue → Erase everything.
+
+Expect: no crash. This is the check that matters, because the first version
+aborted natively — `DELETE` emits one change event per row through JNI and
+126,000 of them overflow a table that holds 51,200. Nothing in JavaScript can
+catch that, so a green unit suite says nothing about it.
+
+Expect also: the second dialog names the real figures (`3,726 sessions and
+50,712 sets`), says plainly that nothing has ever been exported, and ends on
+`It cannot be undone`.
+
+**Observed:**
+
+**AD19 — and the screens notice.** Immediately after the reset, without killing
+the application: look at Home, History and Exercises.
+
+Expect: Home shows `Plans go here` with no `Last trained` line, and Exercises
+reads `Search 15 exercises`. The rows are gone *and every screen has noticed* —
+which is not free, because `DROP TABLE` emits none of the events live queries
+listen for. If a screen still shows old training, the remount signal did not
+fire.
+
+**Observed:**

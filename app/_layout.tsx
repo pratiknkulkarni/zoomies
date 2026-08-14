@@ -21,6 +21,7 @@ import { db } from '@/db/client';
 import migrations from '@/db/migrations/migrations';
 import { storedAppearance } from '@/db/queries/settings';
 import { seedIfNeeded } from '@/db/seed';
+import { onDatabaseReplaced } from '@/lib/restart';
 
 // The splash screen is held until the faces resolve and the database is ready,
 // so no frame ever renders in a fallback font or against an unmigrated schema.
@@ -85,6 +86,25 @@ export default function RootLayout() {
     colorScheme.set(storedAppearance());
   }, []);
 
+  /*
+    Thrown away and rebuilt when the database is replaced under it.
+
+    A factory reset drops the schema, and `DROP TABLE` emits no change events —
+    which is what keeps it from crashing and also what leaves every live query
+    holding rows that no longer exist. Remounting the navigator unmounts every
+    screen, and `useLiveQuery` reads once on mount, so each one comes back with
+    the empty database it is now looking at.
+
+    It also lands on Home, which is the right place to be standing after
+    erasing everything.
+  */
+  const [generation, setGeneration] = useState(0);
+
+  useEffect(
+    () => onDatabaseReplaced(() => setGeneration((count) => count + 1)),
+    [],
+  );
+
   useEffect(() => {
     if (!migrated) {
       return;
@@ -135,7 +155,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <StatusBar style="auto" />
       <View className="flex-1 bg-bg">
-        <Stack screenOptions={{ headerShown: false }} />
+        <Stack key={generation} screenOptions={{ headerShown: false }} />
       </View>
     </SafeAreaProvider>
   );
