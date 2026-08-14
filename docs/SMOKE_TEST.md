@@ -1510,3 +1510,142 @@ Nothing on this screen is a draft (§18 Pattern B) — a prompt here would be
 asking about work that was already committed.
 
 **Observed:**
+
+---
+
+## AD. Both charts, and the mark — Phase 11
+
+**This section needs a database with more than thirteen weeks of history.**
+Every scroll check below is invisible on two weeks of data — the content is
+narrower than its own viewport, nothing moves, and each one passes for the wrong
+reason. Seed or hand-build a long history first; it is worth the twenty minutes,
+because layout cannot be unit tested and this is the only pass it gets.
+
+Run **AD1–AD7 in both themes**. The rest are theme-independent except where
+stated.
+
+**AD1 — a short history still sits still.** With under thirteen weeks logged,
+open Look back and try to drag the grid sideways.
+
+Expect: nothing moves, and the grid looks exactly as it did before this phase.
+The content is sized to the data, so a young grid is narrower than the screen
+and there is nothing to scroll. This is the check that the Phase 9 fix survived
+being generalised.
+
+**Observed:**
+
+**AD2 — a long history opens on today.** With more than thirteen weeks logged,
+open Look back, and open an exercise trained across the same span.
+
+Expect: both charts are scrollable and both open showing the **right-hand end** —
+today for the grid, the most recent session for the trend. Not the beginning,
+and no visible scroll animation on arrival.
+
+**Observed:**
+
+**AD3 — scrolling back reaches the beginning and stops.** Drag the grid right
+until it will go no further.
+
+Expect: it stops at the first week you ever trained. Nothing blank beyond it,
+and no held-open columns before it — `leading` is zero once the history is
+wider than a quarter.
+
+**Observed:**
+
+**AD4 — the axes stay put.** Scroll both charts while watching the left edge.
+
+Expect: `M T W T F S S` does not move on the grid, and the two figures do not
+move on the trend. This is the failure that makes a scrolling chart useless
+within a second, and it is the reason the layout was restructured.
+
+**Observed:**
+
+**AD5 — the month axis travels with its columns.** Scroll the grid slowly to
+both ends, watching where each month label sits.
+
+Expect: each label stays under the columns of the month it names, at both ends
+of the travel and everywhere between. The spans are laid out in flex ratios
+rather than pixels, and a mismatch there walks every later label off its month —
+the failure that took two commits on the day grid in Phase 9.
+
+**Observed:**
+
+**AD6 — the trend's axis does not move.** Scroll the trend from one end to the
+other, watching the two figures on the left.
+
+Expect: they never change. They are the all-time low and high, and an axis that
+rescaled to the visible window would make the same dot height mean two different
+numbers in two places.
+
+**Observed:**
+
+**AD7 — sideways does not fight downwards.** On Look back and on an exercise
+screen, scroll a chart horizontally, then scroll the page vertically, then try a
+diagonal drag.
+
+Expect: neither gesture steals the other. The vertical scroll of the page still
+works with a finger starting inside a chart.
+
+**Observed:**
+
+**AD8 — one rankable metric, no picker.** Open an exercise that measures one
+thing that ranks.
+
+Expect: the section reads `BEST SET EACH SESSION · REPS` (or `· SECONDS`) and
+there are no chips. A picker over a list of one is furniture.
+
+**Observed:**
+
+**AD9 — two rankable metrics, a picker that rescales.** Open an exercise that
+ranks two things and tap between them.
+
+Expect: chips naming both, the section label drops the metric name, and
+switching redraws the dots **and** both axis figures. The y range belongs to the
+chosen metric.
+
+**Observed:**
+
+**AD10 — trained once.** Open an exercise with exactly one session logged.
+
+Expect: a single dot near the right-hand edge, vertically centred. Not a crash,
+not a line, and not a dot pinned to the floor of the chart — the range is zero
+and the middle is the only honest place for it.
+
+**Observed:**
+
+**AD11 — never trained, and nothing that ranks.** Open an exercise with no sets,
+then one whose only metric is a note.
+
+Expect: no chart at all in either case, and no empty pair of axes. `Nothing
+logged yet` covers the first; `Best — nothing here ranks` already covers the
+second.
+
+**Observed:**
+
+**AD12 — a gap reads as a gap.** Find or create an exercise with a three-week
+break in the middle of its history.
+
+Expect: the dots either side of the break are three times as far apart as two
+consecutive weeks, and nothing joins them. Evenly spaced dots would be the one
+result that means this was built wrong.
+
+**Observed:**
+
+**AD13 — the splash and the first screen are one colour.** Cold launch from a
+force-quit, in **both** themes, watching the moment the app appears.
+
+Expect: no flash of a lighter or darker ground between the splash and the first
+frame. `app.json` carried the pre-Phase-8b palette until this phase, so this is
+a regression check with a known cause.
+
+**Observed:**
+
+**AD14 — the mark survives its masks.** Look at the launcher icon on the home
+screen, in the app drawer, and in the recents switcher. If the launcher offers
+a circular icon shape, set it.
+
+Expect: a `Z` in every one, with margin on all sides and nothing clipped. The
+splash shows the same `Z`, not the wordmark — Android masks it to a circle, and
+that is why.
+
+**Observed:**
