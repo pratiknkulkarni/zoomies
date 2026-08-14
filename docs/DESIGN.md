@@ -398,11 +398,24 @@ the first column is short at the top, the last is short at the bottom.
 so the ramp would be shading by a number that had to be invented first. §9 gets
 there independently: state is never carried by colour alone.
 
-Columns are `flex-1` with `gap-xs` over a **fixed thirteen**, and the fixed part
-is what makes `flex-1` safe. `flex-1` over however many columns the history
-happened to fill is what shipped first, and it sized the square by how new the
-user was: two weeks in, the grid was two squares the width of a thumb. Thirteen
-always; the columns before the first session hold their width and draw nothing.
+**Thirteen columns fill the screen, and the rest scroll.** Those are two rules
+and they were one until Phase 11, which is where both of the grid's layout bugs
+came from. The square is sized so that a quarter exactly spans the measured
+width — sizing it by however many columns the history happened to fill is what
+shipped first, and two weeks in the grid was two squares the width of a thumb.
+The *content* is then sized to the history: under thirteen weeks it is narrower
+than its own viewport and does not move, and past thirteen it grows a column a
+week and scrolls. Capping it at thirteen is what made the first month of
+training unreachable by the fourth. The columns before the first session hold
+their width and draw nothing.
+
+**The weekday axis sits outside the scroll and the month axis inside it**, which
+follows from what each one labels: the letters name the rows, which do not move,
+and the months name the columns, which do. Seven anonymous rows is what a
+scrolling weekday axis leaves behind within a second of touching it. The chart
+opens with today at the right edge, un-animated — the past is what you scroll
+back for, and a grid that slid into place on every visit would be §7's
+entertainment.
 
 The weekday axis is one mono `label` character in a `w-lg` column. The month
 axis is laid out in **spans** rather than a label per column, because `MAY` is
@@ -428,6 +441,55 @@ says over what, which is the part that changes as history grows (`FEATURES.md`
 Equal weight, side by side, never one above the other. They are two measurements
 of the same month, and stacking them would make the upper one a headline and the
 lower one a footnote — which is exactly the reading §11.5 exists to prevent.
+
+### 6.14 Best-Set Trend
+
+One dot per session on the exercise screen, at the best set of that session,
+positioned by the day it happened (`FEATURES.md` §10.2).
+
+```
+BEST SET EACH SESSION · REPS
+12
+              ·     ·   ·
+     ·   ·  ·      ·
+ ·
+7
+MAY        JUN        JUL      AUG
+```
+
+**Dots, never a line.** A line joining two sessions three weeks apart draws
+training that did not happen. It follows that the dots are positioned by *date*
+rather than one per session — spacing them evenly would make a three-week gap
+look exactly like three consecutive days, which is the same lie by another
+route.
+
+A dot is `sm` of solid `text`, round rather than square. §6.11's two marks are
+about a thing done or not done and there is no *not done* here — every dot is a
+session that happened — so borrowing that vocabulary would imply a distinction
+the chart does not draw. §3.3 already says dots are ink.
+
+**Two labels on the y axis, the all-time low and the all-time high**, in mono
+`label` at `text-5`, pinned outside the scroll and fixed to the whole history.
+An axis that rescaled to the visible window would make the same dot height mean
+6 reps in one place and 11 in another, so two identical-looking stretches of
+chart would say different things — the one way a chart this quiet could actively
+mislead. **No baseline**, which §3.3 otherwise allows: the axis starts at the
+lowest session rather than at zero, and a rule along the bottom would read as
+zero and put every dot on a scale it is not on.
+
+The plot is `h-chart`, and the month axis reuses §6.12's span treatment
+unchanged. Thirteen weeks fill the screen and the rest scrolls, at the same
+scale as §6.12 — a screenful is a quarter in both charts, so neither can be
+denser than the other. It opens on the most recent session rather than on today,
+because this asks whether a movement is going anywhere rather than whether you
+showed up; *when* you last did it is stated directly above, in §6.13's pair.
+
+**The metric is named in the section label, not in a control.** A row of chips
+appears only where an exercise ranks more than one thing, and takes the naming
+job over from the label when it does. Most rank one, and a picker over a list of
+one is furniture. §6.6 rejected a wrapping row of chips for the exercise picker
+because it does not survive a list that grows; a list of two or three metrics is
+the case where it does.
 
 ---
 
@@ -554,3 +616,4 @@ component contains a conditional.
 | Aug 2026 | Phase 8b, from the second design run (`zoomies_screen.pdf`). **The accent is deleted.** All three of its sanctioned uses read better as ink, and a coloured record marker argued against `FEATURES.md` §15's "stated, not congratulated" while claiming to honour it. `danger` survives as the only hue and reaches two acts. The neutral ramp goes from seven steps to eleven — `text-4`, `text-5`, `rule` and `rule-2` — so a section label, a set index and a list rule stop borrowing tokens meant for something else. Spacing becomes `4 · 6 · 10 · 14 · 18 · 24 · 34`, which moves the screen gutter from `xl` to `2xl`; the names stayed ordinal so the swap was mechanical. Type: `display` 32→27, `heading` 18→19, label tracking 0.08em→0.14em. Radii tighten to 10 / 12 / 22. The primary button becomes solid `text` with a `bg` label, which inverts between themes with no conditional. Geist stays — the document specifies Libre Franklin and IBM Plex Mono, and the difference at these sizes did not justify two font packages and a re-check that no frame renders in a fallback face. |
 | Aug 2026 | Phase 9. Two components added: **§6.12 Day Grid** and **§6.13 Count Pair**. The grid reuses §6.11's two marks at a different scale, which is why it needs no key — one vocabulary across the application. It adds no third mark for a day that has not happened yet: the outline means *skipped*, a Thursday that has not arrived has not been skipped, and a fainter outline fails on its own terms because the step below `mark` is invisible on paper and near-black in the dark. Composition rule 1 gains a note that §6.13's pair is not an exception — both figures are `metric`, and neither is the answer alone. Rule 3 corrected from `text-3` to `text-4`, which the Phase 8b ramp moved and this line did not follow. |
 | Aug 2026 | Phase 9 fix. **§6.12's columns are a fixed thirteen.** `flex-1` over a variable column count sized the square by how long the app had been in use, which was never the intent and read as a broken layout at two weeks in. The undrawn leading columns hold their width, and the month axis gains a matching blank span over them — a span mismatch there walks every later label off the month it names, the same failure the axis gap caused. The third-mark ruling widens: blank now covers a day before the record began as well as a day still to come. |
+| Aug 2026 | Phase 11. **§6.14 Best-Set Trend** added, and it installs nothing: absolutely-positioned `View`s in an `h-chart` box, because §7 forbids axes, gridlines, tooltips, gestures and animation, which is every feature a charting library sells. Dots never a line, and positioned by *date* rather than one per session — the second follows from the first, and skipping it would make a three-week gap look like three consecutive days. The dot is round where §6.11's marks are square: those distinguish done from not done, and every dot here is a session that happened. Two y labels, the all-time low and high, pinned outside the scroll and never rescaled — an axis that moved with the window would make one dot height mean two numbers. **No baseline**, which §3.3 otherwise allows, because the axis starts at the lowest session rather than at zero and a rule along the bottom would read as zero. `h-chart` (96px) added to the height scale. **§6.12 is rewritten around one distinction it had collapsed**: thirteen columns fill the *screen*, and the *content* is sized to the history. Both of the grid's layout bugs came from treating those as one rule — sizing the square by the column count gave week two squares the width of a thumb, and capping the content at thirteen made month one unreachable by month four. The weekday axis moves outside the scroll and the month axis stays inside, which is decided by what each one labels. |

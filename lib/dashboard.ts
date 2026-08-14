@@ -1,4 +1,12 @@
-import { addDays, daysBetween, startOfDay, startOfMonth, startOfWeek } from './days';
+import {
+  addDays,
+  daysBetween,
+  monthSpans,
+  startOfDay,
+  weekWindow,
+  WINDOW_WEEKS,
+  type MonthSpan,
+} from './days';
 
 /**
  * The figures behind Look back (FEATURES.md §11), folded from rows.
@@ -23,15 +31,14 @@ import { addDays, daysBetween, startOfDay, startOfMonth, startOfWeek } from './d
 // ---------------------------------------------------------------------------
 
 /**
- * Thirteen weeks: a quarter, and as many columns as fit a phone at this size.
+ * The grid's floor, which is the shared one — see `WINDOW_WEEKS`.
  *
- * A **minimum**, not a cap. It sets the width of one column — thirteen of them
- * span the screen — and history longer than a quarter adds columns of that same
- * width and scrolls. It was a cap until Phase 11, which is why the grid could
- * not be scrolled back past a quarter and why nothing here had to think about
- * what a fourteenth column would mean.
+ * It was a cap until Phase 11, which is why the grid could not be scrolled back
+ * past a quarter and why nothing here had to think about what a fourteenth
+ * column would mean. Re-exported under the grid's own name because that is what
+ * this module's callers and tests have always called it.
  */
-export const GRID_WEEKS = 13;
+export const GRID_WEEKS = WINDOW_WEEKS;
 
 /**
  * What one square says.
@@ -52,8 +59,7 @@ export type DayState = 'trained' | 'rest' | 'before' | 'future';
 
 export type GridDay = { dayMs: number; state: DayState };
 
-/** A run of consecutive columns belonging to one month, for the axis. */
-export type MonthSpan = { monthMs: number; columns: number };
+export type { MonthSpan };
 
 export type DaysGrid = {
   /**
@@ -121,19 +127,17 @@ export function daysTrainedGrid(
 
   const earliest = performedAt.reduce((low, at) => Math.min(low, at), Infinity);
 
-  const lastColumn = startOfWeek(today);
-  const firstColumn = startOfWeek(earliest);
-
-  // Columns the history actually spans, both ends included — one week of
-  // training is one column, not nought.
-  const spanned = Math.round(daysBetween(firstColumn, lastColumn) / 7) + 1;
-  const weeks = Math.max(minWeeks, spanned);
-
-  // Where the grid's width begins. At or before `firstColumn` by construction,
-  // which is what removed the clamps this function used to need: history can no
-  // longer run off the left edge, because the edge moves.
-  const gridStart = addDays(lastColumn, -(weeks - 1) * 7);
-  const leading = Math.round(daysBetween(gridStart, firstColumn) / 7);
+  // The columns, ending on this week. `startMs` is at or before the week of the
+  // first session by construction, which is what removed the clamps this
+  // function used to need: history can no longer run off the left edge, because
+  // the edge moves.
+  const {
+    startMs: gridStart,
+    weeks,
+    leading,
+    spanned,
+    firstMs: firstColumn,
+  } = weekWindow(earliest, today, minWeeks);
 
   // The first day drawn, to the day rather than to the week. Starting a Thursday
   // first-timer's grid on the Monday would draw three squares saying they
@@ -165,34 +169,6 @@ export function daysTrainedGrid(
     fromMs: began,
     toMs: today,
   };
-}
-
-/**
- * Which months the columns fall in, as spans rather than per-column labels.
- *
- * A week is attributed to its Monday's month, so a week straddling the first
- * belongs to the month it started in — one rule, applied once, rather than a
- * boundary drawn through the middle of a column.
- *
- * Spans rather than a label per column because `MAY` is wider than a square:
- * given the run it covers, the axis can lay each label out in the space its own
- * month occupies.
- */
-function monthSpans(firstColumn: number, columns: number): MonthSpan[] {
-  const spans: MonthSpan[] = [];
-
-  for (let column = 0; column < columns; column += 1) {
-    const monthMs = startOfMonth(addDays(firstColumn, column * 7));
-    const open = spans.at(-1);
-
-    if (open && open.monthMs === monthMs) {
-      open.columns += 1;
-    } else {
-      spans.push({ monthMs, columns: 1 });
-    }
-  }
-
-  return spans;
 }
 
 // ---------------------------------------------------------------------------

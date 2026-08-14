@@ -26,6 +26,7 @@ import {
   valuesForExercise,
 } from '@/db/queries/records';
 import type { Session } from '@/db/queries/sessions';
+import { BestSetTrend } from '@/features/exercises/best-set-trend';
 import {
   formatMeasure,
   formatRecordsWhat,
@@ -68,8 +69,8 @@ type SessionRun = {
  * at once. Tapping a row opens the session, where every set is separate and
  * correctable (§7.3).
  *
- * The best-set chart §10 asks for is Phase 9 — the first thing in the project
- * to want one, and not worth settling the charting stack from here (§10.2).
+ * The best-set trend §10 asks for sits between the two: one dot per session,
+ * drawn by hand from `View`s, and the last thing the application built (§10.2).
  */
 export default function ExerciseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -267,6 +268,11 @@ export default function ExerciseDetailScreen() {
               runs={runs}
               trained={setRows.length > 0}
             />
+
+            {/* Between the standing figures and the list they came from: the
+                pair above is what the best is, this is how it got there, and
+                `Every set` below is the rows both are folded from. */}
+            <BestSetTrend sets={setRows} values={valueRows} metrics={metrics} />
 
             {runs.length > 0 ? (
               <SectionLabel className="px-2xl pb-sm pt-xl">
