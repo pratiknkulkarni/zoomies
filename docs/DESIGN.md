@@ -600,10 +600,50 @@ component contains a conditional.
 
 ---
 
-## 12. Open
+## 12. Identity
 
-- Icon and adaptive icon artwork
-- Splash screen — likely the wordmark in Geist 600 on `bg`, nothing else
+### 12.1 The Mark
+
+**A `Z` in Geist 600.** §1.2's first principle is that type does the work, and
+§15 cut illustration, so a letterform is the only thing left that could be the
+mark — which is the right outcome rather than a fallback.
+
+**The launcher icon is §6.1's primary button at icon scale**: a solid `text`
+ground with a `bg` letter. Ink rather than ground because an icon sits on
+someone else's wallpaper, where a warm off-white square disappears. It is also
+the one place in the application where a filled block appears without being
+pressable, and the identity is worth the exception.
+
+The Android adaptive foreground is the same letter at a smaller share of the
+canvas, on transparency, over an `iconBackground` of `text`. Only the inner two
+thirds of an adaptive icon is guaranteed to survive a launcher's mask.
+
+### 12.2 The Splash
+
+**The mark on `bg`, and nothing else.** The ground is the theme's own — `#F4F2EE`
+light, `#131312` dark, read from `global.css` — so the splash and the first frame
+are the same colour and there is no flash between them. Those two values sat
+wrong in `app.json` from Phase 8b until Phase 11, carrying the pre-refit palette
+while `global.css` had moved.
+
+**The wordmark lost to the platform, not to taste.** This section proposed
+`Zoomies` set in Geist 600, and it cannot be done: Android 12 and later draw the
+splash inside a circular mask with only the inner two thirds guaranteed, and a
+wordmark at 5.4:1 loses its first and last letters to it. The `Z` fits with
+margin, and matching the launcher is the better reading anyway — the same mark
+appears, is pressed, and stays.
+
+### 12.3 How It Is Made
+
+`scripts/icons.py` renders all four files from the Geist 600 face and the
+tokens **read out of `global.css`**, rather than from colours typed into a
+script. That is the whole reason it exists: `app.json`'s splash grounds drifted
+from the palette for two phases without anything catching it, and artwork
+generated from the source of truth cannot repeat that. Regenerate rather than
+edit — these are outputs.
+
+### 12.4 Still Open
+
 - Store screenshot treatment
 
 ---
@@ -617,3 +657,4 @@ component contains a conditional.
 | Aug 2026 | Phase 9. Two components added: **§6.12 Day Grid** and **§6.13 Count Pair**. The grid reuses §6.11's two marks at a different scale, which is why it needs no key — one vocabulary across the application. It adds no third mark for a day that has not happened yet: the outline means *skipped*, a Thursday that has not arrived has not been skipped, and a fainter outline fails on its own terms because the step below `mark` is invisible on paper and near-black in the dark. Composition rule 1 gains a note that §6.13's pair is not an exception — both figures are `metric`, and neither is the answer alone. Rule 3 corrected from `text-3` to `text-4`, which the Phase 8b ramp moved and this line did not follow. |
 | Aug 2026 | Phase 9 fix. **§6.12's columns are a fixed thirteen.** `flex-1` over a variable column count sized the square by how long the app had been in use, which was never the intent and read as a broken layout at two weeks in. The undrawn leading columns hold their width, and the month axis gains a matching blank span over them — a span mismatch there walks every later label off the month it names, the same failure the axis gap caused. The third-mark ruling widens: blank now covers a day before the record began as well as a day still to come. |
 | Aug 2026 | Phase 11. **§6.14 Best-Set Trend** added, and it installs nothing: absolutely-positioned `View`s in an `h-chart` box, because §7 forbids axes, gridlines, tooltips, gestures and animation, which is every feature a charting library sells. Dots never a line, and positioned by *date* rather than one per session — the second follows from the first, and skipping it would make a three-week gap look like three consecutive days. The dot is round where §6.11's marks are square: those distinguish done from not done, and every dot here is a session that happened. Two y labels, the all-time low and high, pinned outside the scroll and never rescaled — an axis that moved with the window would make one dot height mean two numbers. **No baseline**, which §3.3 otherwise allows, because the axis starts at the lowest session rather than at zero and a rule along the bottom would read as zero. `h-chart` (96px) added to the height scale. **§6.12 is rewritten around one distinction it had collapsed**: thirteen columns fill the *screen*, and the *content* is sized to the history. Both of the grid's layout bugs came from treating those as one rule — sizing the square by the column count gave week two squares the width of a thumb, and capping the content at thirteen made month one unreachable by month four. The weekday axis moves outside the scroll and the month axis stays inside, which is decided by what each one labels. |
+| Aug 2026 | Phase 11 identity. **§12 stops being a list of open items and becomes the mark.** A `Z` in Geist 600: §1.2 rule 1 says type does the work and §15 cut illustration, so a letterform was the only thing the mark could be. The launcher icon is §6.1's primary button at icon scale — solid `text` with a `bg` letter — because an icon sits on someone else's wallpaper, where a warm off-white square disappears. **The wordmark lost to the platform, not to taste**: Android 12 and later mask the splash to a circle with only the inner two thirds guaranteed, and `Zoomies` at 5.4:1 loses its first and last letters, where the `Z` fits with margin. The splash grounds are corrected to `#F4F2EE` / `#131312` — `app.json` had carried the pre-Phase-8b palette since the refit, so launching showed one ground and then another. All four files are generated by `scripts/icons.py` from the tokens **read out of `global.css`**, which is the specific defence against that drift happening again. |

@@ -7,26 +7,32 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "icon": "./assets/icon.png",
     "ios": {
       "bundleIdentifier": "com.zoomies.app",
       "supportsTablet": false
     },
     "android": {
       "package": "com.zoomies.app",
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1A1917"
+      }
     },
     "plugins": [
       "expo-router",
       "expo-status-bar",
       "expo-font",
-      "./plugins/with-splash-no-icon",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FAFAF8",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "backgroundColor": "#F4F2EE",
           "dark": {
-            "backgroundColor": "#0F0F0E"
+            "image": "./assets/splash-icon-dark.png",
+            "backgroundColor": "#131312"
           }
         }
       ],

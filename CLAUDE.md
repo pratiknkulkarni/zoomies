@@ -137,6 +137,9 @@ lib/
   export.ts             JSON export
   format.ts             Duration, load, date formatting
 stores/                 Zustand — active session only
+scripts/                Build-time generators. `icons.py` renders the icon,
+                        adaptive icon and splash from Geist and the tokens in
+                        `global.css` — outputs, so regenerate rather than edit
 docs/                   Source-of-truth documents
 ```
 

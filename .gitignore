@@ -42,3 +42,6 @@ coverage/
 
 # Scratch — screenshots, pulled databases, anything not part of the project
 temp/
+
+# Python bytecode from scripts/
+__pycache__/
