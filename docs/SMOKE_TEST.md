@@ -1649,3 +1649,32 @@ splash shows the same `Z`, not the wordmark — Android masks it to a circle, an
 that is why.
 
 **Observed:**
+
+**AD15 — the quarter, and everything behind it.** Open Look back on a database
+with more than a quarter of history, then press `Every week`.
+
+Expect: Look back's grid spans exactly thirteen columns and does not scroll.
+`Every week` opens `Days trained` over the whole span, which **states both years
+in its range** — `18 Jun 2007 – 14 Aug 2026`, not `18 Jun – 14 Aug`. It opens on
+today at the right edge and scrolls back to the first week ever trained.
+
+**Observed:**
+
+**AD16 — the one loader, and what it is covering.** Watch the moment `Every
+week` is pressed on a long history.
+
+Expect: a spinner and `Counting every day you have trained`, then the grid. On
+nineteen years the wait is a few seconds and it covers two costs, not one — the
+read, and then drawing one square per day. It is the only loader in the
+application, and it is here because this is the only wait long enough that a
+blank screen would read as a failure.
+
+**Observed:**
+
+**AD17 — the deep screen stays scrollable.** Drag the all-time grid sideways
+several times.
+
+Expect: it scrolls smoothly once drawn, with the weekday letters pinned. The
+cost is paid on arrival, not per gesture.
+
+**Observed:**

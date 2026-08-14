@@ -59,9 +59,18 @@ export function completedSessions() {
  * no name of its own (§6.1) — the exercise to title the row with. Rooted at
  * `exercise_entries` so the count moves when one is added or removed.
  *
- * Two columns for every entry ever, which grows with training history. At this
- * volume that is cheaper than a query per row and honest about what it costs;
- * Phase 8 is where it would be revisited if it ever mattered.
+ * Two columns for every entry ever, which grows with training history — and
+ * **measured, then left alone**. On nineteen years it returns 12,868 rows in
+ * 9.7ms, which is cheaper than the `COUNT` beside it and a twentieth of what
+ * the reads around it used to cost. It is also rooted at `exercise_entries`,
+ * which changes when a session starts rather than when a set is logged, so it
+ * never sat in the hot path that made logging slow.
+ *
+ * `group_concat` would take it to 3,724 rows and 6.9ms. Three milliseconds does
+ * not buy ordering that varies by SQLite version — the row renders exercises in
+ * the order they were trained — nor a delimited string to split back apart in
+ * JavaScript. The rule that found the real problem is the same one that stops
+ * here: change what the measurement asks for.
  */
 export function liveEntryRefs() {
   return db

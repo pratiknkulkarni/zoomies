@@ -715,6 +715,15 @@ sets, days). This rules out most vanity metrics automatically.
 
 ### 11.3 Dashboard Blocks
 
+**The grid draws a quarter, and every week ever is one tap away.** One square
+per day over nineteen years is 7,000 views and blocks the main thread for over
+two seconds, so the tab is bounded to the thirteen columns it can draw in a
+frame and a pushed **Days trained** screen holds the whole span. Bounding
+without that screen would have been a feature removed rather than a cost moved.
+That screen carries the application's only loader, and the exception is the
+argument: everything else resolves fast enough that a spinner would flash and
+read as a fault, where this one genuinely takes a moment and should say so.
+
 Four blocks, in order. Nothing else. The screen is titled **Look back** and is
 **a tab, never Home** — what you want at 18:39 in a garage is a Start button,
 not a review of the last quarter, and that reasoning is untouched by giving it
