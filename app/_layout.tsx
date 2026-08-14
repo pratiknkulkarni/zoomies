@@ -19,16 +19,26 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Screen } from '@/components/ui/screen';
 import { db } from '@/db/client';
 import migrations from '@/db/migrations/migrations';
+import { storedAppearance } from '@/db/queries/settings';
 import { seedIfNeeded } from '@/db/seed';
 
 // The splash screen is held until the faces resolve and the database is ready,
 // so no frame ever renders in a fallback font or against an unmigrated schema.
 void SplashScreen.preventAutoHideAsync();
 
-// Follow the system setting. The manual override arrives in Phase 10 and
-// replaces this call; nothing else in the app reads the colour scheme, because
-// every token has a dark value.
-colorScheme.set('system');
+/*
+  The stored appearance, applied before the first frame (FEATURES.md §13).
+
+  At module scope rather than in an effect: an effect runs after a render, so
+  someone who chose Light would see one frame of dark on every launch. The read
+  is synchronous and safe this early — it is one row of a local file, and it
+  falls back to `system` if the table is not there yet, which on a first launch
+  it is not.
+
+  Nothing else in the application reads the colour scheme. Every token has a
+  dark value, so no component contains a theme conditional.
+*/
+colorScheme.set(storedAppearance());
 
 export default function RootLayout() {
   // Two weights only, 400 and 600 (DESIGN.md §2.2).

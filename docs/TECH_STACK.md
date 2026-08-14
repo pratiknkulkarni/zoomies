@@ -143,7 +143,8 @@ history is not shipped.
 ### 4.5 Seeding
 
 **First-launch seed, not a migration.** An idempotent seed guarded by a flag row
-in a `meta` table.
+in a `meta` table. That table is the general key/value store; §5.1 puts the
+appearance preference in it too.
 
 Rationale: adding a built-in exercise later must not require a schema migration,
 and a user-deleted built-in must not reappear on the next migration run. Runs
@@ -162,11 +163,28 @@ not absolute. Durations are stored in seconds as integers.
 |---|---|
 | Persisted domain data | Drizzle `useLiveQuery` reading SQLite directly |
 | Active session ephemeral state | **Zustand** |
-| Local preferences | `expo-secure-store` (sensitive) / `AsyncStorage` (trivial) |
+| Local preferences | The `meta` table — see §5.1. No AsyncStorage, no `expo-secure-store`. |
 | Server state | None in v1 |
 
 No TanStack Query, no Redux, no normalised client cache. The database is local
 and fast enough that a caching layer would add indirection without benefit.
+
+### 5.1 Preferences live in `meta`
+
+There is exactly one local preference — the appearance override (`FEATURES.md`
+§13) — and it is one row in the key/value table §4.5 already created for the
+seed flag.
+
+**AsyncStorage was listed here and is not installed.** Its one advantage over a
+SQLite read is being available before the database opens, and this application
+does not have that window: `app/_layout.tsx` holds the splash screen until
+migrations and the seed resolve, so the first frame already renders after a
+database is open. A second persistence mechanism, for one enum, that has to be
+kept in step with a source of truth §4.1 says is the database, buys a dependency
+and a way for the two to disagree.
+
+`expo-secure-store` is for secrets. There are none — no accounts, no tokens, no
+network.
 
 Zustand holds only what does not belong in the database: current exercise index,
 timer running state, unsaved set draft.
