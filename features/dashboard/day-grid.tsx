@@ -112,11 +112,28 @@ export function DayGrid({ grid }: { grid: DaysGrid }) {
           Opens on today, at the right edge. Today is what the screen is for;
           the past is what you scroll back to. `animated: false` because a grid
           that slides into place on every visit is animation for its own sake —
-          DESIGN.md §7. A no-op while the content fits, which is the common case.
+          DESIGN.md §7.
+
+          **`scrollTo` with the width this callback was handed, not
+          `scrollToEnd`.** The latter silently did nothing here and the grid
+          opened on the first week ever logged — it resolves the end against a
+          content size the native view has not necessarily adopted at the moment
+          it fires, which is the same moment this callback reports. The
+          subtraction is the whole of what `scrollToEnd` would have done, and it
+          uses the number rather than asking for it again.
+
+          Negative while the content fits, which is the common case and is left
+          alone: a young grid has nowhere to scroll and must not be nudged.
         */
-        onContentSizeChange={() =>
-          scroll.current?.scrollToEnd({ animated: false })
-        }
+        onContentSizeChange={(width) => {
+          const offset = width - plotWidth;
+
+          if (offset > 0) {
+            requestAnimationFrame(() =>
+              scroll.current?.scrollTo({ x: offset, animated: false }),
+            );
+          }
+        }}
         className="flex-1"
       >
         <View style={{ width: contentWidth }} className="gap-sm">

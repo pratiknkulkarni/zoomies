@@ -145,11 +145,21 @@ export function BestSetTrend({
           /*
             Opens on the most recent session, at the right edge, for the reason
             `lib/trend.ts` ends the window there: the newest training is what the
-            screen is being opened for. A no-op while the content fits.
+            screen is being opened for.
+
+            `scrollTo` with the reported width rather than `scrollToEnd`, which
+            did nothing at all and left the chart showing the oldest thirteen
+            weeks. `DayGrid` carries the full reasoning.
           */
-          onContentSizeChange={() =>
-            scroll.current?.scrollToEnd({ animated: false })
-          }
+          onContentSizeChange={(width) => {
+            const offset = width - plotWidth;
+
+            if (offset > 0) {
+              requestAnimationFrame(() =>
+                scroll.current?.scrollTo({ x: offset, animated: false }),
+              );
+            }
+          }}
           className="flex-1"
         >
           <View style={{ width: contentWidth }} className="gap-sm">
