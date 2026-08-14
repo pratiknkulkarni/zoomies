@@ -2,6 +2,7 @@ import type { exerciseMetrics } from '@/db/schema';
 
 // Relative, unlike the type import above: `@/` is a tsconfig alias the test
 // runner does not resolve, and a type import is erased before it ever tries.
+import { daysBetween } from './days';
 import { describeMeasure } from './metrics';
 
 type ExerciseMetricRow = typeof exerciseMetrics.$inferSelect;
@@ -259,6 +260,21 @@ export function formatDayRange(fromMs: number, toMs: number): string {
   if (from.getMonth() === to.getMonth() && from.getFullYear() === to.getFullYear()) {
     return `${from.getDate()}–${to.getDate()} ${month(to)}`;
   }
+
+  /*
+    The year appears once the range is longer than one, and not merely because
+    it crossed a New Year. Found on a database holding nineteen years: the grid
+    read `18 Jun – 14 Aug`, which is eight weeks, and the first of those dates
+    was in 2007.
+
+    Crossing a year boundary is the wrong test — `28 Dec – 3 Jan` is six days
+    and the years are noise on it. Length is the thing that makes a bare date
+    ambiguous, so length is what this asks about.
+  */
+  if (daysBetween(fromMs, toMs) > 365) {
+    return `${from.getDate()} ${month(from)} ${from.getFullYear()} – ${to.getDate()} ${month(to)} ${to.getFullYear()}`;
+  }
+
   return `${from.getDate()} ${month(from)} – ${to.getDate()} ${month(to)}`;
 }
 
