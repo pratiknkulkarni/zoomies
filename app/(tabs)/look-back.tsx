@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
+import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Screen } from '@/components/ui/screen';
 import { SectionLabel } from '@/components/ui/section-label';
@@ -206,6 +207,23 @@ export default function LookBackScreen() {
               {`Days trained · ${formatDayRange(grid.fromMs, grid.toMs)}`}
             </SectionLabel>
             <DayGrid grid={grid} />
+            {/*
+              A quarter is what this grid can draw in a frame — nineteen years
+              of squares is 7,000 `View`s and blocked the main thread for over
+              two seconds. The rest is not gone, it is one tap away on a screen
+              where the wait is asked for.
+
+              A button rather than a text link: the objection to `Look back ›`
+              was a navigation vocabulary of one word in one corner, and the
+              answer is not to reintroduce it two screens later. This is a
+              control, sitting under the thing it expands.
+            */}
+            <Button
+              variant="secondary"
+              onPress={() => router.push('/days-trained')}
+            >
+              <Text>Every week</Text>
+            </Button>
           </View>
         ) : settled ? (
           <View className="px-2xl">
