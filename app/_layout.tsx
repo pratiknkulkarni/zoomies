@@ -57,6 +57,34 @@ export default function RootLayout() {
   const [seeded, setSeeded] = useState(false);
   const [seedError, setSeedError] = useState<Error | null>(null);
 
+  /*
+    The override, applied again now that the application is running.
+
+    The module-scope call above is not enough on its own, and the reason is
+    worth stating because it is invisible from this file. NativeWind's
+    `colorScheme.set` does not hold the value itself — outside tests it only
+    calls `Appearance.setColorScheme`, and the resolved scheme is read back from
+    an observable that its own listener updates:
+
+        appearance.addChangeListener((state) => {
+          if (AppState.currentState === "active") { … }
+        });
+
+    At module scope the application is not active yet, so that guard drops the
+    change and the observable keeps the system value. The override therefore
+    survived until the process was killed and never one launch further — which
+    is exactly the symptom: choosing Dark worked, and reopening on a light phone
+    came back light.
+
+    Running once on mount is after the listener will accept it and long before
+    the splash lifts, so nothing flashes. The module-scope call stays: it costs a
+    single synchronous row read and is what covers the first frame on the launch
+    where it does land.
+  */
+  useEffect(() => {
+    colorScheme.set(storedAppearance());
+  }, []);
+
   useEffect(() => {
     if (!migrated) {
       return;
