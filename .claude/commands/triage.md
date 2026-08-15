@@ -36,9 +36,10 @@ Then stop and let me choose. Do not start fixing.
 ## 3. Fix the one I pick
 
 - Branch: `fix/<number>-<short-slug>`.
-- Read `docs/DESIGN.md`, `docs/FEATURES.md` and `docs/TECH_STACK.md` before any
-  decision they cover. They are authoritative and they are in the private
-  `docs/` repository — see CLAUDE.md § Repository.
+- Read `docs/spec/DESIGN.md`, `docs/spec/FEATURES.md` and
+  `docs/spec/TECH_STACK.md` before any decision they cover. They are
+  authoritative, and they live in the private `docs/` repository — see
+  CLAUDE.md § Repository.
 - Add a unit test when the fault is in `lib/` or a query. Do not add a component
   or navigation test; the project does not have them and this is not the moment
   to start.

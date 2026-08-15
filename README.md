@@ -1,11 +1,11 @@
 # Zoomies
 
-A training journal for calisthenics and gymnastic rings. One person, one phone,
-no account, no server, no network. It records what you did, so that later you
-can see what you did.
+A training journal for calisthenics and gymnastic rings that I built for myself.
+One person, one phone, no account, no server, no network calls. It records what
+I did so I can look at it later.
 
-It is a **journal, not a coach**. It does not prescribe workouts, correct form,
-suggest progressions, or have an opinion about whether you trained enough.
+It's a journal, not a coach. It won't tell me what to train, correct my form, or
+have an opinion about whether I've done enough this week.
 
 <p align="center">
   <img src="media/session.png" alt="Logging a set during a session" width="24%">
@@ -16,89 +16,80 @@ suggest progressions, or have an opinion about whether you trained enough.
 
 ---
 
-## Why it exists
+## Why I built it
 
-Because of one specific, repeated, ordinary failure:
+I kept losing track of my sets.
 
-> **Sets get forgotten or missed during training, because you are tired.**
+Halfway through a session, four exercises in, forearms burning, I could never
+remember whether that was my second or third set of chin-ups. So I'd do an extra
+one, or skip one, or stand there for a while trying to reconstruct the last four
+minutes. It's a small problem and it happened every single time I trained.
 
-Halfway through a session, four exercises deep, forearms burning, you cannot
-reliably remember whether that was your second or third set of chin-ups. You
-either do an extra one, or skip one, or stand there trying to reconstruct the
-last four minutes.
+Paper works, but then I have to add it all up. Spreadsheets are out of the question.
+I tried three other fitness apps and gave up on all of
+them: they were slow, or noisy, or wanted an account and a network connection for ads.
 
-Paper works but does not add up. Spreadsheets are miserable with chalky hands.
-Three other fitness apps were abandoned before this one, for being loud, slow,
-or dishonest — and all of them wanted an account and a network connection that
-a garage at night does not have.
-
-So every feature here serves one of exactly two purposes:
-
-1. **Fast logging during training**, when you are tired, breathing hard, and
-   want the phone out of your hands.
-2. **Reflection after training**, when you are sitting down and want to know
-   whether anything is actually moving.
-
-A feature serving neither does not belong, however good it is.
+So I wrote one that does two things. It lets me log a set fast while I'm tired
+and want the phone out of my hands, and it lets me look back afterwards and see
+whether anything is actually improving. If a feature doesn't do one of those, I
+didn't build it.
 
 ---
 
 ## What it does
 
-**Plan.** Templates of exercises with per-slot targets — three sets of eight, or
-a thirty-second hold. Editing a template never rewrites history: targets are
-snapshotted onto the session when it starts.
+**Plan.** I set up templates: a list of exercises with the sets I intend to do,
+like 3 × 8 chin-ups or a 30 second hold. Editing a template later doesn't change
+anything I've already done, because the targets get copied onto the session when
+it starts.
 
-**Train.** Start a session from a template. Each exercise shows a live `2 / 4`
-counter and what you did last time. Log a set in one tap; the button names the
-set it is about to write, so *was that my second or third* is answered at the
-moment of pressing. Holds are timed by a tap-to-start clock that fills a
-hairline track and beeps at the target.
+**Train.** I start a session from a template. Each exercise shows a running
+`2 / 4` counter and what I managed last time. Logging a set is one tap, and the
+button says which set it's about to save, so I don't have to count. Holds get a
+tap-to-start clock that fills a thin bar and beeps when it hits the target.
 
-**Record.** A history timeline, each session readable back set by set. Per
-exercise: every set ever logged, personal records per metric, and a dot plot of
-the best set over time.
+**Record.** History is a timeline of sessions, and I can open any one of them
+and read it back set by set. Each exercise has its own page with every set I've
+ever logged, my best for each metric, and a scatter of my best set over time.
 
-**Look back.** Days trained as a grid of filled and unfilled squares — a
-quarter to a screen, scrolling back as far as the history goes — plus what has
-not been trained lately, and recent records.
+**Look back.** A grid of squares, one per day, filled if I trained. A quarter
+fits on screen and it scrolls back as far as my history goes. Underneath: what I
+haven't touched in a while, and any records I've set recently.
 
-**Keep.** Export everything to a JSON file. It is a copy of the database, not a
-view of the application — soft-deleted rows included — so it is a real backup
-rather than a report.
+**Keep.** Export writes the whole database to a JSON file. It's a copy of the
+database rather than a summary of it, deleted rows included, so it's an actual
+backup. Import is still a WIP.
 
-Forty-two built-in exercises across twelve families, fifteen active by default;
-the rest surface as suggestions when you train something in the same family.
-Custom exercises and custom metric configurations are supported.
+There are 42 built-in exercises across 12 families, 15 of them switched on to
+start with. The rest show up as suggestions once I train something in the same
+family. I can add my own, and change what any of them measure.
 
 ---
 
-## What it refuses to do
+## What it deliberately doesn't do
 
-This list is the design, as much as the feature list is.
+- **No accounts, no sync, no network.** There's no server and the app makes no
+  network calls at all. It works in a basement and on a plane.
+- **No streaks.** There's a row of seven dots for the week and no number next to
+  it. No flame, no counter, no penalty for missing a day.
+- **No celebration.** If I beat a record it says so. No confetti, no numbers
+  counting up, no animation.
+- **No accent colour.** Emphasis comes from weight, rules and solid black. The
+  only colour in the whole app is the red used for dangerous actions like delete and discard.
+- **No shadows, gradients, blur or elevation.**
+- **No illustrations or empty-state graphics.**
+- **No gamification, analytics, ads (obviously), subscriptions or social features.**
 
-- **No accounts, no sync, no network.** There is no server and there are no
-  network calls. It works in a basement and on a plane.
-- **No streaks.** The week row is seven dots with no number attached. No flame,
-  no count, no reset penalty.
-- **No celebration.** Records are stated, not congratulated. No confetti, no
-  counting-up numbers, no animated reveals.
-- **No accent colour.** Emphasis is weight, rule and solid ink. `danger` is the
-  only hue in the system and it reaches delete and discard alone.
-- **No shadows, gradients, blur or elevation.** Depth is one surface against
-  another.
-- **No illustration.** No empty-state graphics, no doodles.
-- **No gamification, analytics, ads, subscriptions, or social anything.**
+Two rules I care about more than they probably sound:
 
-And two rules that matter more than they look:
+- **Null means "not recorded". Zero means zero.** If I didn't type a value it
+  isn't stored as `0`, and it shows as `—`.
+- **The app never tells me to do more.** A target only goes up if it offers to
+  raise it after I've beaten it, and only if I beat it on most of my sets rather
+  than one good one.
 
-- **Null means not recorded. Zero means zero.** A value you did not enter is
-  never stored as `0`, and is displayed as `—`.
-- **Nothing is prescribed.** The only way a target ever increases is a prompt
-  offering it after you beat it — on a majority of sets, not one lucky one.
-
-Both themes follow the system by default, and every token has a dark value — so
-no component in the codebase contains a theme conditional.
+Both themes follow the system setting. Every colour token has a dark value, so
+there isn't a single theme conditional anywhere in the components.
 
 <p align="center">
   <img src="media/session-dark.png" alt="A session in the dark theme" width="24%">
@@ -109,59 +100,22 @@ no component in the codebase contains a theme conditional.
 
 ---
 
-## How it is built
-
-**A set stores no measurements.** A `sets` row records that an effort happened:
-its index, whether it went to failure, when. The values live in
-`set_metric_values`, one row per metric.
-
-```
-12 reps, felt strong   =   one sets row + two set_metric_values rows
-```
-
-This is the central decision in the schema and it looks like over-engineering
-until you change an exercise's metrics. Because the values hang off metric ids
-rather than columns, renaming a metric, reordering them, adding one or deleting
-one leaves every historical row byte-identical. Collapsing this into columns on
-`sets` would make every metric change a migration over training history.
-
-**Aggregates are never stored.** `24 reps` does not exist in the database. It is
-a `SUM` over individual sets, computed at read time. There is no total that can
-drift away from the rows it came from.
-
-**Timers derive from timestamps**, never from accumulated `setInterval` ticks.
-Backgrounding the app for ninety seconds does not lose ninety seconds.
-
-**Writes commit before the UI moves.** Every mutation is a single transaction
-that resolves after `COMMIT`. A force-quit mid-session loses nothing — which is
-the first invariant, and the reason the application exists.
-
-**Both charts are `View`s.** The days-trained grid and the best-set trend draw
-no axes, gridlines, tooltips or animations, because the design system forbids
-all four — which is every feature a charting library sells. So there is no
-charting dependency.
-
----
-
 ## Stack
 
 | Layer | Choice |
 |---|---|
-| Platform | Expo SDK 57 (React Native 0.86, React 19.2), managed workflow |
-| Language | TypeScript, `strict` with `noUncheckedIndexedAccess` |
-| Database | SQLite on device via `expo-sqlite` — the source of truth |
-| ORM | Drizzle ORM, `drizzle-kit` migrations (9 tables, 7 migrations) |
-| Routing | Expo Router, typed routes |
-| Styling | NativeWind v4. Every colour, space and size is a token |
-| Components | `react-native-reusables`, copied into the repo and owned |
+| Platform | Expo SDK 57 (React Native 0.86, React 19.2) |
+| Language | TypeScript |
+| Database | SQLite on the device via `expo-sqlite` |
+| ORM | Drizzle ORM with `drizzle-kit` migrations |
+| Routing | Expo Router |
+| Styling | NativeWind v4 |
+| Components | `react-native-reusables`, copied in and edited |
 | Icons | `lucide-react-native` |
-| Fonts | Geist and Geist Mono, bundled. All numerals are mono |
-| State | Zustand, ephemeral only — anything durable goes to SQLite |
-| IDs | UUID v7, so rows sort chronologically by primary key |
+| Fonts | Geist and Geist Mono. Anything numeric is mono (iirc) |
+| State | Zustand for ephemeral state only. Anything that matters goes to SQLite |
+| IDs | UUID v7, so rows sort by time on their primary key |
 | Charts | None |
-
-No backend, no state-management library beyond Zustand, no charting library, no
-component library beyond the one that was copied in and edited.
 
 ---
 
@@ -173,76 +127,72 @@ npm start                 # Expo dev server
 npm run android           # build and run on a device or emulator
 ```
 
-Native Android project, if it is missing:
+If the native Android project is missing (which it might if I switch laptops or reinstall OS):
 
 ```bash
 npx expo prebuild --platform android --no-install
 printf 'sdk.dir=%s/Android/Sdk\n' "$HOME" > android/local.properties
 ```
 
-Both lines — `prebuild` writes everything except `local.properties`, which is
-machine-specific and the one file it will not recreate.
+> Both lines matter. `prebuild` writes everything except `local.properties`, which is machine-specific and the one file it won't recreate.
 
 ```bash
 npm run typecheck
 npm run lint
 npm test
-npm run deploy            # debug APK, installed on the attached device
-npm run release -- minor  # signed APK, tagged, published to Releases
+npm run deploy            # debug APK onto the attached device
+npm run release -- minor  # signed APK, tagged and published to Releases
 ```
 
-**Installing it:** download the APK from
-[Releases](https://gitea.15092021.xyz/pratik/zoomies/releases) onto the phone.
-There is no store listing.
+To install it, download the APK from
+[Releases](https://gitea.15092021.xyz/pratik/zoomies/releases) on the phone.
+**It's not on any store.**
 
 ---
 
 ## Tests
 
-285 unit tests over the parts where being wrong would be silent: timer
-arithmetic, the personal-record fold and its ties, the target-raise majority
-rule, week and day boundaries, duration and value formatting, export
-completeness, and the parsing edge where *null* is kept distinct from *zero*.
+285 unit tests, aimed at the places where being wrong wouldn't be obvious: timer
+arithmetic, working out personal records and handling ties, the rule that
+decides whether to offer a target increase, week and day boundaries, formatting,
+export completeness, and the parsing that keeps null and zero apart. Fully generated using Claude.
 
-Export completeness is tested against the real `db/schema.ts` — tables are
-discovered from the schema and columns from `SELECT *`, so adding a table cannot
-quietly produce incomplete backups.
+The export test runs against the real `db/schema.ts` and discovers tables and
+columns rather than being given a list, so adding a table can't quietly start
+producing incomplete backups.
 
-**What is not tested:** there are no component, navigation, snapshot or E2E
-tests. Interface behaviour is verified by a written smoke test walked on a
-physical device, phase by phase, and the gaps in that are recorded rather than
-glossed over.
+There are no component, navigation, snapshot or E2E tests. I check the interface
+by hand on a Pixel against a written smoke test, and where I haven't checked
+something I write that down instead of pretending otherwise.
 
 ---
 
 ## How this was built
 
-**This is a code-assisted project, written with [Claude
-Code](https://claude.com/claude-code).** Saying so plainly, because the
-interesting part is not that a model wrote code — it is what had to exist around
-it for the result to hold together.
+I wrote this with [Claude Code](https://claude.com/claude-code). The part I think is worth
+explaining is what I had to put around it to get something that holds together.
 
-Four specification documents were written before the first line of code: the
-feature set and data model, the technology choices, the visual design system
-down to the spacing scale, and a phased build plan. Each was authoritative in
-its own domain, and a request that conflicted with one had to change the
-document first. `CLAUDE.md` in this repository is the working agreement that
-sits on top of them — the invariants, the conventions, and an explicit list of
-things not to build.
+I wrote four specification documents before any code: what the app does and how
+the data is shaped, what it's built with, the visual system down to the spacing
+scale, and the order I'd build it in. Each one was the final say in its own area,
+and when I wanted something that contradicted one of them, I had to change the
+document first. `CLAUDE.md` in this repo sits on top of those and holds the rules
+that can't be broken, the conventions, and a list of things I've decided not to
+build.
 
-Eleven phases, each finished and verified on a physical Pixel before the next
-began. Several decisions in here are recorded reversals: a rest timer specified
-and then cut before it was built, a charting library twice planned and twice
-found unnecessary, a metric editor rebuilt rather than patched a fourth time.
+I worked in eleven phases and finished each one on a real phone before starting
+the next. A few decisions in here are ones I reversed: I specified a rest timer
+and then cut it before building it, I planned for a charting library twice and
+didn't need it either time, and I rebuilt the metric editor rather than patch it
+a fourth time.
 
-The specifications, the build plan, the development log and the engineering
-notes are kept privately. This README and `CLAUDE.md` are the public part.
+The specs, the build plan, the development log and my engineering notes are in a
+separate private repo. This README and `CLAUDE.md` are the public part.
 
 ---
 
 ## Status
 
-Version 1, in daily personal use. Android only for now; nothing in the code is
-iOS-specific, but nothing has been verified there either. Not on any store, and
-not intended for one — bug reports and ideas go to
-[Issues](https://gitea.15092021.xyz/pratik/zoomies/issues).
+Version 1, and I use it. Android only so far. Nothing in the code is
+iOS-specific and I haven't tried it there. It isn't going on a store. Bugs and
+ideas go to [Issues](https://gitea.15092021.xyz/pratik/zoomies/issues).
