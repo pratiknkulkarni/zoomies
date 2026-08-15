@@ -1,5 +1,9 @@
 # Zoomies
 
+> **Zoomies** is an informal term for a sudden, brief burst of frantic energy 
+where a pet, most commonly a dog or cat, runs wildly in circles,
+dashes from room to room, or leaps on furniture. 
+
 A training journal for calisthenics and gymnastic rings that I built for myself.
 One person, one phone, no account, no server, no network calls. It records what
 I did so I can look at it later.
