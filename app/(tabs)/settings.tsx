@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
+import Constants from 'expo-constants';
 import { File, Paths } from 'expo-file-system';
 import { router } from 'expo-router';
 import * as Sharing from 'expo-sharing';
@@ -87,8 +88,33 @@ export default function SettingsScreen() {
 
         <Backup />
         <ResetEverything />
+        <Version />
       </ScrollView>
     </Screen>
+  );
+}
+
+/**
+ * Which build this is.
+ *
+ * Here because a bug report that cannot name its version is a bug report that
+ * cannot be told apart from one already fixed. Both numbers, because they
+ * answer different questions: the version is what a release is called, and the
+ * versionCode is the only thing Android compares when deciding whether an APK
+ * is an upgrade.
+ *
+ * Last on the screen and quiet. It is a fact to be looked up, not a setting.
+ */
+function Version() {
+  const version = Constants.expoConfig?.version ?? '—';
+  const code = Constants.expoConfig?.android?.versionCode ?? '—';
+
+  return (
+    <View className="px-2xl pt-2xl">
+      <Text className="font-mono text-metricXs text-text-3">
+        Zoomies {version} ({code})
+      </Text>
+    </View>
   );
 }
 

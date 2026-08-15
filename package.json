@@ -15,7 +15,9 @@
     "deploy": "npm run apk && adb ${ZOOMIES_DEVICE:+-s $ZOOMIES_DEVICE} install -r android/app/build/outputs/apk/debug/app-debug.apk && npm run reverse",
     "deploy:release": "npm run apk:release && adb ${ZOOMIES_DEVICE:+-s $ZOOMIES_DEVICE} install -r android/app/build/outputs/apk/release/app-release.apk",
     "reverse": "adb ${ZOOMIES_DEVICE:+-s $ZOOMIES_DEVICE} reverse tcp:8081 tcp:8081",
-    "device": "adb ${ZOOMIES_DEVICE:+-s $ZOOMIES_DEVICE} shell getprop ro.product.model"
+    "device": "adb ${ZOOMIES_DEVICE:+-s $ZOOMIES_DEVICE} shell getprop ro.product.model",
+    "release": "bash scripts/release.sh",
+    "screenshots": "bash scripts/screenshots.sh"
   },
   "dependencies": {
     "@expo-google-fonts/geist": "^0.4.2",

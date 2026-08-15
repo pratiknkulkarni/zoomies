@@ -1,0 +1,49 @@
+name: Bug
+about: It crashed, lost something, or did the wrong thing.
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Only the first box is required. A one-line issue filed between sets
+        beats a complete one written next week, and an incomplete one can
+        always be filled in at triage.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      placeholder: Logged the third set of chin-ups and the counter still said 2 / 4.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+
+  - type: input
+    id: where
+    attributes:
+      label: Which screen
+      placeholder: Live session, History, Look back, an exercise…
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The last line of Settings.
+      placeholder: 1.0.0 (1)
+
+  - type: dropdown
+    id: lost
+    attributes:
+      label: Did anything you logged disappear?
+      description: >
+        Never losing a set is the first invariant. If the answer is yes this
+        stops being an ordinary bug, so it is worth one tap to say.
+      options:
+        - "No"
+        - "Yes"
+        - "Not sure"

@@ -14,6 +14,7 @@
     },
     "android": {
       "package": "com.zoomies.app",
+      "versionCode": 1,
       "predictiveBackGestureEnabled": false,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -38,7 +39,8 @@
       ],
       "expo-sqlite",
       "expo-audio",
-      "expo-sharing"
+      "expo-sharing",
+      "./plugins/with-release-signing"
     ],
     "experiments": {
       "typedRoutes": true

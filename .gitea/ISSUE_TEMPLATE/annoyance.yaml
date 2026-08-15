@@ -1,0 +1,28 @@
+name: Annoyance
+about: It works, but using it is worse than it should be.
+labels:
+  - annoyance
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Separate from a bug because the fix is a different kind of decision.
+        Nothing here is wrong; something here is tiring.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What made you notice
+      description: >
+        Where you were and what you were doing matters more than the
+        suggestion. Most of this application's worst moments were found with
+        chalky hands in bad light, not at a desk.
+      placeholder: Had to scroll back up to see which set I was on.
+    validations:
+      required: true
+
+  - type: input
+    id: where
+    attributes:
+      label: Which screen
+      placeholder: Live session, History, Look back, an exercise…

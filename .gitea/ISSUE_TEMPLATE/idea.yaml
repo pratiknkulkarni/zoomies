@@ -1,0 +1,23 @@
+name: Idea
+about: A change worth considering. Not a fault.
+labels:
+  - idea
+body:
+  - type: markdown
+    attributes:
+      value: |
+        One box on purpose. An idea that has to be justified before it can be
+        written down is an idea that gets forgotten instead.
+
+        Two tests it will be held to later, so they may as well be said now:
+        does it serve fast logging during training, or reflection after it?
+        And is it on the cut list in the docs — streaks, celebration,
+        illustration, accounts, sync, anything social — because those were
+        decided against with reasons rather than skipped.
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+    validations:
+      required: true
