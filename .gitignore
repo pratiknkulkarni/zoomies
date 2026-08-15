@@ -40,8 +40,13 @@ coverage/
 .idea/
 *.swp
 
-# Scratch — screenshots, pulled databases, anything not part of the project
+# Scratch — pulled databases, anything not part of the project
 temp/
+
+# The working documents are their own private repository, nested here.
+# See CLAUDE.md § Repository. Not a submodule: a submodule would record its URL
+# in a tracked .gitmodules, and this one leaves no trace in the public repo.
+/docs/
 
 # Python bytecode from scripts/
 __pycache__/
