@@ -28,6 +28,17 @@ const { withAppBuildGradle } = require('@expo/config-plugins');
  * purpose. An unsigned release APK will not install, which is a loud failure.
  * Falling back to the debug key would be a quiet one: installable today,
  * unable to upgrade a properly signed build ever again.
+ *
+ * **Debug builds are signed with the same key**, when it is available. Android
+ * refuses to replace an installed app with one carrying a different signature,
+ * so with two identities `npm run deploy` stops working the moment a release
+ * build is on the phone, and the only way back is an uninstall — which is the
+ * database. One identity also keeps the debug build usable as the escape hatch
+ * that can read `zoomies.db` off the device through `run-as`, which a release
+ * build cannot do.
+ *
+ * Where the credentials are absent, debug falls back to Expo's own
+ * `debug.keystore` so that a fresh clone still builds and runs.
  */
 
 const MARKER = 'ZOOMIES_UPLOAD_STORE_FILE';
@@ -43,6 +54,37 @@ const RELEASE_SIGNING_CONFIG = `
                 keyPassword ZOOMIES_UPLOAD_KEY_PASSWORD
             }
         }`;
+
+const DEBUG_SIGNING_CONFIG = `        debug {
+            // Same key as release when there is one, so that a debug build can
+            // replace an installed release build instead of being refused for
+            // its signature. See the note at the top of this plugin.
+            if (project.hasProperty('ZOOMIES_UPLOAD_STORE_FILE')) {
+                storeFile file(ZOOMIES_UPLOAD_STORE_FILE)
+                storePassword ZOOMIES_UPLOAD_STORE_PASSWORD
+                keyAlias ZOOMIES_UPLOAD_KEY_ALIAS
+                keyPassword ZOOMIES_UPLOAD_KEY_PASSWORD
+            } else {
+                storeFile file('debug.keystore')
+                storePassword 'android'
+                keyAlias 'androiddebugkey'
+                keyPassword 'android'
+            }
+        }`;
+
+/** The debug block exactly as the Expo template writes it. */
+const TEMPLATE_DEBUG_CONFIG =
+  /        debug \{\n\s*storeFile file\('debug\.keystore'\)\n\s*storePassword 'android'\n\s*keyAlias 'androiddebugkey'\n\s*keyPassword 'android'\n        \}/;
+
+function useOneKeyForDebugToo(contents) {
+  if (!TEMPLATE_DEBUG_CONFIG.test(contents)) {
+    throw new Error(
+      'with-release-signing: the debug signingConfig in app/build.gradle is ' +
+        'not the shape the Expo template writes. The plugin needs updating.'
+    );
+  }
+  return contents.replace(TEMPLATE_DEBUG_CONFIG, DEBUG_SIGNING_CONFIG);
+}
 
 function addReleaseSigningConfig(contents) {
   const anchor = contents.indexOf('signingConfigs {');
@@ -86,7 +128,8 @@ module.exports = function withReleaseSigning(config) {
     if (mod.modResults.contents.includes(MARKER)) {
       return mod;
     }
-    let contents = addReleaseSigningConfig(mod.modResults.contents);
+    let contents = useOneKeyForDebugToo(mod.modResults.contents);
+    contents = addReleaseSigningConfig(contents);
     contents = pointReleaseAtIt(contents);
     mod.modResults.contents = contents;
     return mod;
