@@ -227,7 +227,10 @@ npm run deploy                 # Build the debug apk and install it on the devic
 npm run deploy:release         # The same, release-signed
 npm run device                 # Which phone adb is talking to
 
-eas build --profile preview --platform android --local
+npm run release -- patch       # Version, build, sign, tag, publish to Gitea
+npm run screenshots            # Regenerate media/ from a seeded database
+
+scripts/gitea.sh issues        # The bug queue. `issue <n>`, `comment`, `close`
 ```
 
 ### `android/` is generated, and it is **not** disposable
@@ -255,6 +258,46 @@ next Gradle run is a full recompile because the build cache goes too.
 
 After any change to `db/schema.ts`, run `drizzle-kit generate` and commit the
 generated migration in the same commit.
+
+---
+
+## Releasing
+
+`npm run release -- patch|minor|major|X.Y.Z` does the whole thing: refuses a
+dirty tree or a diverged `main`, runs typecheck, lint and tests, bumps
+`expo.version` and `expo.android.versionCode`, prebuilds, builds, verifies the
+signature, tags, pushes, and publishes the APK to Gitea's releases page.
+
+**The keystore is a third thing that has to exist on the machine**, alongside
+`android/local.properties` and the native project:
+
+```
+~/.config/zoomies/zoomies-release.jks     the key
+~/.gradle/gradle.properties                ZOOMIES_UPLOAD_* — path, alias, passwords
+```
+
+Both are outside the repository and neither is recoverable. **Losing them means
+no future build can ever install over the one on the phone**, and the only way
+out is an uninstall, which is the database. `plugins/with-release-signing.js`
+wires them into `build.gradle` at prebuild time, and signs debug builds with the
+same key so the two build types can replace each other.
+
+`versionCode` is the only number Android compares when deciding whether an APK
+is an upgrade. It increments per release and is unrelated to the semver.
+
+## Bugs found while using it
+
+Issues live on the public repo. `scripts/gitea.sh` is the one path to them, and
+`/triage` is the working session: read the queue, rank it, fix one.
+
+Most issues are filed one-handed between sets and will be a single line. Treat
+that as the format working, not as missing information — reconstruct what you
+can from the code first. Rank by consequence: anything that lost a set outranks
+everything, then anything that displays a number that is not true, then anything
+hard to do with tired hands.
+
+Branch `fix/<n>-slug`, and end the commit message with `Fixes #<n>` so Gitea
+closes it on push to `main`.
 
 ---
 

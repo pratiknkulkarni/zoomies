@@ -28,8 +28,9 @@ either do an extra one, or skip one, or stand there trying to reconstruct the
 last four minutes.
 
 Paper works but does not add up. Spreadsheets are miserable with chalky hands.
-Every fitness app I tried wanted an account, a subscription, a streak I was
-about to break, and a network connection I did not have in the garage.
+Three other fitness apps were abandoned before this one, for being loud, slow,
+or dishonest — and all of them wanted an account and a network connection that
+a garage at night does not have.
 
 So every feature here serves one of exactly two purposes:
 
@@ -58,8 +59,9 @@ hairline track and beeps at the target.
 exercise: every set ever logged, personal records per metric, and a dot plot of
 the best set over time.
 
-**Look back.** Thirteen weeks of days trained as a grid of filled and unfilled
-squares, what has not been trained lately, and recent records.
+**Look back.** Days trained as a grid of filled and unfilled squares — a
+quarter to a screen, scrolling back as far as the history goes — plus what has
+not been trained lately, and recent records.
 
 **Keep.** Export everything to a JSON file. It is a copy of the database, not a
 view of the application — soft-deleted rows included — so it is a real backup
@@ -88,6 +90,13 @@ This list is the design, as much as the feature list is.
 - **No illustration.** No empty-state graphics, no doodles.
 - **No gamification, analytics, ads, subscriptions, or social anything.**
 
+And two rules that matter more than they look:
+
+- **Null means not recorded. Zero means zero.** A value you did not enter is
+  never stored as `0`, and is displayed as `—`.
+- **Nothing is prescribed.** The only way a target ever increases is a prompt
+  offering it after you beat it — on a majority of sets, not one lucky one.
+
 Both themes follow the system by default, and every token has a dark value — so
 no component in the codebase contains a theme conditional.
 
@@ -97,13 +106,6 @@ no component in the codebase contains a theme conditional.
   <img src="media/exercise-dark.png" alt="An exercise in the dark theme" width="24%">
   <img src="media/look-back-dark.png" alt="The grid in the dark theme" width="24%">
 </p>
-
-And two rules that matter more than they look:
-
-- **Null means not recorded. Zero means zero.** A value you did not enter is
-  never stored as `0`, and is displayed as `—`.
-- **Nothing is prescribed.** The only way a target ever increases is a prompt
-  offering it after you beat it — on a majority of sets, not one lucky one.
 
 ---
 
@@ -190,7 +192,8 @@ npm run release -- minor  # signed APK, tagged, published to Releases
 ```
 
 **Installing it:** download the APK from
-[Releases](../../releases) onto the phone. There is no store listing.
+[Releases](https://gitea.15092021.xyz/pratik/zoomies/releases) onto the phone.
+There is no store listing.
 
 ---
 
@@ -242,4 +245,4 @@ notes are kept privately. This README and `CLAUDE.md` are the public part.
 Version 1, in daily personal use. Android only for now; nothing in the code is
 iOS-specific, but nothing has been verified there either. Not on any store, and
 not intended for one — bug reports and ideas go to
-[Issues](../../issues).
+[Issues](https://gitea.15092021.xyz/pratik/zoomies/issues).
