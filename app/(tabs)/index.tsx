@@ -139,7 +139,7 @@ export default function HomeScreen() {
                 lastRunByTemplate.get(item.id) ?? null,
               )}
               empty={planSlots.length === 0}
-              running={session?.id ?? null}
+              running={session?.templateId === item?.id ? session?.id : null}
               onOpen={() =>
                 router.push({
                   pathname: '/template/[id]',
