@@ -193,6 +193,8 @@ function Logging({ entryId }: { entryId: string }) {
             ? entry.targetValue * 1000
             : null
         }
+        targetMetricId={entry.targetMetricId}
+        targetValue={entry.targetValue}
       />
     );
 

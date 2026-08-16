@@ -18,17 +18,19 @@ const PlusIcon = iconWithClassName(Plus);
  * when a number is far away; the steppers are there when it is one off.
  */
 /**
- * One. Everything this app records is a whole number — a count or a number of
- * seconds. Added load was the only fractional metric and it is removed (§15),
- * so the step is no longer a decision any caller makes.
+ * One, by default. Everything this app records is a whole number — a count or
+ * a number of seconds — so a caller never needs a fraction. A caller logging
+ * against a target (issue #3) may pass a larger step instead, so +/- moves by
+ * that target rather than by one at a time.
  */
-const STEP = 1;
+const DEFAULT_STEP = 1;
 
 function NumericField({
   value,
   onChangeText,
   unit,
   accessibilityLabel,
+  step = DEFAULT_STEP,
   /**
    * DESIGN.md §6.8 — empty, not `—`. The dash means *not recorded* on display
    * surfaces; in an input it claims a value was withheld rather than awaited,
@@ -50,6 +52,7 @@ function NumericField({
   onChangeText: (next: string | ((current: string) => string)) => void;
   unit?: string | null;
   accessibilityLabel: string;
+  step?: number;
   placeholder?: string;
 }) {
   const nudge = (by: number) => {
@@ -74,7 +77,7 @@ function NumericField({
     <View className="flex-row items-center gap-sm">
       <Stepper
         label={`Decrease ${accessibilityLabel}`}
-        onPress={() => nudge(-STEP)}
+        onPress={() => nudge(-step)}
       >
         <MinusIcon size={24} strokeWidth={1.5} className="text-text-2" />
       </Stepper>
@@ -94,7 +97,7 @@ function NumericField({
 
       <Stepper
         label={`Increase ${accessibilityLabel}`}
-        onPress={() => nudge(STEP)}
+        onPress={() => nudge(step)}
       >
         <PlusIcon size={24} strokeWidth={1.5} className="text-text-2" />
       </Stepper>

@@ -37,6 +37,8 @@ export function SetLog({
   nextSetNumber,
   setsUntilTarget,
   durationTargetMs,
+  targetMetricId,
+  targetValue,
   onLogged,
 }: {
   entryId: string;
@@ -59,6 +61,13 @@ export function SetLog({
    * counts up instead.
    */
   durationTargetMs: number | null;
+  /**
+   * Which metric the entry's target applies to, snapshotted at session start
+   * (invariant 5). Drives the +/- step for that one metric (issue #3) — every
+   * other metric keeps the default step of one.
+   */
+  targetMetricId: string | null;
+  targetValue: number | null;
   onLogged?: () => void;
 }) {
   const primary = metrics.at(0);
@@ -173,6 +182,11 @@ export function SetLog({
               onChangeText={set(metric.id)}
               unit={metric.unit}
               accessibilityLabel={metric.name}
+              step={
+                metric.id === targetMetricId && targetValue
+                  ? targetValue
+                  : undefined
+              }
             />
           </View>
         ),
