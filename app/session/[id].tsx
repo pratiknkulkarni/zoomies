@@ -193,12 +193,23 @@ function Header({
   planned: number;
 }) {
   const [now, setNow] = useState(() => Date.now());
+  // FIX #6
+  // In a nutshell, this local now (local to component) was holding an older value of Date.now()
+  // which was before the pause accumulation happened. Now, we need to start back from the place
+  // after the pause was complete, so we need to add accumulateMs. This happened after the TICK_MS
+  // So sync updating now right after the paused had been updated.
+  const [pausedAtSeen, setPausedAtSeen] = useState(session.pausedAt);
+
+  // if the pausedAt value changes, then update.
+  if (session.pausedAt !== pausedAtSeen) {
+    setPausedAtSeen(session.pausedAt);
+    setNow(() => Date.now());
+  }
 
   useEffect(() => {
     if (session.pausedAt !== null) {
       return;
     }
-
     const timer = setInterval(() => setNow(Date.now()), TICK_MS);
     return () => clearInterval(timer);
   }, [session.pausedAt]);
