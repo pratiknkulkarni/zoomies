@@ -38,7 +38,7 @@ export function SetMarks({
 
   return (
     <View
-      className="flex-row gap-xs"
+      className="flex-row flex-wrap gap-xs"
       accessibilityLabel={`${done} of ${target} sets`}
     >
       {Array.from({ length: total }, (_, index) => (
