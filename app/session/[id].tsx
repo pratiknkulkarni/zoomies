@@ -99,15 +99,36 @@ export default function SessionScreen() {
   const settled = updatedAt !== undefined;
 
   /**
-   * The first exercise still short of its target — the one you are almost
-   * certainly on. Everything before it is done; everything after has not
-   * started. Falls through to nothing once the whole plan is complete, which
-   * is correct: there is no live row when there is nothing left to do.
+   * The exercise you are almost certainly on: among everything still short of
+   * its target, whichever one carries the most recently logged set. Falls
+   * back to plan order for entries nobody has touched yet, so a session that
+   * has not started still lifts its first row. Falls through to nothing once
+   * the whole plan is complete, which is correct: there is no live row when
+   * there is nothing left to do.
    */
-  const liveEntryId = entries.find((entry) => {
-    const done = setsByEntry.get(entry.id)?.length ?? 0;
-    return entry.targetSets === null ? done === 0 : done < entry.targetSets;
-  })?.id;
+  const liveEntryId = useMemo(() => {
+    const incomplete = entries.filter((entry) => {
+      const done = setsByEntry.get(entry.id)?.length ?? 0;
+      return entry.targetSets === null ? done === 0 : done < entry.targetSets;
+    });
+
+    let mostRecentEntry: ExerciseEntry | undefined = incomplete[0];
+    let mostRecentAt = -Infinity;
+
+    for (const entry of incomplete) {
+      const lastPerformedAt = (setsByEntry.get(entry.id) ?? []).reduce(
+        (max, set) => Math.max(max, set.performedAt),
+        -Infinity,
+      );
+
+      if (lastPerformedAt > mostRecentAt) {
+        mostRecentAt = lastPerformedAt;
+        mostRecentEntry = entry;
+      }
+    }
+
+    return mostRecentEntry?.id;
+  }, [entries, setsByEntry]);
 
   const planned = entries.reduce(
     (total, entry) => total + (entry.targetSets ?? 0),
