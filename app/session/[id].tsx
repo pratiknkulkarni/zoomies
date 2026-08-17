@@ -5,6 +5,7 @@ import { FlatList, Pressable, View } from 'react-native';
 
 import { BackButton } from '@/components/ui/back-button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { ProgressTrack } from '@/components/ui/progress-track';
 import { Screen } from '@/components/ui/screen';
 import { SetMarks } from '@/components/ui/set-marks';
 import { Text } from '@/components/ui/text';
@@ -240,6 +241,8 @@ function Header({
     minute: '2-digit',
   });
 
+  const percent = planned > 0 ? Math.round((logged / planned) * 100) : null;
+
   return (
     <View className="px-2xl pt-sm">
       <View className="flex-row items-baseline gap-lg">
@@ -260,9 +263,15 @@ function Header({
           ? logged === 1
             ? '1 set'
             : `${logged} sets`
-          : `${logged} of ${planned} sets`}
+          : `${logged} of ${planned} sets (${percent}%)`}
         {session.pausedAt === null ? '' : ' · paused'}
       </Text>
+
+      {planned > 0 ? (
+        <View className="pt-xs">
+          <ProgressTrack progress={logged / planned} />
+        </View>
+      ) : null}
     </View>
   );
 }

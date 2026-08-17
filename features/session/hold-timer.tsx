@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { ProgressTrack } from '@/components/ui/progress-track';
 import { Text } from '@/components/ui/text';
 import { formatClock } from '@/lib/format';
 import { beepTargetReached } from '@/lib/sound';
@@ -161,7 +162,7 @@ export function HoldTimer({
         <Text className="text-bodySm text-text-2">{label}</Text>
       </Pressable>
 
-      {targetMs !== null ? <Track progress={progress} /> : null}
+      {targetMs !== null ? <ProgressTrack progress={progress} /> : null}
 
       {running ? (
         <Pressable
@@ -173,24 +174,6 @@ export function HoldTimer({
           <Text className="text-bodySm text-text-2">Pause</Text>
         </Pressable>
       ) : null}
-    </View>
-  );
-}
-
-/**
- * The hairline progress track of §6.3.
- *
- * The width is a runtime fraction, so it is an inline style rather than a
- * token — the same exemption `components/ui/screen.tsx` documents for safe-area
- * insets. Everything else about it, the hairline height included, is tokened.
- */
-function Track({ progress }: { progress: number }) {
-  return (
-    <View className="h-hairline w-full bg-muted">
-      <View
-        className="h-hairline bg-text-3"
-        style={{ width: `${progress * 100}%` }}
-      />
     </View>
   );
 }
