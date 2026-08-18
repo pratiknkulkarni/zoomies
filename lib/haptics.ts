@@ -27,6 +27,22 @@ export function tapTargetReached(): void {
 }
 
 /**
+ * Rest is over and the next set is starting (§8.2) — §7.6's *timer complete*,
+ * which until the cycle existed had no moment to fire on.
+ *
+ * **The one signal that is not confirming something you did.** Every other call
+ * here reports a write that has landed; this one is an instruction to move, and
+ * it is the heavier notification style for that reason. The hold reaching its
+ * target gets no haptic of its own — `tapTargetReached` follows from the save
+ * instead — so the two ends of a round stay one signal each.
+ */
+export function tapRestOver(): void {
+  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(
+    ignore,
+  );
+}
+
+/**
  * Something was added to a list — an exercise into a template.
  *
  * The same weight as `tapSaved`, because it means the same thing: that counted.

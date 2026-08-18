@@ -132,6 +132,20 @@ export const templateSlots = sqliteTable(
       () => exerciseMetrics.id,
     ),
     targetValue: real('target_value'),
+    /**
+     * Seconds to rest after each set of this slot, or null for no rest at all
+     * (FEATURES.md §8.2).
+     *
+     * **On the slot, not the exercise.** §5.2 lets one exercise fill two slots,
+     * and a jump-rope template runs the same movement at 10 × 60s / 15s rest
+     * early and 5 × 40s / 20s rest at the end. Hanging this off the exercise
+     * would force those two to share a number.
+     *
+     * Null and zero are different answers, as everywhere else: null is no rest
+     * configured and shows no countdown, zero is a rest of no length, which is
+     * a thing you can ask for and not a thing you can mean.
+     */
+    restSeconds: integer('rest_seconds'),
     ...lifecycle,
   },
   (t) => [
@@ -192,6 +206,15 @@ export const exerciseEntries = sqliteTable(
       () => exerciseMetrics.id,
     ),
     targetValue: real('target_value'),
+    /**
+     * Snapshotted from the slot alongside the targets above, and for the same
+     * reason: `template_slot_id` below is provenance and reading a plan figure
+     * through it would undo invariant 5.
+     *
+     * Always null for ad-hoc entries and quick logs — rest is a property of a
+     * plan, and neither of those has one.
+     */
+    restSeconds: integer('rest_seconds'),
     /**
      * Which slot this entry came from — **provenance, never a target source.**
      *

@@ -50,6 +50,13 @@
       "when": 1786704841860,
       "tag": "0006_performed_at_index",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1787026000576,
+      "tag": "0007_slot_rest_seconds",
+      "breakpoints": true
     }
   ]
 }

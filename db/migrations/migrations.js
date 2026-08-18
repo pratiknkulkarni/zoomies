@@ -8,6 +8,7 @@ import m0003 from './0003_drop_rest_seconds.sql';
 import m0004 from './0004_remove_added_load.sql';
 import m0005 from './0005_entry_slot_link.sql';
 import m0006 from './0006_performed_at_index.sql';
+import m0007 from './0007_slot_rest_seconds.sql';
 
   export default {
     journal,
@@ -18,7 +19,8 @@ m0002,
 m0003,
 m0004,
 m0005,
-m0006
+m0006,
+m0007
     }
   }
   

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { HoldTimer } from '@/features/session/hold-timer';
+import { RestTimer } from '@/features/session/rest-timer';
 import { Input } from '@/components/ui/input';
 import { NumericField } from '@/components/ui/numeric-field';
 import { SectionLabel } from '@/components/ui/section-label';
@@ -39,6 +40,7 @@ export function SetLog({
   durationTargetMs,
   targetMetricId,
   targetValue,
+  restMs,
   onLogged,
 }: {
   entryId: string;
@@ -68,12 +70,30 @@ export function SetLog({
    */
   targetMetricId: string | null;
   targetValue: number | null;
+  /**
+   * The entry's rest in millis, snapshotted from the slot, or null for no rest
+   * at all (§8.2). Never set on an ad-hoc entry or a quick log — rest is a
+   * property of a plan and neither has one.
+   */
+  restMs: number | null;
   onLogged?: () => void;
 }) {
   const primary = metrics.at(0);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [toFailure, setToFailure] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  /**
+   * When the rest after a counted set began, or null when none is running.
+   *
+   * Only the counted path needs this held here. A duration exercise's rest is
+   * one phase of the cycle `HoldTimer` owns (§8.2), because there it decides
+   * what happens next; here nothing happens next.
+   */
+  const [restingSince, setRestingSince] = useState<number | null>(null);
+
+  /** Stable, so the countdown does not resubscribe to `AppState` per render. */
+  const endRest = useCallback(() => setRestingSince(null), []);
 
   /**
    * Takes an updater as well as a value, so a stepper derives from the freshest
@@ -135,6 +155,15 @@ export function SetLog({
       return;
     }
 
+    /*
+      The rest starts when you pressed, not when SQLite finished, and it starts
+      whether or not the write is still in flight — the two are unrelated, and
+      a slow write must not eat into a rest you are already taking.
+    */
+    if (restMs !== null) {
+      setRestingSince(Date.now());
+    }
+
     void commit(drafted(metrics));
   };
 
@@ -157,6 +186,8 @@ export function SetLog({
       {timed && primary ? (
         <HoldTimer
           targetMs={durationTargetMs}
+          restMs={restMs}
+          setsRemaining={setsUntilTarget}
           disabled={saving}
           onComplete={(seconds) =>
             commit([{ metricId: primary.id, num: seconds }, ...drafted(typed)])
@@ -191,6 +222,18 @@ export function SetLog({
           </View>
         ),
       )}
+
+      {/*
+        §8.2 — the counted rest. Nothing renders while `restingSince` is null,
+        so an exercise without rest is the screen it always was.
+      */}
+      {!timed && restMs !== null ? (
+        <RestTimer
+          startedAt={restingSince}
+          restMs={restMs}
+          onEnd={endRest}
+        />
+      ) : null}
 
       {/*
         §4.2 — a flag on the set, not a metric. Eight clean reps and eight

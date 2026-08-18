@@ -22,7 +22,8 @@ import { useDraftExit } from '@/lib/use-draft-exit';
 import { cn } from '@/lib/utils';
 
 /**
- * What a slot plans: how many sets, and of what (§5.1).
+ * What a slot plans: how many sets, of what, and how long you rest between them
+ * (§5.1, §8.2).
  *
  * Its own screen because the slot row already carries three controls and these
  * fields would not fit under a thumb beside them. Reached by id alone — slot
@@ -31,8 +32,9 @@ import { cn } from '@/lib/utils';
  *
  * **Every field here is nullable and each null means something.** No target
  * sets shows the completed count with nothing to reach; no target metric means
- * no measurement to beat. Emptying a field is a decision, not a failure to
- * decide, so it is written as null rather than defaulted back.
+ * no measurement to beat; no rest means no countdown between sets at all.
+ * Emptying a field is a decision, not a failure to decide, so it is written as
+ * null rather than defaulted back.
  *
  * A **draft screen** (§18, Pattern A). It used to write on every keystroke and
  * carry no button at all, which meant the only way to leave was to press Back
@@ -84,28 +86,48 @@ function Editor({ slot }: { slot: TemplateSlot }) {
     sets: fromNullableNumber(slot.targetSets),
     value: fromNullableNumber(slot.targetValue),
     metricId: slot.targetMetricId,
+    rest: fromNullableNumber(slot.restSeconds),
   };
 
   const [sets, setSets] = useState(stored.sets);
   const [value, setValue] = useState(stored.value);
   const [metricId, setMetricId] = useState(stored.metricId);
+  const [rest, setRest] = useState(stored.rest);
 
   const dirty =
     sets !== stored.sets ||
     value !== stored.value ||
-    metricId !== stored.metricId;
+    metricId !== stored.metricId ||
+    rest !== stored.rest;
 
   const discard = () => {
     setSets(stored.sets);
     setValue(stored.value);
     setMetricId(stored.metricId);
+    setRest(stored.rest);
   };
 
   /**
-   * One write for the whole screen, which is what makes the three fields a
-   * plan rather than three independent settings. Metric and value in
-   * particular have always had to travel together — a value with no metric
-   * does not say what `8` counts — and now they cannot even briefly disagree.
+   * Whether this plan will run as a cycle (§8.2) rather than as a countdown you
+   * restart by hand — which changes what the caption below has to warn about.
+   *
+   * The same four conditions the entry screen checks, asked of the draft rather
+   * than of the stored row, so the caption describes what Save is about to
+   * mean.
+   */
+  const cycles =
+    metrics.at(0)?.type === 'duration' &&
+    metricId === metrics.at(0)?.id &&
+    toNullableFloat(value) !== null &&
+    toNullableInt(sets) !== null &&
+    toNullableInt(rest) !== null;
+
+  /**
+   * One write for the whole screen, which is what makes the fields a plan
+   * rather than four independent settings. Metric and value in particular have
+   * always had to travel together — a value with no metric does not say what
+   * `8` counts — and now they cannot even briefly disagree. Rest hangs off the
+   * same pair, and `setSlotPlan` clears it when they go.
    */
   const save = () => {
     const targetValue = toNullableFloat(value);
@@ -116,6 +138,7 @@ function Editor({ slot }: { slot: TemplateSlot }) {
         metricId !== null && targetValue !== null
           ? { metricId, value: targetValue }
           : null,
+      restSeconds: toNullableInt(rest),
     });
   };
 
@@ -185,6 +208,37 @@ function Editor({ slot }: { slot: TemplateSlot }) {
             </>
           )}
         </View>
+
+        {/*
+          §8.2 — rest is offered only once there is a target, in the same way
+          the target value is offered only once there is a metric. A countdown
+          between sets of nothing measured is a timer with no exercise attached,
+          and `setSlotPlan` clears this alongside the target for the same
+          reason.
+
+          Empty is the default and means no rest, so a slot that says nothing
+          about rest behaves exactly as it did before this existed.
+        */}
+        {metrics.length > 0 ? (
+          <View className="gap-xs">
+            <SectionLabel>Rest</SectionLabel>
+            <Input
+              value={rest}
+              onChangeText={setRest}
+              accessibilityLabel="Rest between sets, in seconds"
+              keyboardType="number-pad"
+              placeholder="No rest"
+              editable={metricId !== null}
+            />
+            <Text className="text-caption text-text-2">
+              {metricId === null
+                ? 'Choose a target first.'
+                : cycles
+                  ? 'Seconds to rest after every set of this exercise. The next set starts counting down on its own when it ends.'
+                  : 'Seconds to rest after every set of this exercise.'}
+            </Text>
+          </View>
+        ) : null}
 
         <FormActions
           dirty={dirty}
