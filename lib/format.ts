@@ -554,7 +554,7 @@ export function formatSlotTally(count: number): string | undefined {
 }
 
 /**
- * What a plan says: `3 × 8 reps`.
+ * What a plan says: `3 × 8 reps`, or `10 × 60 seconds · 15s rest`.
  *
  * Shared by template slots and by the exercise entries they are snapshotted
  * onto, so a session shows the same words the plan did.
@@ -563,9 +563,19 @@ export function formatSlotTally(count: number): string | undefined {
  * target sets shows the completed count alone during a session. `No target` is
  * stated rather than omitted, because a blank line would read as "not
  * configured yet" instead of "decided".
+ *
+ * **Rest is a suffix and never the whole string.** It qualifies a plan rather
+ * than being one, and `15s rest` alone beside an exercise with no target would
+ * describe a gap between sets that nothing asked for. So a slot carrying rest
+ * and nothing else still reads `No target` — which is true, and which cannot
+ * happen anyway, since §8.2 only offers rest once there is a target.
  */
 export function formatTarget(
-  target: { targetSets: number | null; targetValue: number | null },
+  target: {
+    targetSets: number | null;
+    targetValue: number | null;
+    restSeconds?: number | null;
+  },
   metric: MetricLabel | undefined,
 ): string {
   const measure =
@@ -573,13 +583,20 @@ export function formatTarget(
       ? formatMeasure(target.targetValue, metric)
       : null;
 
-  if (target.targetSets !== null && measure) {
-    return `${target.targetSets} × ${measure}`;
-  }
-  if (target.targetSets !== null) {
-    return target.targetSets === 1 ? '1 set' : `${target.targetSets} sets`;
-  }
-  return measure ?? 'No target';
+  const plan =
+    target.targetSets !== null && measure
+      ? `${target.targetSets} × ${measure}`
+      : target.targetSets !== null
+        ? target.targetSets === 1
+          ? '1 set'
+          : `${target.targetSets} sets`
+        : (measure ?? 'No target');
+
+  const rest = target.restSeconds ?? null;
+
+  return rest === null || plan === 'No target'
+    ? plan
+    : `${plan} · ${rest}s rest`;
 }
 
 type MetricLabel = { name: string; unit: string | null };

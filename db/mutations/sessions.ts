@@ -85,6 +85,7 @@ export async function startFromTemplate(templateId: string): Promise<string> {
         targetSets: slot.targetSets,
         targetMetricId: slot.targetMetricId,
         targetValue: slot.targetValue,
+        restSeconds: slot.restSeconds,
         templateSlotId: slot.id,
         isAdHoc: false,
       });
@@ -223,6 +224,13 @@ export async function overrideTarget(
       targetSets: target.sets,
       targetMetricId: paired ? target.metricId : null,
       targetValue: paired ? target.value : null,
+      /*
+        Rest goes with the target it qualifies, the same way `setSlotPlan`
+        clears it — otherwise dropping the target for today would leave a
+        countdown still running between sets and no longer shown anywhere,
+        since §8.2 hangs both the field and the readout off having a target.
+      */
+      ...(paired ? {} : { restSeconds: null }),
     })
     .where(eq(exerciseEntries.id, entryId));
 }

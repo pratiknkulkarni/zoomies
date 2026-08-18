@@ -134,10 +134,10 @@ export async function moveSlot(
  * Everything a slot plans, written as one row (§5.1).
  *
  * The slot screen is a draft (§18), so it saves once rather than per keystroke,
- * and this is the write it makes. Both fields are nullable and each null is a
+ * and this is the write it makes. Every field is nullable and each null is a
  * recorded decision rather than an absence: no `target_sets` means the session
- * counts what you do with nothing to reach, and no target means no measurement
- * to beat.
+ * counts what you do with nothing to reach, no target means no measurement to
+ * beat, and no `rest_seconds` means no countdown between sets at all.
  *
  * Sets and target used to be two calls, which meant a moment where the row held
  * a new set count against an old target. Nothing read it in that moment, but
@@ -148,6 +148,7 @@ export async function setSlotPlan(
   plan: {
     targetSets: number | null;
     target: { metricId: string; value: number } | null;
+    restSeconds: number | null;
   },
 ): Promise<void> {
   await db
@@ -156,6 +157,13 @@ export async function setSlotPlan(
       targetSets: plan.targetSets,
       targetMetricId: plan.target?.metricId ?? null,
       targetValue: plan.target?.value ?? null,
+      /*
+        Rest hangs off the target, because §8.2 only offers it once there is
+        one — a countdown between sets of nothing measured is a timer with no
+        exercise attached. Clearing the target therefore clears the rest with
+        it, rather than leaving a figure the slot screen can no longer show.
+      */
+      restSeconds: plan.target === null ? null : plan.restSeconds,
     })
     .where(eq(templateSlots.id, slotId));
 }

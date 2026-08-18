@@ -17,6 +17,7 @@ import {
   formatSetValues,
   formatShortDate,
   formatSlotTally,
+  formatTarget,
   formatTimeRange,
   formatTrainingWindow,
   formatVolume,
@@ -507,5 +508,61 @@ describe('formatPlanSummary', () => {
 
   it('says an empty plan is empty', () => {
     expect(formatPlanSummary(0, 0, null)).toBe('No exercises · never run');
+  });
+});
+
+describe('formatTarget', () => {
+  const seconds = { name: 'Hold', unit: 's' };
+
+  it('reads a plan as sets by measure', () => {
+    expect(
+      formatTarget(
+        { targetSets: 10, targetValue: 60, restSeconds: null },
+        seconds,
+      ),
+    ).toBe('10 × 60 s');
+  });
+
+  it('appends rest to the plan it qualifies', () => {
+    expect(
+      formatTarget({ targetSets: 10, targetValue: 60, restSeconds: 15 }, seconds),
+    ).toBe('10 × 60 s · 15s rest');
+  });
+
+  it('treats a missing rest and no rest as the same silence', () => {
+    const plan = { targetSets: 5, targetValue: 40 };
+
+    expect(formatTarget({ ...plan, restSeconds: null }, seconds)).toBe(
+      formatTarget(plan, seconds),
+    );
+  });
+
+  /*
+    Zero is a rest of no length, which is a thing that can be asked for and is
+    not the same answer as null. It has to survive being formatted, or the
+    display would quietly agree with a slot that says something else.
+  */
+  it('states a zero rest rather than reading it as none', () => {
+    expect(
+      formatTarget({ targetSets: 3, targetValue: 30, restSeconds: 0 }, seconds),
+    ).toBe('3 × 30 s · 0s rest');
+  });
+
+  it('never lets rest stand in for a plan it is qualifying', () => {
+    expect(
+      formatTarget(
+        { targetSets: null, targetValue: null, restSeconds: 15 },
+        seconds,
+      ),
+    ).toBe('No target');
+  });
+
+  it('carries rest on a set count with nothing measured', () => {
+    expect(
+      formatTarget(
+        { targetSets: 4, targetValue: null, restSeconds: 90 },
+        undefined,
+      ),
+    ).toBe('4 sets · 90s rest');
   });
 });

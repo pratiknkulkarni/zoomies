@@ -195,6 +195,12 @@ function Logging({ entryId }: { entryId: string }) {
         }
         targetMetricId={entry.targetMetricId}
         targetValue={entry.targetValue}
+        /*
+          §8.2 — snapshotted onto the entry at session start like every other
+          plan figure, so editing the template mid-session cannot change the
+          rest you are already training to.
+        */
+        restMs={entry.restSeconds === null ? null : entry.restSeconds * 1000}
       />
     );
 
