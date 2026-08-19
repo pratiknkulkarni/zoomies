@@ -200,3 +200,9 @@ separate private repo. This README and `CLAUDE.md` are the public part.
 Version 1, and I use it. Android only so far. Nothing in the code is
 iOS-specific and I haven't tried it there. It isn't going on a store. Bugs and
 ideas go to [Issues](https://gitea.15092021.xyz/pratik/zoomies/issues).
+
+---
+
+Developed on a self-hosted [Gitea](https://gitea.15092021.xyz/pratik/zoomies) that runs in
+my homelab; the copy on GitHub is a read-only mirror of it, pushed on every commit.
+Issues and pull requests are welcome on the GitHub side and I will port them across.
