@@ -57,7 +57,7 @@ export function ExerciseForm({
         value={values.family}
         onChange={set('family')}
         options={families}
-        placeholder="Choose a family"
+        placeholder="Choose or add a family"
         emptyLabel="No family"
         accessibilityLabel="Family"
       />
