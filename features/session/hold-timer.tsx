@@ -3,9 +3,10 @@ import { AppState, Pressable, View } from 'react-native';
 
 import { ProgressTrack } from '@/components/ui/progress-track';
 import { Text } from '@/components/ui/text';
+import { cueDue } from '@/lib/countdown';
 import { formatClock } from '@/lib/format';
 import { tapRestOver } from '@/lib/haptics';
-import { beepRestOver, beepTargetReached } from '@/lib/sound';
+import { beepCountdown, beepHoldOver, beepRestOver } from '@/lib/sound';
 import {
   elapsedMs,
   hasElapsed,
@@ -92,6 +93,42 @@ export function HoldTimer({
    * synchronously by the effect that sets it.
    */
   const firing = useRef(false);
+
+  /**
+   * The last mark `lib/countdown.ts` announced, and which countdown made it.
+   *
+   * Keyed on the countdown's start rather than cleared on a phase change, so
+   * the hold and the rest after it each get their own three seconds without an
+   * effect having to be ordered against the ones that play them. A pause keeps
+   * the key, which is why resuming at two seconds does not count three again.
+   */
+  const announced = useRef<{ from: number; mark: number } | null>(null);
+
+  /**
+   * Says the count, when this repaint is where a mark falls (§8.2).
+   *
+   * `ending` is which tone closes it. `countdown.ts` knows a countdown is
+   * ending and cannot know whether that means stop or go, which is the one
+   * thing the phone on the floor has to convey.
+   */
+  const announce = (left: number, from: number, ending: 'stop' | 'go') => {
+    const seen = announced.current;
+    const due = cueDue(left, seen && seen.from === from ? seen.mark : null);
+
+    if (!due) {
+      return;
+    }
+
+    announced.current = { from, mark: due.mark };
+
+    if (due.cue === 'tick') {
+      beepCountdown();
+    } else if (ending === 'stop') {
+      beepHoldOver();
+    } else {
+      beepRestOver();
+    }
+  };
 
   /**
    * Whether this entry cycles at all (§8.2). All three are required: without a
@@ -188,14 +225,28 @@ export function HoldTimer({
       return;
     }
 
-    if (!hasElapsed(phase.timer, targetMs, Date.now())) {
+    const now = Date.now();
+
+    /*
+      Before the check below rather than after it. The last mark is the sound
+      this used to make at zero, and on a repaint that finds a hold already
+      finished — the app was away for two minutes — this is its only chance to
+      make it.
+    */
+    announce(
+      remainingMs(phase.timer, targetMs, now),
+      phase.timer.startedAt,
+      'stop',
+    );
+
+    if (!hasElapsed(phase.timer, targetMs, now)) {
       return;
     }
 
-    // Sound only. The haptic follows from the save itself in `SetLog`, which
-    // knows whether this set also finished the exercise — two signals for two
-    // different facts, rather than two buzzes for one.
-    beepTargetReached();
+    // Nothing sounds here: the countdown said it a second ago and its tone is
+    // still finishing. The haptic follows from the save itself in `SetLog`,
+    // which knows whether this set also finished the exercise — two signals for
+    // two different facts, rather than two buzzes for one.
     record(Math.round(targetMs / 1000));
     // `record` is stable enough for this: it is guarded by `firing` and reads
     // nothing that changes between renders.
@@ -203,21 +254,24 @@ export function HoldTimer({
   }, [tick, phase, targetMs]);
 
   /**
-   * The rest is over: sound, buzz, and either the next hold or nothing.
+   * The rest is over: the buzz, and either the next hold or nothing.
    *
-   * `announce` is false when you skipped it by hand. You are holding the phone
-   * and looking at it, so a beep would be telling you what you just did.
+   * `ranOut` is false when you skipped it by hand. You are holding the phone
+   * and looking at it, so being told what you just did is noise.
+   *
+   * No tone here any more. The countdown plays it on the last second, so it is
+   * finishing as this runs — which is what makes the go arrive with the effort
+   * rather than after it.
    */
-  const endRest = (announce: boolean) => {
+  const endRest = (ranOut: boolean) => {
     if (phase.kind !== 'rest') {
       return;
     }
 
-    if (announce) {
-      // Both, unlike the hold ending. There is no write here to carry a haptic
-      // of its own, and this is the signal that means *move* rather than
-      // *that counted*.
-      beepRestOver();
+    if (ranOut) {
+      // Unlike the hold ending. There is no write here to carry a haptic of its
+      // own, and this is the signal that means *move* rather than *that
+      // counted*.
       tapRestOver();
     }
 
@@ -233,7 +287,11 @@ export function HoldTimer({
       return;
     }
 
-    if (!hasElapsed(phase.timer, restMs, Date.now())) {
+    const now = Date.now();
+
+    announce(remainingMs(phase.timer, restMs, now), phase.timer.startedAt, 'go');
+
+    if (!hasElapsed(phase.timer, restMs, now)) {
       return;
     }
 
