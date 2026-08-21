@@ -329,7 +329,17 @@ export function HoldTimer({
           disabled && 'opacity-50',
         )}
       >
-        <Text className="font-mono text-display text-text">{figure}</Text>
+        {/*
+          §9 caps the scaling rather than letting a 200% setting take a
+          five-character clock past the screen gutter. The figure is the one
+          element on this screen that cannot wrap or truncate.
+        */}
+        <Text
+          className="font-mono-semibold text-timer text-text"
+          maxFontSizeMultiplier={1.3}
+        >
+          {figure}
+        </Text>
         <Text className="text-bodySm text-text-2">{label}</Text>
       </Pressable>
 
