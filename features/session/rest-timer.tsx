@@ -3,9 +3,10 @@ import { AppState, Pressable, View } from 'react-native';
 
 import { ProgressTrack } from '@/components/ui/progress-track';
 import { Text } from '@/components/ui/text';
+import { cueDue } from '@/lib/countdown';
 import { formatClock } from '@/lib/format';
 import { tapRestOver } from '@/lib/haptics';
-import { beepRestOver } from '@/lib/sound';
+import { beepCountdown, beepRestOver } from '@/lib/sound';
 import { hasElapsed, remainingMs, startTimer } from '@/lib/timers';
 
 /** How often the figure repaints. It never accumulates — see `hold-timer`. */
@@ -44,8 +45,12 @@ export function RestTimer({
    */
   const ended = useRef(false);
 
+  /** The last mark the countdown announced, or null before it has said one. */
+  const announced = useRef<number | null>(null);
+
   useEffect(() => {
     ended.current = false;
+    announced.current = null;
   }, [startedAt]);
 
   useEffect(() => {
@@ -79,12 +84,35 @@ export function RestTimer({
   const timer = startedAt === null ? null : startTimer(startedAt);
 
   useEffect(() => {
-    if (!timer || ended.current || !hasElapsed(timer, restMs, Date.now())) {
+    if (!timer || ended.current) {
+      return;
+    }
+
+    const now = Date.now();
+
+    /*
+      The same three seconds the hold card counts, from the same module — a
+      rest is a rest, and one of them announcing itself differently would be
+      two vocabularies for one fact. The tone that ends it plays here, on the
+      last second, rather than below at zero.
+    */
+    const due = cueDue(remainingMs(timer, restMs, now), announced.current);
+
+    if (due) {
+      announced.current = due.mark;
+
+      if (due.cue === 'tick') {
+        beepCountdown();
+      } else {
+        beepRestOver();
+      }
+    }
+
+    if (!hasElapsed(timer, restMs, now)) {
       return;
     }
 
     ended.current = true;
-    beepRestOver();
     tapRestOver();
     onEnd();
     // Re-checked on every repaint rather than only when something else happens
