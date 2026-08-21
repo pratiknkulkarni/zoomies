@@ -99,6 +99,10 @@ module.exports = {
       bodySm: ['14px', { lineHeight: '21px' }],
       caption: ['13px', { lineHeight: '20px' }],
       label: ['11px', { lineHeight: '17px' }],
+      // The running clock, and nothing else. Line height 1.125 rather than the
+      // 1.4 the headings use: it is one line of figures with no ascender or
+      // descender to clear, and 1.4 would put a 90px box around a 64px number.
+      timer: ['64px', { lineHeight: '72px' }],
       metric: ['24px', { lineHeight: '34px' }],
       metricSm: ['16px', { lineHeight: '22px' }],
       metricXs: ['13px', { lineHeight: '18px' }],
