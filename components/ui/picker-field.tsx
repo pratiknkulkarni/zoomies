@@ -22,9 +22,12 @@ const PlusIcon = iconWithClassName(Plus);
  * **The field is not a text input.** That is the whole point: free text is how
  * `push up`, `Push-Up` and `Push Ups` became three families that never group
  * together, and how `rep`, `reps` and `secund` became three units. Typing
- * happens only inside the sheet, only to filter, and a new value requires
- * pressing Create — so a typo can no longer arrive by accident, only by
- * intent.
+ * happens only inside the sheet, and a new value requires pressing Create — so
+ * a typo can no longer arrive by accident, only by intent.
+ *
+ * **The sheet has to say that out loud.** The field being a filter and the
+ * field being how you add a value look identical until something is typed, so
+ * the placeholder names both jobs (issue #8).
  *
  * A wrapping row of chips came first and did not survive contact: families grow
  * and the field became a wall to scroll past. A sheet keeps the form short
@@ -113,6 +116,9 @@ function Sheet({
 
   const needle = search.trim().toLowerCase();
 
+  /** The label as it reads inside a sentence: `Family` -> `family`. */
+  const noun = label.toLowerCase();
+
   const matches = useMemo(
     () => options.filter((option) => matchesQuery(option, search)),
     [options, search],
@@ -154,11 +160,18 @@ function Sheet({
         >
           <SectionLabel>{label}</SectionLabel>
 
+          {/*
+            The placeholder is the only thing on this sheet that says a new
+            value can be made here. `Search` described the field accurately and
+            hid the feature completely: the Create row appears once something
+            is typed, and nothing suggested typing something that was not
+            already in the list (issue #8).
+          */}
           <Input
             value={search}
             onChangeText={setSearch}
-            placeholder="Search"
-            accessibilityLabel={`Search ${label.toLowerCase()}`}
+            placeholder={`Search or add a ${noun}`}
+            accessibilityLabel={`Search or add a ${noun}`}
             autoCapitalize="none"
             autoFocus
           />
@@ -196,9 +209,15 @@ function Sheet({
               </View>
             ) : null}
 
+            {/*
+              Reachable on an empty query alone: anything typed either matches
+              something or is creatable, so this is an empty list rather than
+              an empty result. It read `Nothing matches.`, which answered a
+              question nobody had asked and said nothing about what to do.
+            */}
             {matches.length === 0 && !creatable ? (
               <Text className="pt-lg text-bodySm text-text-2">
-                Nothing matches.
+                Type a name to add the first {noun}.
               </Text>
             ) : null}
           </ScrollView>
